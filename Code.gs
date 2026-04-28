@@ -190,13 +190,20 @@ function getUserClaims(userId) {
           dateStr = Utilities.formatDate(new Date(data[i][12]), tz, "yyyy-MM-dd");
         } catch (_) {}
       }
+      let paymentDateStr = "";
+      if (data[i][11]) {
+        try {
+          paymentDateStr = Utilities.formatDate(new Date(data[i][11]), tz, "yyyy-MM-dd");
+        } catch (_) {}
+      }
       grouped[ref] = {
-        refNo:     ref,
-        recipient: data[i][2] || "",
-        total:     0,
-        status:    data[i][9]  || "",
-        payStatus: data[i][10] || "",
-        date:      dateStr
+        refNo:        ref,
+        recipient:    data[i][2] || "",
+        total:        0,
+        status:       data[i][9]  || "",
+        payStatus:    data[i][10] || "",
+        date:         dateStr,
+        paymentDate:  paymentDateStr
       };
     }
     grouped[ref].total += parseFloat(data[i][7]) || 0;

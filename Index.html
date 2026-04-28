@@ -444,6 +444,24 @@
       font-size: .65rem; font-weight: 700;
     }
 
+    /* ── Payment sub-tabs ──────────────────────────────────────────────── */
+    .pay-subtab {
+      background: none; border: none;
+      padding: .7rem 1.25rem;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: .4rem;
+      border-bottom: 2.5px solid transparent;
+      transition: color .18s, border-color .18s;
+    }
+    .pay-subtab:hover { color: var(--accent); }
+    .pay-subtab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+
     /* ── Responsive ────────────────────────────────────────────────────── */
     @media (max-width: 576px) {
       #topBar { padding: .65rem 1rem; }
@@ -701,38 +719,107 @@
       <div class="row g-3 mb-3" id="paymentStats"></div>
 
       <div class="app-card">
-        <div class="card-header-bar">
-          <div class="header-icon" style="background:var(--success-bg);color:var(--success)"><i class="bi bi-cash-coin"></i></div>
-          <h6>Pending Payment Approvals</h6>
+        <!-- Sub-tab nav -->
+        <div style="display:flex;border-bottom:1.5px solid var(--border)">
+          <button id="paySubTabPending" class="pay-subtab active" onclick="switchPayTab('pending')">
+            <i class="bi bi-hourglass-split"></i>Pending
+          </button>
+          <button id="paySubTabPaid" class="pay-subtab" onclick="switchPayTab('paid')">
+            <i class="bi bi-check2-all"></i>Paid
+          </button>
         </div>
+
         <div id="paymentLoader" class="hidden" style="padding:2rem;text-align:center;color:var(--text-muted)">
           <span class="spinner-sm"></span> Loading payments…
         </div>
-        <div class="table-responsive">
-          <table class="app-table">
-            <thead>
-              <tr>
-                <th style="width:40px">
-                  <input type="checkbox" id="checkAll" class="form-check-input" onclick="toggleAllPay(this)">
-                </th>
-                <th>Ref No</th>
-                <th>Recipient</th>
-                <th>Amount (RM)</th>
-                <th>Submitted Date</th>
-              </tr>
-            </thead>
-            <tbody id="paymentBody"></tbody>
-          </table>
+
+        <!-- Pending sub-pane -->
+        <div id="paySubPending">
+          <div class="table-responsive">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th style="width:40px">
+                    <input type="checkbox" id="checkAll" class="form-check-input" onclick="toggleAllPay(this)">
+                  </th>
+                  <th>Ref No</th>
+                  <th>Recipient</th>
+                  <th>Amount (RM)</th>
+                  <th>Details</th>
+                  <th>Submitted Date</th>
+                  <th>Paid Date</th>
+                </tr>
+              </thead>
+              <tbody id="pendingBody"></tbody>
+            </table>
+          </div>
+          <div style="padding:.85rem 1.25rem;background:#f8fafc;border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius)">
+            <button id="payBtn" class="btn btn-success px-4" onclick="processPayment()">
+              <i class="bi bi-check2-circle me-1"></i>Mark Selected as Paid
+            </button>
+          </div>
         </div>
-        <div style="padding:.85rem 1.25rem;background:#f8fafc;border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius)">
-          <button id="payBtn" class="btn btn-success px-4" onclick="processPayment()">
-            <i class="bi bi-check2-circle me-1"></i>Mark Selected as Paid
-          </button>
+
+        <!-- Paid sub-pane -->
+        <div id="paySubPaid" class="hidden">
+          <div class="table-responsive">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Ref No</th>
+                  <th>Recipient</th>
+                  <th>Amount (RM)</th>
+                  <th>Details</th>
+                  <th>Submitted Date</th>
+                  <th>Paid Date</th>
+                </tr>
+              </thead>
+              <tbody id="paidBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
 
   </div><!-- /contentArea -->
+
+  <!-- ── CLAIM DETAIL MODAL ─────────────────────────────────────── -->
+  <div class="modal fade" id="claimDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content" style="border-radius:var(--radius);overflow:hidden;border:none">
+        <div class="modal-header" style="background:var(--primary);color:#fff;border:none;padding:.9rem 1.25rem">
+          <div>
+            <h6 class="modal-title mb-0" style="font-weight:700">Claim Details</h6>
+            <div id="detailRefLabel" style="font-family:monospace;font-size:.78rem;opacity:.75;margin-top:.15rem"></div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div id="detailLoader" style="padding:2.5rem;text-align:center;color:var(--text-muted)">
+            <span class="spinner-sm"></span> Loading claim details…
+          </div>
+          <div id="detailContent" class="hidden">
+            <div class="table-responsive">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Invoice No</th>
+                    <th>Description</th>
+                    <th style="text-align:right">Amount (RM)</th>
+                  </tr>
+                </thead>
+                <tbody id="detailBody"></tbody>
+              </table>
+            </div>
+            <div id="detailSummary" style="padding:1rem 1.25rem;background:#f8fafc;border-top:1.5px solid var(--border);display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:flex-end"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /mainView -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -962,7 +1049,7 @@ function loadHistory() {
     .withSuccessHandler(data => {
       loader.classList.add("hidden");
       if (!data.length) {
-        body.innerHTML = `<tr><td colspan="7">
+        body.innerHTML = `<tr><td colspan="9">
           <div class="empty-state">
             <i class="bi bi-inbox"></i>
             <p>No claims found. Start a new draft from the Claim Form tab.</p>
@@ -971,14 +1058,25 @@ function loadHistory() {
       }
       const frag = document.createDocumentFragment();
       data.forEach(r => {
-        const tr = document.createElement("tr");
-        const rec = esc(r.recipient || "");
-        const initials  = getInitials(r.recipient);
-        const shortName = esc(r.recipient.split(" ").filter(Boolean).pop() || r.recipient);
+        const tr          = document.createElement("tr");
+        const rec         = esc(r.recipient || "");
+        const initials    = getInitials(r.recipient);
+        const shortName   = esc(r.recipient.split(" ").filter(Boolean).pop() || r.recipient);
         const formattedDate = formatDate(r.date);
+        const amountPaid  = r.payStatus === "Paid" ? r.total : 0;
+        const balance     = r.total - amountPaid;
 
-        tr.innerHTML = `
-          <td><span class="ref-pill">${esc(r.refNo)}</span></td>
+        // Ref No cell: clickable pill for Submitted/Paid claims
+        const refCell = document.createElement("td");
+        const refBtn  = document.createElement("button");
+        refBtn.className = "ref-pill ref-pill-btn";
+        refBtn.textContent = r.refNo;
+        refBtn.title = "Click to view details";
+        refBtn.onclick = () => openClaimDetail(r.refNo, { total: r.total, amountPaid, balance });
+        refCell.appendChild(refBtn);
+
+        tr.appendChild(refCell);
+        tr.insertAdjacentHTML("beforeend", `
           <td>
             <div class="recipient-tag">
               <span class="initials">${initials}</span>
@@ -987,19 +1085,22 @@ function loadHistory() {
           </td>
           <td style="color:var(--text-secondary);font-size:.82rem">${formattedDate}</td>
           <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
+          <td style="font-weight:600;color:var(--success)">RM ${amountPaid.toFixed(2)}</td>
+          <td style="font-weight:600;color:${balance > 0 ? "var(--danger)" : "var(--success)"}">RM ${balance.toFixed(2)}</td>
           <td><span class="badge-status badge-${esc(r.status)}">${esc(r.status)}</span></td>
           <td><span class="badge-status badge-${esc(r.payStatus)}">${esc(r.payStatus)}</span></td>
-          <td></td>`;
+          <td></td>`);
 
+        const actionCell = tr.lastElementChild;
         if (r.status === "Draft") {
           const btn = document.createElement("button");
           btn.className = "btn btn-sm";
           btn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
           btn.innerHTML = '<i class="bi bi-pencil me-1"></i>Edit';
           btn.onclick = () => editDraft(r.refNo, r.recipient);
-          tr.lastElementChild.appendChild(btn);
+          actionCell.appendChild(btn);
         } else {
-          tr.lastElementChild.innerHTML = `<span style="color:var(--text-muted);font-size:.8rem">—</span>`;
+          actionCell.innerHTML = `<span style="color:var(--text-muted);font-size:.8rem">—</span>`;
         }
         frag.appendChild(tr);
       });
@@ -1036,21 +1137,87 @@ function editDraft(ref, rec) {
     .getDraftDetails(ref, currentUser.userId);
 }
 
+// ── claim detail modal ─────────────────────────────────────────────────────
+function openClaimDetail(refNo, summaryData) {
+  document.getElementById("detailRefLabel").textContent = refNo;
+  document.getElementById("detailBody").innerHTML = "";
+  document.getElementById("detailSummary").innerHTML = "";
+  document.getElementById("detailLoader").classList.remove("hidden");
+  document.getElementById("detailContent").classList.add("hidden");
+
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("claimDetailModal")).show();
+
+  google.script.run
+    .withSuccessHandler(items => {
+      document.getElementById("detailLoader").classList.add("hidden");
+      document.getElementById("detailContent").classList.remove("hidden");
+
+      const tbody = document.getElementById("detailBody");
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted)">No items found.</td></tr>`;
+      } else {
+        const frag = document.createDocumentFragment();
+        items.forEach(it => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="color:var(--text-secondary);font-size:.82rem">${esc(formatDate(it.date))}</td>
+            <td>${esc(it.type || "")}</td>
+            <td style="font-family:monospace;font-size:.82rem">${esc(it.invNo || "—")}</td>
+            <td>${esc(it.description || "")}</td>
+            <td style="text-align:right;font-weight:600">RM ${parseFloat(it.amount || 0).toFixed(2)}</td>`;
+          frag.appendChild(tr);
+        });
+        tbody.appendChild(frag);
+      }
+
+      const { total, amountPaid, balance } = summaryData;
+      document.getElementById("detailSummary").innerHTML = `
+        <div style="text-align:right">
+          <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Total Claim</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--text)">RM ${total.toFixed(2)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Amount Paid</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--success)">RM ${amountPaid.toFixed(2)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Balance to Pay</div>
+          <div style="font-size:1rem;font-weight:700;color:${balance > 0 ? "var(--danger)" : "var(--success)"}">RM ${balance.toFixed(2)}</div>
+        </div>`;
+    })
+    .withFailureHandler(() => {
+      document.getElementById("detailLoader").classList.add("hidden");
+      toast("Failed to load claim details.", true);
+    })
+    .getDraftDetails(refNo, currentUser.userId);
+}
+
 // ── payments ───────────────────────────────────────────────────────────────
+function switchPayTab(name) {
+  const isPending = name === "pending";
+  document.getElementById("paySubPending").classList.toggle("hidden", !isPending);
+  document.getElementById("paySubPaid").classList.toggle("hidden",    isPending);
+  document.getElementById("paySubTabPending").classList.toggle("active",  isPending);
+  document.getElementById("paySubTabPaid").classList.toggle("active",    !isPending);
+}
+
 function loadPaymentList() {
   const loader = document.getElementById("paymentLoader");
-  const body   = document.getElementById("paymentBody");
   const stats  = document.getElementById("paymentStats");
   loader.classList.remove("hidden");
-  body.innerHTML = "";
+  document.getElementById("pendingBody").innerHTML = "";
+  document.getElementById("paidBody").innerHTML    = "";
   stats.innerHTML = "";
   document.getElementById("checkAll").checked = false;
 
   google.script.run
     .withSuccessHandler(data => {
       loader.classList.add("hidden");
-      const pending = data.filter(r => r.status === "Submitted" && r.payStatus === "Unpaid");
-      const total   = pending.reduce((s, r) => s + r.total, 0);
+
+      const pending      = data.filter(r => r.status === "Submitted" && r.payStatus === "Unpaid");
+      const paid         = data.filter(r => r.payStatus === "Paid");
+      const pendingTotal = pending.reduce((s, r) => s + r.total, 0);
+      const paidTotal    = paid.reduce((s, r) => s + r.total, 0);
 
       stats.innerHTML = `
         <div class="col-6 col-md-3">
@@ -1062,30 +1229,84 @@ function loadPaymentList() {
         <div class="col-6 col-md-3">
           <div class="stat-card">
             <div class="stat-label">Total Pending</div>
-            <div class="stat-value" style="color:var(--danger)">RM ${total.toFixed(2)}</div>
+            <div class="stat-value" style="color:var(--danger)">RM ${pendingTotal.toFixed(2)}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="stat-label">Paid Claims</div>
+            <div class="stat-value" style="color:var(--success)">${paid.length}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="stat-label">Total Paid</div>
+            <div class="stat-value" style="color:var(--success)">RM ${paidTotal.toFixed(2)}</div>
           </div>
         </div>`;
 
+      // ── Pending table ───────────────────────────────────────────────────
+      const pendingBody = document.getElementById("pendingBody");
       if (!pending.length) {
-        body.innerHTML = `<tr><td colspan="5">
+        pendingBody.innerHTML = `<tr><td colspan="7">
           <div class="empty-state">
             <i class="bi bi-check-circle" style="color:var(--success)"></i>
             <p>No pending payments. All submitted claims have been processed.</p>
           </div></td></tr>`;
-        return;
+      } else {
+        const frag = document.createDocumentFragment();
+        pending.forEach(r => {
+          const tr     = document.createElement("tr");
+          const detBtn = document.createElement("button");
+          detBtn.className  = "btn btn-sm";
+          detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
+          detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
+          detBtn.onclick    = () => openClaimDetail(r.refNo, { total: r.total, amountPaid: 0, balance: r.total });
+
+          tr.innerHTML = `
+            <td><input type="checkbox" class="form-check-input pay-chk" value="${esc(r.refNo)}"></td>
+            <td><span class="ref-pill">${esc(r.refNo)}</span></td>
+            <td style="color:var(--text-secondary)">${esc(r.recipient)}</td>
+            <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
+            <td></td>
+            <td style="color:var(--text-secondary);font-size:.82rem">${formatDate(r.date)}</td>
+            <td style="color:var(--text-muted);font-size:.82rem">—</td>`;
+          tr.children[4].appendChild(detBtn);
+          frag.appendChild(tr);
+        });
+        pendingBody.appendChild(frag);
       }
-      const frag = document.createDocumentFragment();
-      pending.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="checkbox" class="form-check-input pay-chk" value="${esc(r.refNo)}"></td>
-          <td><span class="ref-pill">${esc(r.refNo)}</span></td>
-          <td style="color:var(--text-secondary)">${esc(r.recipient)}</td>
-          <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
-          <td style="color:var(--text-secondary);font-size:.82rem">${formatDate(r.date)}</td>`;
-        frag.appendChild(tr);
-      });
-      body.appendChild(frag);
+
+      // ── Paid table ──────────────────────────────────────────────────────
+      const paidBody = document.getElementById("paidBody");
+      if (!paid.length) {
+        paidBody.innerHTML = `<tr><td colspan="6">
+          <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No paid claims yet.</p>
+          </div></td></tr>`;
+      } else {
+        const frag = document.createDocumentFragment();
+        paid.forEach(r => {
+          const tr     = document.createElement("tr");
+          const detBtn = document.createElement("button");
+          detBtn.className  = "btn btn-sm";
+          detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
+          detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
+          detBtn.onclick    = () => openClaimDetail(r.refNo, { total: r.total, amountPaid: r.total, balance: 0 });
+
+          tr.innerHTML = `
+            <td><span class="ref-pill">${esc(r.refNo)}</span></td>
+            <td style="color:var(--text-secondary)">${esc(r.recipient)}</td>
+            <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
+            <td></td>
+            <td style="color:var(--text-secondary);font-size:.82rem">${formatDate(r.date)}</td>
+            <td style="color:var(--text-secondary);font-size:.82rem">${formatDate(r.paymentDate)}</td>`;
+          tr.children[3].appendChild(detBtn);
+          frag.appendChild(tr);
+        });
+        paidBody.appendChild(frag);
+      }
     })
     .withFailureHandler(() => {
       loader.classList.add("hidden");
@@ -1134,6 +1355,7 @@ function formatDate(dateStr) {
   if (!dateStr) return "—";
   try {
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "—";
     return d.toLocaleDateString("en-MY", { day: "2-digit", month: "short", year: "numeric" });
   } catch (_) { return "—"; }
 }
