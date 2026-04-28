@@ -30,7 +30,7 @@ function setupSheets() {
     App_Users:  ["UserID","Password","FullName"],
     App_Claims: ["RefNo","UserID","Recipient","InvoiceDate","Type","InvoiceNo",
                  "Description","Amount","FileUrl","Status","PaymentStatus",
-                 "PaymentDate","Timestamp"]
+                 "PaymentDate","Timestamp","CheckedBy","ApprovedBy"]
   };
 
   Object.entries(schemas).forEach(([name, headers]) => {
@@ -159,7 +159,9 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
         status,
         "Unpaid",
         "",
-        ts
+        ts,
+        "", // CheckedBy
+        ""  // ApprovedBy
       ]);
     });
 
@@ -400,4 +402,73 @@ function processRowPayments(rowNums, userId) {
   });
 
   return { success: true };
+}
+
+// Returns all data needed to render a printable claim report.
+// Includes line items, header info, and Prepared/Checked/Approved by details.
+function getClaimReport(refNo) {
+  refNo = sanitize(refNo);
+  if (!refNo) return null;
+
+  const tz        = Session.getScriptTimeZone();
+  const claimData = getSheet("App_Claims").getDataRange().getValues();
+  const userData  = getSheet("App_Users").getDataRange().getValues();
+
+  // Build userId → fullName lookup
+  const userMap = {};
+  for (let i = 1; i < userData.length; i++) {
+    userMap[userData[i][0].toString()] = userData[i][2].toString();
+  }
+
+  const items = [];
+  let userId = "", recipient = "", submittedDate = "", checkedBy = "", approvedBy = "";
+  let total = 0;
+
+  for (let i = 1; i < claimData.length; i++) {
+    if (claimData[i][0].toString() !== refNo) continue;
+    if (claimData[i][6].toString().toUpperCase() === LEGACY_PLACEHOLDER) continue;
+
+    // Capture header fields from the first matching row
+    if (!userId) {
+      userId     = claimData[i][1].toString();
+      recipient  = claimData[i][2].toString();
+      checkedBy  = (claimData[i][13] || "").toString().trim();
+      approvedBy = (claimData[i][14] || "").toString().trim();
+      try {
+        submittedDate = Utilities.formatDate(new Date(claimData[i][12]), tz, "dd MMM yyyy");
+      } catch (_) {}
+    }
+
+    const rawDate = claimData[i][3];
+    let dateStr = "";
+    if (rawDate) {
+      try { dateStr = Utilities.formatDate(new Date(rawDate), tz, "dd MMM yyyy"); } catch (_) {}
+    }
+
+    const amount = parseFloat(claimData[i][7]) || 0;
+    total += amount;
+
+    items.push({
+      date:        dateStr,
+      type:        claimData[i][4].toString(),
+      invNo:       claimData[i][5].toString(),
+      description: claimData[i][6].toString(),
+      amount:      amount,
+      payStatus:   (claimData[i][10] || "").toString().trim()
+    });
+  }
+
+  if (!userId) return null;
+
+  return {
+    refNo,
+    recipient,
+    submittedDate,
+    total,
+    items,
+    preparedBy:   userMap[userId] || userId,
+    preparedById: userId,
+    checkedBy,
+    approvedBy
+  };
 }
