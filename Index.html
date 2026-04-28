@@ -689,6 +689,15 @@
             <i class="bi bi-arrow-clockwise me-1"></i>Refresh
           </button>
         </div>
+        <!-- Search bar -->
+        <div style="padding:.65rem 1.25rem;border-bottom:1px solid var(--border);background:#fafbfc">
+          <div style="position:relative;max-width:360px">
+            <i class="bi bi-search" style="position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:.85rem;pointer-events:none"></i>
+            <input id="historySearch" type="text" class="form-control" placeholder="Search by ref no, recipient, status…"
+                   style="padding-left:2.1rem;font-size:13px"
+                   oninput="filterHistory()">
+          </div>
+        </div>
         <div id="historyLoader" class="hidden" style="padding:2rem;text-align:center;color:var(--text-muted)">
           <span class="spinner-sm"></span> Loading claims…
         </div>
@@ -696,6 +705,9 @@
           <table class="app-table">
             <thead>
               <tr>
+                <th style="width:40px">
+                  <input type="checkbox" id="histCheckAll" class="form-check-input" onclick="toggleAllHist(this)" aria-label="Select all claims">
+                </th>
                 <th>Ref No</th>
                 <th>Recipient</th>
                 <th>Date</th>
@@ -709,6 +721,13 @@
             </thead>
             <tbody id="historyBody"></tbody>
           </table>
+        </div>
+        <!-- Pay-selected footer (hidden until at least one checkbox ticked) -->
+        <div id="histPayFooter" class="hidden" style="padding:.85rem 1.25rem;background:#f8fafc;border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:flex;align-items:center;gap:.75rem">
+          <span id="histSelCount" style="font-size:13px;color:var(--text-secondary)"></span>
+          <button id="histPayBtn" class="btn btn-success px-4" onclick="payHistorySelected()">
+            <i class="bi bi-check2-circle me-1"></i>Pay Selected
+          </button>
         </div>
       </div>
     </div>
@@ -740,7 +759,7 @@
               <thead>
                 <tr>
                   <th style="width:40px">
-                    <input type="checkbox" id="checkAll" class="form-check-input" onclick="toggleAllPay(this)">
+                    <input type="checkbox" id="checkAll" class="form-check-input" onclick="toggleAllPay(this)" aria-label="Select all pending claims">
                   </th>
                   <th>Ref No</th>
                   <th>Recipient</th>
@@ -827,6 +846,7 @@
 // ── state ──────────────────────────────────────────────────────────────────
 let currentUser = null;
 let editingRef  = null;
+let historyData = [];   // cache for live-search filtering
 
 // ── toast ──────────────────────────────────────────────────────────────────
 function toast(msg, isError = false) {
@@ -1044,73 +1064,151 @@ function loadHistory() {
   const body   = document.getElementById("historyBody");
   loader.classList.remove("hidden");
   body.innerHTML = "";
+  document.getElementById("historySearch").value = "";
+  document.getElementById("histPayFooter").classList.add("hidden");
 
   google.script.run
     .withSuccessHandler(data => {
       loader.classList.add("hidden");
-      if (!data.length) {
-        body.innerHTML = `<tr><td colspan="9">
-          <div class="empty-state">
-            <i class="bi bi-inbox"></i>
-            <p>No claims found. Start a new draft from the Claim Form tab.</p>
-          </div></td></tr>`;
-        return;
-      }
-      const frag = document.createDocumentFragment();
-      data.forEach(r => {
-        const tr          = document.createElement("tr");
-        const rec         = esc(r.recipient || "");
-        const initials    = getInitials(r.recipient);
-        const shortName   = esc(r.recipient.split(" ").filter(Boolean).pop() || r.recipient);
-        const formattedDate = formatDate(r.date);
-        const amountPaid  = r.payStatus === "Paid" ? r.total : 0;
-        const balance     = r.total - amountPaid;
-
-        // Ref No cell: clickable pill for Submitted/Paid claims
-        const refCell = document.createElement("td");
-        const refBtn  = document.createElement("button");
-        refBtn.className = "ref-pill ref-pill-btn";
-        refBtn.textContent = r.refNo;
-        refBtn.title = "Click to view details";
-        refBtn.onclick = () => openClaimDetail(r.refNo, { total: r.total, amountPaid, balance });
-        refCell.appendChild(refBtn);
-
-        tr.appendChild(refCell);
-        tr.insertAdjacentHTML("beforeend", `
-          <td>
-            <div class="recipient-tag">
-              <span class="initials">${initials}</span>
-              <span title="${rec}">${shortName}</span>
-            </div>
-          </td>
-          <td style="color:var(--text-secondary);font-size:.82rem">${formattedDate}</td>
-          <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
-          <td style="font-weight:600;color:var(--success)">RM ${amountPaid.toFixed(2)}</td>
-          <td style="font-weight:600;color:${balance > 0 ? "var(--danger)" : "var(--success)"}">RM ${balance.toFixed(2)}</td>
-          <td><span class="badge-status badge-${esc(r.status)}">${esc(r.status)}</span></td>
-          <td><span class="badge-status badge-${esc(r.payStatus)}">${esc(r.payStatus)}</span></td>
-          <td></td>`);
-
-        const actionCell = tr.lastElementChild;
-        if (r.status === "Draft") {
-          const btn = document.createElement("button");
-          btn.className = "btn btn-sm";
-          btn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
-          btn.innerHTML = '<i class="bi bi-pencil me-1"></i>Edit';
-          btn.onclick = () => editDraft(r.refNo, r.recipient);
-          actionCell.appendChild(btn);
-        } else {
-          actionCell.innerHTML = `<span style="color:var(--text-muted);font-size:.8rem">—</span>`;
-        }
-        frag.appendChild(tr);
-      });
-      body.appendChild(frag);
+      historyData = data;
+      renderHistory(data);
     })
     .withFailureHandler(() => {
       loader.classList.add("hidden");
       toast("Failed to load history.", true);
     })
     .getUserClaims(currentUser.userId);
+}
+
+function filterHistory() {
+  const q = document.getElementById("historySearch").value.trim().toLowerCase();
+  if (!q) { renderHistory(historyData); return; }
+  const filtered = historyData.filter(r =>
+    r.refNo.toLowerCase().includes(q)      ||
+    (r.recipient || "").toLowerCase().includes(q) ||
+    (r.status    || "").toLowerCase().includes(q) ||
+    (r.payStatus || "").toLowerCase().includes(q)
+  );
+  renderHistory(filtered);
+}
+
+function renderHistory(data) {
+  const body = document.getElementById("historyBody");
+  body.innerHTML = "";
+  document.getElementById("histCheckAll").checked = false;
+  document.getElementById("histPayFooter").classList.add("hidden");
+
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="10">
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No claims found. Start a new draft from the Claim Form tab.</p>
+      </div></td></tr>`;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  data.forEach(r => {
+    const tr            = document.createElement("tr");
+    const rec           = esc(r.recipient || "");
+    const initials      = getInitials(r.recipient);
+    const shortName     = esc(r.recipient.split(" ").filter(Boolean).pop() || r.recipient);
+    const formattedDate = formatDate(r.date);
+    const amountPaid    = r.payStatus === "Paid" ? r.total : 0;
+    const balance       = r.total - amountPaid;
+    const isPayable     = r.status === "Submitted" && r.payStatus === "Unpaid";
+
+    // Checkbox cell (only enabled for payable rows)
+    const chkCell = document.createElement("td");
+    if (isPayable) {
+      const chk = document.createElement("input");
+      chk.type      = "checkbox";
+      chk.className = "form-check-input hist-chk";
+      chk.value     = r.refNo;
+      chk.setAttribute("aria-label", "Select claim " + r.refNo);
+      chk.onchange  = updateHistPayFooter;
+      chkCell.appendChild(chk);
+    }
+    tr.appendChild(chkCell);
+
+    // Clickable Ref No pill
+    const refCell = document.createElement("td");
+    const refBtn  = document.createElement("button");
+    refBtn.className   = "ref-pill ref-pill-btn";
+    refBtn.textContent = r.refNo;
+    refBtn.title       = "Click to view details";
+    refBtn.onclick     = () => openClaimDetail(r.refNo, { total: r.total, amountPaid, balance });
+    refCell.appendChild(refBtn);
+    tr.appendChild(refCell);
+
+    tr.insertAdjacentHTML("beforeend", `
+      <td>
+        <div class="recipient-tag">
+          <span class="initials">${initials}</span>
+          <span title="${rec}">${shortName}</span>
+        </div>
+      </td>
+      <td style="color:var(--text-secondary);font-size:.82rem">${formattedDate}</td>
+      <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
+      <td style="font-weight:600;color:var(--success)">RM ${amountPaid.toFixed(2)}</td>
+      <td style="font-weight:600;color:${balance > 0 ? "var(--danger)" : "var(--success)"}">RM ${balance.toFixed(2)}</td>
+      <td><span class="badge-status badge-${esc(r.status)}">${esc(r.status)}</span></td>
+      <td><span class="badge-status badge-${esc(r.payStatus)}">${esc(r.payStatus)}</span></td>
+      <td></td>`);
+
+    const actionCell = tr.lastElementChild;
+    if (r.status === "Draft") {
+      const btn = document.createElement("button");
+      btn.className    = "btn btn-sm";
+      btn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
+      btn.innerHTML    = '<i class="bi bi-pencil me-1"></i>Edit';
+      btn.onclick      = () => editDraft(r.refNo, r.recipient);
+      actionCell.appendChild(btn);
+    } else {
+      actionCell.innerHTML = `<span style="color:var(--text-muted);font-size:.8rem">—</span>`;
+    }
+    frag.appendChild(tr);
+  });
+  body.appendChild(frag);
+}
+
+function toggleAllHist(src) {
+  document.querySelectorAll(".hist-chk").forEach(c => c.checked = src.checked);
+  updateHistPayFooter();
+}
+
+function updateHistPayFooter() {
+  const sel     = document.querySelectorAll(".hist-chk:checked");
+  const footer  = document.getElementById("histPayFooter");
+  const countEl = document.getElementById("histSelCount");
+  if (sel.length) {
+    footer.classList.remove("hidden");
+    countEl.textContent = sel.length + " claim" + (sel.length > 1 ? "s" : "") + " selected";
+  } else {
+    footer.classList.add("hidden");
+  }
+  // Sync header checkbox state
+  const allChks = document.querySelectorAll(".hist-chk");
+  document.getElementById("histCheckAll").checked    = allChks.length > 0 && sel.length === allChks.length;
+  document.getElementById("histCheckAll").indeterminate = sel.length > 0 && sel.length < allChks.length;
+}
+
+function payHistorySelected() {
+  const sel = Array.from(document.querySelectorAll(".hist-chk:checked")).map(c => c.value);
+  if (!sel.length) { toast("Please select at least one claim to pay.", true); return; }
+
+  setBtn("histPayBtn", '<span class="spinner-sm"></span> Processing…', true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn("histPayBtn", '<i class="bi bi-check2-circle me-1"></i>Pay Selected', false);
+      toast(res.success ? "Payment recorded successfully." : "Update failed.", !res.success);
+      if (res.success) loadHistory();
+    })
+    .withFailureHandler(() => {
+      setBtn("histPayBtn", '<i class="bi bi-check2-circle me-1"></i>Pay Selected', false);
+      toast("Server error.", true);
+    })
+    .processPayments(sel, currentUser.userId);
 }
 
 function editDraft(ref, rec) {
