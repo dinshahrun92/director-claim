@@ -4,121 +4,1284 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>ClaimFlow — Director Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    body { background: #f4f6f9; font-size: 13px; }
+    /* ── Tokens ─────────────────────────────────────────────────────────── */
+    :root {
+      --ink:          #0d1117;
+      --ink-2:        #3d4654;
+      --ink-3:        #8b93a1;
+      --ink-4:        #bcc2cc;
+      --surface:      #ffffff;
+      --surface-2:    #f7f8fa;
+      --surface-3:    #edf0f4;
+      --border:       #e4e8ef;
+      --border-2:     #d0d6e0;
+
+      --brand:        #2563eb;
+      --brand-dark:   #1a4fc4;
+      --brand-light:  #eff4ff;
+      --brand-mid:    #dbe8ff;
+
+      --emerald:      #059669;
+      --emerald-bg:   #ecfdf5;
+      --amber:        #d97706;
+      --amber-bg:     #fffbeb;
+      --rose:         #e11d48;
+      --rose-bg:      #fff1f2;
+      --violet:       #7c3aed;
+      --violet-bg:    #f5f3ff;
+      --sky:          #0284c7;
+      --sky-bg:       #f0f9ff;
+
+      --nav-h:        60px;
+      --sidebar-w:    220px;
+      --radius-xs:    4px;
+      --radius-sm:    8px;
+      --radius:       12px;
+      --radius-lg:    18px;
+      --radius-xl:    24px;
+      --shadow-xs:    0 1px 2px rgba(0,0,0,.05);
+      --shadow-sm:    0 2px 8px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04);
+      --shadow:       0 4px 20px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+      --shadow-lg:    0 12px 40px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04);
+      --shadow-panel: -4px 0 48px rgba(0,0,0,.14);
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--surface-2);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100%;
+      -webkit-font-smoothing: antialiased;
+    }
     .hidden { display: none !important; }
-    .card  { border: none; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
-    .status-Draft     { background:#fff3cd; color:#856404; padding:3px 8px; border-radius:10px; font-weight:600; white-space:nowrap; }
-    .status-Submitted { background:#d1ecf1; color:#0c5460; padding:3px 8px; border-radius:10px; font-weight:600; white-space:nowrap; }
-    .table-input { border:1px solid #ddd; padding:4px 6px; border-radius:4px; width:100%; box-sizing:border-box; }
-    .nav-pills .nav-link.active { background-color:#0d6efd; }
-    #toast-container { position:fixed; bottom:1.5rem; right:1.5rem; z-index:9999; display:flex; flex-direction:column; gap:.5rem; }
-    .toast-msg { padding:.6rem 1rem; border-radius:8px; color:#fff; font-size:13px; min-width:220px;
-                 animation: fadeup .25s ease; }
-    .toast-ok  { background:#198754; }
-    .toast-err { background:#dc3545; }
-    @keyframes fadeup { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; }
+
+    /* ── Scrollbar ───────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 99px; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       AUTH
+    ════════════════════════════════════════════════════════════════════ */
+    #authView {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      background: var(--ink);
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(37,99,235,.35) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 40% at 80% 100%, rgba(124,58,237,.2) 0%, transparent 60%);
+      position: relative;
+      overflow: hidden;
+    }
+    #authView::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: .5;
+    }
+
+    .auth-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      animation: fadeUp .45s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .auth-logo-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px; height: 52px;
+      background: var(--brand);
+      border-radius: 14px;
+      font-size: 1.4rem;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(37,99,235,.45);
+      margin-bottom: .75rem;
+    }
+    .auth-logo h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -.02em;
+    }
+    .auth-logo p {
+      font-size: .82rem;
+      color: rgba(255,255,255,.45);
+      margin-top: .2rem;
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .auth-card-body { padding: 2rem; }
+    .auth-card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: .25rem;
+      letter-spacing: -.01em;
+    }
+    .auth-card-sub {
+      font-size: .82rem;
+      color: var(--ink-3);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Form elements ───────────────────────────────────────────────────── */
+    .field { margin-bottom: 1rem; }
+    .field-label {
+      display: block;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--ink-2);
+      letter-spacing: .02em;
+      margin-bottom: .4rem;
+    }
+    .field-input-wrap { position: relative; }
+    .field-icon {
+      position: absolute;
+      left: .85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-4);
+      font-size: .95rem;
+      pointer-events: none;
+      transition: color .18s;
+    }
+    .field-input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .62rem .9rem .62rem 2.4rem;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--ink);
+      background: var(--surface);
+      transition: border-color .18s, box-shadow .18s;
+      outline: none;
+      appearance: none;
+    }
+    .field-input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+    .field-input:focus ~ .field-icon { color: var(--brand); }
+    .field-input::placeholder { color: var(--ink-4); }
+
+    .field-input-wrap .field-icon { pointer-events: none; }
+    .field-input:focus + .field-icon { color: var(--brand); }
+
+    /* fix: icon before input in DOM */
+    .field-input-wrap {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+    .field-input-wrap .field-icon { order: 2; position: absolute; left: .85rem; }
+    .field-input-wrap .field-input { order: 1; }
+
+    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+      padding: .62rem 1.1rem;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      border: 1.5px solid transparent;
+      transition: all .18s;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: .6; pointer-events: none; }
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(37,99,235,.3);
+    }
+    .btn-primary:hover { background: var(--brand-dark); box-shadow: 0 4px 14px rgba(37,99,235,.4); transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink-2);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface-2); border-color: var(--border-2); }
+    .btn-danger-ghost {
+      background: var(--rose-bg);
+      color: var(--rose);
+      border-color: transparent;
+    }
+    .btn-danger-ghost:hover { background: #ffe0e7; }
+    .btn-success-ghost {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border-color: transparent;
+    }
+    .btn-success-ghost:hover { background: #d1fae5; }
+    .btn-amber-ghost {
+      background: var(--amber-bg);
+      color: var(--amber);
+      border-color: transparent;
+    }
+    .btn-amber-ghost:hover { background: #fef3c7; }
+    .btn-sm { padding: .38rem .75rem; font-size: 13px; }
+    .btn-xs { padding: .25rem .55rem; font-size: 12px; border-radius: 6px; }
+    .btn-icon-sq {
+      width: 32px; height: 32px; padding: 0;
+      border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .btn-full { width: 100%; }
+    .btn-link {
+      background: none; border: none; padding: 0;
+      color: var(--brand); font-size: 13.5px; font-weight: 500;
+      text-decoration: none;
+    }
+    .btn-link:hover { text-decoration: underline; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       APP SHELL
+    ════════════════════════════════════════════════════════════════════ */
+    #mainView { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── Top nav ─────────────────────────────────────────────────────────── */
+    #topBar {
+      height: var(--nav-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      position: sticky; top: 0; z-index: 200;
+      box-shadow: var(--shadow-xs);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: .65rem;
+      flex-shrink: 0;
+    }
+    .nav-brand-mark {
+      width: 32px; height: 32px;
+      background: var(--brand);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .9rem;
+    }
+    .nav-brand-name {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -.02em;
+    }
+    .nav-brand-name span {
+      color: var(--brand);
+    }
+    .nav-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    /* Tab nav in top bar */
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: .15rem;
+      flex: 1;
+    }
+    .nav-tab {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .45rem .85rem;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px; font-weight: 500;
+      color: var(--ink-3);
+      background: transparent; border: none;
+      transition: all .15s;
+      position: relative;
+    }
+    .nav-tab i { font-size: .95rem; }
+    .nav-tab:hover { color: var(--ink); background: var(--surface-2); }
+    .nav-tab.active {
+      color: var(--brand);
+      background: var(--brand-light);
+      font-weight: 600;
+    }
+    .nav-tab .tab-badge {
+      font-size: 10px; font-weight: 700;
+      background: var(--brand);
+      color: #fff;
+      border-radius: 99px;
+      padding: 1px 6px;
+      line-height: 1.5;
+    }
+
+    /* Right side of topbar */
+    .nav-right {
+      display: flex; align-items: center; gap: .75rem;
+      margin-left: auto;
+    }
+    .user-chip {
+      display: flex; align-items: center; gap: .55rem;
+      padding: .3rem .65rem .3rem .35rem;
+      border-radius: 99px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+    .user-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), #7c3aed);
+      color: #fff;
+      font-size: .7rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .user-name {
+      font-size: .82rem; font-weight: 600;
+      color: var(--ink-2);
+      max-width: 130px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ── Content ─────────────────────────────────────────────────────────── */
+    #contentArea {
+      flex: 1;
+      padding: 1.75rem 1.5rem;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; animation: fadeUp .25s ease both; }
+
+    /* ── Section header ──────────────────────────────────────────────────── */
+    .section-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .section-header h2 {
+      font-size: 1.05rem; font-weight: 700; color: var(--ink); letter-spacing: -.01em;
+    }
+    .section-header p { font-size: .82rem; color: var(--ink-3); margin-top: .15rem; }
+
+    /* ── Cards ───────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: .75rem;
+      background: var(--surface);
+    }
+    .card-icon {
+      width: 34px; height: 34px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .95rem;
+      flex-shrink: 0;
+    }
+    .card-icon-blue   { background: var(--brand-light);  color: var(--brand); }
+    .card-icon-green  { background: var(--emerald-bg);   color: var(--emerald); }
+    .card-icon-violet { background: var(--violet-bg);    color: var(--violet); }
+    .card-icon-amber  { background: var(--amber-bg);     color: var(--amber); }
+    .card-icon-sky    { background: var(--sky-bg);       color: var(--sky); }
+    .card-header h3 {
+      font-size: .9rem; font-weight: 700; color: var(--ink);
+      letter-spacing: -.01em; flex: 1;
+    }
+    .card-body { padding: 1.25rem; }
+
+    /* ── Selection step / Hero ───────────────────────────────────────────── */
+    .hero-panel {
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .hero-icon-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px; height: 72px;
+      border-radius: 20px;
+      background: var(--brand-light);
+      color: var(--brand);
+      font-size: 1.8rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 8px 28px rgba(37,99,235,.15);
+    }
+    .hero-panel h2 {
+      font-size: 1.2rem; font-weight: 700; color: var(--ink);
+      letter-spacing: -.02em; margin-bottom: .5rem;
+    }
+    .hero-panel p { font-size: .875rem; color: var(--ink-3); margin-bottom: 2rem; max-width: 380px; margin-left: auto; margin-right: auto; }
+
+    .recipient-grid {
+      display: grid;
+      gap: .75rem;
+      max-width: 460px;
+      margin: 0 auto 1.5rem;
+    }
+    .recipient-option {
+      display: flex; align-items: center; gap: .9rem;
+      padding: .85rem 1rem;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: all .18s;
+      text-align: left;
+      background: var(--surface);
+    }
+    .recipient-option:hover {
+      border-color: var(--brand);
+      background: var(--brand-light);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+    }
+    .recipient-option.selected {
+      border-color: var(--brand);
+      background: var(--brand-light);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+    .recipient-option .r-avatar {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--brand), #7c3aed);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .recipient-option .r-name {
+      font-size: .88rem; font-weight: 600; color: var(--ink);
+    }
+    .recipient-option .r-title {
+      font-size: .75rem; color: var(--ink-3); margin-top: .05rem;
+    }
+    .recipient-option .r-check {
+      margin-left: auto;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border-2);
+      display: flex; align-items: center; justify-content: center;
+      color: transparent; font-size: .7rem;
+      transition: all .18s;
+      flex-shrink: 0;
+    }
+    .recipient-option.selected .r-check {
+      background: var(--brand); border-color: var(--brand);
+      color: #fff;
+    }
+
+    /* Hidden select (kept for backend compatibility) */
+    #recipientSelect { display: none; }
+
+    /* ── Entry table ─────────────────────────────────────────────────────── */
+    .entry-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .entry-header-left { flex: 1; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+    .ref-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .25rem .65rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--ink-2);
+    }
+    .ref-badge i { color: var(--ink-4); font-size: .75rem; }
+    .recipient-display {
+      font-size: .82rem;
+      color: var(--ink-3);
+    }
+    .recipient-display strong { color: var(--ink-2); font-weight: 600; }
+
+    .total-pill {
+      display: flex; flex-direction: column; align-items: flex-end;
+      background: linear-gradient(135deg, #1e3a5f 0%, var(--brand) 100%);
+      border-radius: var(--radius-sm);
+      padding: .5rem .9rem;
+      color: #fff;
+    }
+    .total-pill .tp-label { font-size: .65rem; opacity: .7; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .total-pill .tp-amount { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+
+    .table-wrap { overflow-x: auto; }
+    .entry-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .entry-table thead tr {
+      background: var(--surface-2);
+      border-bottom: 1.5px solid var(--border);
+    }
+    .entry-table thead th {
+      padding: .6rem .85rem;
+      font-size: .72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--ink-3);
+      white-space: nowrap;
+      text-align: left;
+    }
+    .entry-table tbody td {
+      padding: .35rem .45rem;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--surface-3);
+    }
+    .entry-table tbody tr:last-child td { border-bottom: none; }
+    .entry-table tbody tr:hover td { background: var(--surface-2); }
+
+    .t-input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      padding: .42rem .65rem;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--ink);
+      background: var(--surface);
+      transition: border-color .18s, box-shadow .18s;
+      outline: none;
+      appearance: none;
+    }
+    .t-input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(37,99,235,.1);
+    }
+    .t-input::placeholder { color: var(--ink-4); }
+    .t-input[type="number"] { font-family: 'DM Mono', monospace; font-size: 13px; }
+    select.t-input { cursor: pointer; }
+
+    .entry-footer {
+      padding: 1rem 1.25rem;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: .65rem;
+    }
+    .add-row-btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .4rem .85rem;
+      border-radius: 7px;
+      border: 1.5px dashed var(--border-2);
+      background: transparent;
+      color: var(--ink-3);
+      font-size: 13px; font-weight: 500;
+      font-family: inherit;
+      transition: all .18s;
+    }
+    .add-row-btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: var(--brand-light);
+    }
+
+    /* ── Data table ──────────────────────────────────────────────────────── */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table thead tr {
+      background: var(--surface-2);
+      border-bottom: 1.5px solid var(--border);
+    }
+    .data-table thead th {
+      padding: .65rem 1rem;
+      font-size: .72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--ink-3);
+      white-space: nowrap; text-align: left;
+    }
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--surface-3);
+      transition: background .12s;
+    }
+    .data-table tbody tr:last-child { border-bottom: none; }
+    .data-table tbody tr:hover { background: var(--surface-2); }
+    .data-table tbody td {
+      padding: .8rem 1rem;
+      vertical-align: middle;
+    }
+    .data-table .col-mono {
+      font-family: 'DM Mono', monospace;
+      font-size: .8rem;
+      letter-spacing: .01em;
+    }
+
+    /* ── Ref pill (clickable) ────────────────────────────────────────────── */
+    .ref-chip {
+      display: inline-flex; align-items: center; gap: .35rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .28rem .65rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem; font-weight: 500;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .ref-chip i { font-size: .7rem; color: var(--ink-4); transition: color .15s; }
+    .ref-chip:hover {
+      background: var(--brand-light);
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+    .ref-chip:hover i { color: var(--brand); }
+
+    /* ── Status badges ───────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .28rem .65rem;
+      border-radius: 99px;
+      font-size: .72rem; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge::before {
+      content: ''; width: 5px; height: 5px;
+      border-radius: 50%; background: currentColor;
+    }
+    .badge-draft     { background: var(--amber-bg);    color: var(--amber); }
+    .badge-submitted { background: var(--brand-mid);   color: var(--brand-dark); }
+    .badge-paid      { background: var(--emerald-bg);  color: var(--emerald); }
+    .badge-unpaid    { background: var(--rose-bg);     color: var(--rose); }
+    .badge-partial   { background: #fff7ed;             color: #c2410c; }
+
+    /* ── Recipient tag ───────────────────────────────────────────────────── */
+    .rec-tag {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-size: .82rem; color: var(--ink-2);
+    }
+    .rec-tag .rec-avatar {
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--brand), #7c3aed);
+      color: #fff;
+      font-size: .65rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Spinner ─────────────────────────────────────────────────────────── */
+    .spin {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: rot .65s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* ── Search ──────────────────────────────────────────────────────────── */
+    .search-wrap {
+      padding: .75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .search-inner {
+      position: relative;
+      max-width: 340px;
+    }
+    .search-inner i {
+      position: absolute; left: .75rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-4); font-size: .85rem; pointer-events: none;
+    }
+    .search-inner input {
+      width: 100%;
+      padding: .5rem .85rem .5rem 2.2rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px; font-family: inherit;
+      color: var(--ink); background: var(--surface-2);
+      outline: none;
+      transition: border-color .18s, background .18s;
+    }
+    .search-inner input:focus {
+      border-color: var(--brand);
+      background: var(--surface);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    }
+    .search-inner input::placeholder { color: var(--ink-4); }
+
+    /* ── Empty state ─────────────────────────────────────────────────────── */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 4rem 1rem;
+      text-align: center;
+    }
+    .empty-state .es-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: var(--surface-3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; color: var(--ink-4);
+      margin-bottom: 1rem;
+    }
+    .empty-state h4 { font-size: .9rem; font-weight: 600; color: var(--ink-2); margin-bottom: .35rem; }
+    .empty-state p { font-size: .82rem; color: var(--ink-3); max-width: 280px; }
+
+    /* ── Toast ───────────────────────────────────────────────────────────── */
+    #toast-container {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      z-index: 9999;
+      display: flex; flex-direction: column; gap: .5rem;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .7rem 1rem;
+      border-radius: var(--radius-sm);
+      background: var(--ink);
+      color: #fff;
+      font-size: 13.5px; font-weight: 500;
+      min-width: 240px; max-width: 340px;
+      box-shadow: var(--shadow-lg);
+      animation: toast-in .22s cubic-bezier(.4,0,.2,1) both;
+      pointer-events: auto;
+    }
+    .toast i { font-size: 1rem; flex-shrink: 0; }
+    .toast-ok  i { color: #4ade80; }
+    .toast-err i { color: #f87171; }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(6px) scale(.97); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+       SIDE PANEL
+    ════════════════════════════════════════════════════════════════════ */
+    #sidePanelOverlay {
+      position: fixed; inset: 0;
+      background: rgba(13,17,23,.5);
+      backdrop-filter: blur(2px);
+      z-index: 1040;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    #sidePanelOverlay.open { opacity: 1; pointer-events: auto; }
+
+    #sidePanel {
+      position: fixed; top: 0; right: 0;
+      width: 68vw; min-width: 580px; max-width: 960px;
+      height: 100%;
+      background: var(--surface);
+      box-shadow: var(--shadow-panel);
+      z-index: 1050;
+      display: flex; flex-direction: column;
+      transform: translateX(105%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    #sidePanel.open { transform: translateX(0); }
+
+    .panel-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .panel-hdr-left { display: flex; align-items: center; gap: .75rem; }
+    .panel-hdr-icon {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      background: var(--brand-light);
+      color: var(--brand);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .panel-hdr h4 {
+      font-size: .92rem; font-weight: 700; color: var(--ink); letter-spacing: -.01em;
+    }
+    .panel-hdr .panel-sub { font-size: .75rem; color: var(--ink-3); margin-top: .08rem; }
+    .panel-close {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--ink-3); font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .panel-close:hover { background: var(--rose-bg); border-color: var(--rose); color: var(--rose); }
+
+    .panel-body { flex: 1; overflow-y: auto; }
+
+    .panel-footer {
+      border-top: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      background: var(--surface-2);
+      flex-shrink: 0;
+    }
+    .panel-totals {
+      display: flex; gap: 1rem; justify-content: flex-end;
+      margin-bottom: .85rem;
+    }
+    .panel-total-item {
+      text-align: right;
+    }
+    .panel-total-item .pt-label { font-size: .7rem; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+    .panel-total-item .pt-val { font-size: 1rem; font-weight: 700; color: var(--ink); }
+    .panel-sel-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: .75rem;
+      padding: .5rem .75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .panel-sel-row .sel-label { font-size: .82rem; color: var(--ink-3); }
+    .panel-sel-row .sel-amount { font-size: .9rem; font-weight: 700; color: var(--brand); }
+
+    /* ── Panel table ─────────────────────────────────────────────────────── */
+    .panel-table { width: 100%; border-collapse: collapse; }
+    .panel-table thead tr {
+      background: var(--surface-2);
+      border-bottom: 1.5px solid var(--border);
+    }
+    .panel-table thead th {
+      padding: .6rem 1rem;
+      font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--ink-3); text-align: left; white-space: nowrap;
+    }
+    .panel-table thead th:first-child { width: 44px; text-align: center; }
+    .panel-table tbody tr {
+      border-bottom: 1px solid var(--surface-3);
+      transition: background .12s;
+    }
+    .panel-table tbody tr:last-child { border-bottom: none; }
+    .panel-table tbody td {
+      padding: .75rem 1rem;
+      vertical-align: middle;
+    }
+    .panel-table tbody td:first-child { text-align: center; }
+    .panel-table tr.submitted-row { background: #f0fdf4; }
+    .panel-table tr.submitted-row td { opacity: .8; }
+
+    /* ── Checkbox ────────────────────────────────────────────────────────── */
+    .chk {
+      width: 16px; height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-2);
+      cursor: pointer;
+      accent-color: var(--brand);
+    }
+
+    /* ════════════════════════════════════════════════════════════════════
+       PRINT / REPORT
+    ════════════════════════════════════════════════════════════════════ */
+    #reportView { display: none; }
+    @media print {
+      #toast-container, #authView, #mainView,
+      #sidePanelOverlay, #sidePanel { display: none !important; }
+      #reportView { display: block !important; }
+    }
+
+    .rpt-page {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      color: #0d1117;
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 2.5rem 3rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .rpt-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .rpt-brand { display: flex; align-items: center; gap: .75rem; }
+    .rpt-brand-mark {
+      width: 42px; height: 42px;
+      background: #2563eb; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: #fff;
+    }
+    .rpt-brand h1 { font-size: 1rem; font-weight: 700; color: #0d1117; }
+    .rpt-brand p  { font-size: .7rem; color: #8b93a1; margin: 0; text-transform: uppercase; letter-spacing: .06em; }
+    .rpt-stamp { text-align: right; font-size: .72rem; color: #8b93a1; }
+    .rpt-stamp strong { display: block; font-size: .78rem; color: #0d1117; margin-bottom: .1rem; }
+
+    .rpt-meta {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      margin-bottom: 1.5rem;
+      background: #f7f8fa;
+      border: 1px solid #e4e8ef;
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .rpt-meta-item .m-label {
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: #8b93a1; margin-bottom: .2rem;
+    }
+    .rpt-meta-item .m-val {
+      font-size: .875rem; font-weight: 600; color: #0d1117;
+    }
+
+    .rpt-table {
+      width: 100%; border-collapse: collapse; margin-bottom: 2rem; font-size: 11.5px;
+    }
+    .rpt-table thead tr { background: #0d1117; color: #fff; }
+    .rpt-table thead th {
+      padding: .55rem .75rem; font-weight: 600; font-size: .68rem;
+      text-transform: uppercase; letter-spacing: .05em; text-align: left;
+    }
+    .rpt-table tbody tr:nth-child(even) { background: #f7f8fa; }
+    .rpt-table tbody td {
+      padding: .5rem .75rem;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: middle;
+    }
+    .rpt-table tfoot tr { background: #eff4ff; border-top: 2px solid #2563eb; }
+    .rpt-table tfoot td { padding: .6rem .75rem; font-weight: 700; font-size: .875rem; }
+
+    .rpt-sigs {
+      display: flex; gap: 1rem; margin-top: .5rem;
+    }
+    .rpt-sig {
+      flex: 1;
+      border: 1px solid #e4e8ef;
+      border-radius: 8px;
+      padding: .85rem 1rem 1rem;
+      min-height: 110px;
+      display: flex; flex-direction: column;
+    }
+    .rpt-sig-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8b93a1; margin-bottom: .35rem; }
+    .rpt-sig-name  { font-size: .82rem; font-weight: 600; color: #0d1117; }
+    .rpt-sig-id    { font-size: .72rem; color: #8b93a1; margin-top: .08rem; }
+    .rpt-sig-line  { border-top: 1.5px solid #e4e8ef; margin-top: auto; padding-top: .35rem; }
+    .rpt-sig-cap   { font-size: .68rem; color: #bcc2cc; }
+
+    .rpt-footer {
+      margin-top: 2rem; font-size: .68rem; color: #bcc2cc;
+      text-align: center; border-top: 1px solid #e4e8ef; padding-top: .65rem;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 576px) {
+      #topBar { padding: 0 1rem; }
+      .nav-tab span { display: none; }
+      #contentArea { padding: 1rem .75rem; }
+      #sidePanel { width: 100vw; min-width: unset; }
+      .hero-panel { padding: 2rem 1rem; }
+    }
   </style>
 </head>
 <body>
 
-<!-- Toast container -->
 <div id="toast-container"></div>
 
-<!-- ── AUTH ── -->
-<div id="authView" class="container mt-5" style="max-width:400px">
-  <div id="loginBox" class="card p-4">
-    <h4 class="text-center mb-4 text-primary">Claim Portal Login</h4>
-    <input type="text"     id="lId"   class="form-control mb-2" placeholder="User ID"  autocomplete="username">
-    <input type="password" id="lPass" class="form-control mb-3" placeholder="Password" autocomplete="current-password">
-    <button id="loginBtn" class="btn btn-primary w-100" onclick="handleLogin()">Login</button>
-    <button class="btn btn-link w-100 btn-sm mt-2 text-decoration-none" onclick="toggleAuth(false)">New user? Register here</button>
-  </div>
-  <div id="regBox" class="card p-4 hidden">
-    <h4 class="text-center mb-4 text-success">Create Account</h4>
-    <input type="text"     id="rName" class="form-control mb-2" placeholder="Full Name">
-    <input type="text"     id="rId"   class="form-control mb-2" placeholder="User ID (min 3 chars)">
-    <input type="password" id="rPass" class="form-control mb-3" placeholder="Password (min 4 chars)">
-    <button id="regBtn" class="btn btn-success w-100" onclick="handleReg()">Register</button>
-    <button class="btn btn-link w-100 btn-sm mt-2 text-decoration-none" onclick="toggleAuth(true)">Back to Login</button>
-  </div>
-</div>
+<!-- ═══════════════════════════════════════════════════════════════════════
+     AUTH
+════════════════════════════════════════════════════════════════════════ -->
+<div id="authView">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo-mark"><i class="bi bi-clipboard2-check-fill"></i></div>
+      <h1>ClaimFlow</h1>
+      <p>Director Claim Management Portal</p>
+    </div>
 
-<!-- ── MAIN APP ── -->
-<div id="mainView" class="container py-4 hidden">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 id="userGreet" class="text-primary fw-bold mb-0"></h4>
-    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
-  </div>
+    <!-- LOGIN -->
+    <div id="loginBox" class="auth-card">
+      <div class="auth-card-body">
+        <div class="auth-card-title">Welcome back</div>
+        <div class="auth-card-sub">Sign in to manage your expense claims</div>
 
-  <ul class="nav nav-pills mb-4">
-    <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#claimTab"
-              id="claimTabBtn">Claim Form</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#historyTab"
-              onclick="loadHistory()">History / Drafts</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#paymentTab"
-              onclick="loadPaymentList()">Payment Tracking</button>
-    </li>
-  </ul>
+        <div class="field">
+          <label class="field-label">User ID</label>
+          <div class="field-input-wrap">
+            <input type="text" id="lId" class="field-input" placeholder="Enter your user ID" autocomplete="username">
+            <i class="bi bi-person field-icon"></i>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:1.5rem">
+          <label class="field-label">Password</label>
+          <div class="field-input-wrap">
+            <input type="password" id="lPass" class="field-input" placeholder="Enter your password" autocomplete="current-password">
+            <i class="bi bi-lock field-icon"></i>
+          </div>
+        </div>
 
-  <div class="tab-content">
-
-    <!-- FORM TAB -->
-    <div id="claimTab" class="tab-pane fade show active">
-
-      <div id="selectionStep" class="card p-5 text-center">
-        <h5 class="mb-4">To whom are you submitting this claim?</h5>
-        <select id="recipientSelect" class="form-select w-50 mx-auto mb-4">
-          <option>Datuk Wira Syamsul Azly Akbar</option>
-          <option>Datin Wira Ardiana Zanaria Abu Zubir</option>
-          <option>Datik Kalsom Aziz</option>
-        </select>
-        <button id="startBtn" class="btn btn-primary btn-lg px-5" onclick="startNewBatch()">
-          Start New Draft
+        <button id="loginBtn" class="btn btn-primary btn-full" onclick="handleLogin()">
+          <i class="bi bi-box-arrow-in-right"></i> Sign in
         </button>
-      </div>
 
-      <div id="entryStep" class="card p-4 hidden">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <h6 class="mb-0">Ref: <span id="activeRef" class="badge bg-dark"></span></h6>
-          <h5 class="text-primary fw-bold mb-0">Total: RM <span id="grandTotal">0.00</span></h5>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-bordered table-sm align-middle">
-            <thead>
-              <tr class="table-light">
-                <th>Date</th><th>Type</th><th>Inv No</th><th>Description</th><th>Amount (RM)</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="itemTableBody"></tbody>
-          </table>
-        </div>
-        <button class="btn btn-outline-secondary btn-sm mb-4" onclick="addRow()">+ Add Line Item</button>
-        <div class="d-flex gap-2 flex-wrap">
-          <button id="saveBtn" class="btn btn-warning fw-bold flex-fill" onclick="submitBatch(true)">Save Draft</button>
-          <button id="subBtn"  class="btn btn-primary fw-bold flex-fill" onclick="submitBatch(false)">Submit Final Claim</button>
-          <button class="btn btn-light" onclick="cancelEntry()">Close</button>
+        <div style="text-align:center;margin-top:1.25rem">
+          <span style="font-size:13px;color:var(--ink-3)">New here? </span>
+          <button class="btn-link" onclick="toggleAuth(false)">Create an account</button>
         </div>
       </div>
     </div>
 
-    <!-- HISTORY TAB -->
-    <div id="historyTab" class="tab-pane fade">
-      <div class="card p-3">
-        <div id="historyLoader" class="text-center p-3 hidden">
-          <div class="spinner-border text-primary"></div>
-          <p class="mt-2 mb-0 text-muted">Loading history…</p>
+    <!-- REGISTER -->
+    <div id="regBox" class="auth-card hidden">
+      <div class="auth-card-body">
+        <div class="auth-card-title">Create account</div>
+        <div class="auth-card-sub">Register to access the portal</div>
+
+        <div class="field">
+          <label class="field-label">Full Name</label>
+          <div class="field-input-wrap">
+            <input type="text" id="rName" class="field-input" placeholder="Your full name">
+            <i class="bi bi-person-badge field-icon"></i>
+          </div>
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover mt-2 mb-0">
+        <div class="field">
+          <label class="field-label">User ID <span style="color:var(--ink-4);font-weight:400;font-size:.72rem">(min 3 chars)</span></label>
+          <div class="field-input-wrap">
+            <input type="text" id="rId" class="field-input" placeholder="Choose a user ID">
+            <i class="bi bi-at field-icon"></i>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:1.5rem">
+          <label class="field-label">Password <span style="color:var(--ink-4);font-weight:400;font-size:.72rem">(min 4 chars)</span></label>
+          <div class="field-input-wrap">
+            <input type="password" id="rPass" class="field-input" placeholder="Choose a password">
+            <i class="bi bi-shield-lock field-icon"></i>
+          </div>
+        </div>
+
+        <button id="regBtn" class="btn btn-primary btn-full" onclick="handleReg()">
+          <i class="bi bi-person-check"></i> Create account
+        </button>
+
+        <div style="text-align:center;margin-top:1.25rem">
+          <button class="btn-link" onclick="toggleAuth(true)">
+            <i class="bi bi-arrow-left" style="font-size:.8rem"></i> Back to sign in
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════════════════════════════════════ -->
+<div id="mainView" class="hidden">
+
+  <!-- Top bar -->
+  <div id="topBar">
+    <div class="nav-brand">
+      <div class="nav-brand-mark"><i class="bi bi-clipboard2-check"></i></div>
+      <span class="nav-brand-name">Claim<span>Flow</span></span>
+    </div>
+    <div class="nav-divider"></div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" id="tab-claim" onclick="switchTab('claim')">
+        <i class="bi bi-pencil-square"></i>
+        <span>Claim Form</span>
+      </button>
+      <button class="nav-tab" id="tab-history" onclick="switchTab('history')">
+        <i class="bi bi-journal-text"></i>
+        <span>Claim Record</span>
+      </button>
+    </nav>
+    <div class="nav-right">
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <span class="user-name" id="userGreet"></span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="contentArea">
+
+    <!-- ── CLAIM FORM TAB ─────────────────────────────────────────── -->
+    <div id="pane-claim" class="tab-pane active">
+
+      <!-- Step 1: Recipient -->
+      <div id="selectionStep" class="card">
+        <div class="hero-panel">
+          <div class="hero-icon-wrap">
+            <i class="bi bi-send-plus-fill"></i>
+          </div>
+          <h2>Submit a New Claim</h2>
+          <p>Select the director to submit this claim to, then begin entering your line items.</p>
+
+          <div class="recipient-grid">
+            <div class="recipient-option selected" onclick="selectRecipient(this, 'Datuk Wira Syamsul Azly Akbar')">
+              <div class="r-avatar">DSA</div>
+              <div>
+                <div class="r-name">Datuk Wira Syamsul Azly Akbar</div>
+                <div class="r-title">Director</div>
+              </div>
+              <div class="r-check"><i class="bi bi-check2"></i></div>
+            </div>
+            <div class="recipient-option" onclick="selectRecipient(this, 'Datin Wira Ardiana Zanaria Abu Zubir')">
+              <div class="r-avatar" style="background:linear-gradient(135deg,#059669,#0284c7)">DWA</div>
+              <div>
+                <div class="r-name">Datin Wira Ardiana Zanaria Abu Zubir</div>
+                <div class="r-title">Director</div>
+              </div>
+              <div class="r-check"><i class="bi bi-check2"></i></div>
+            </div>
+            <div class="recipient-option" onclick="selectRecipient(this, 'Datik Kalsom Aziz')">
+              <div class="r-avatar" style="background:linear-gradient(135deg,#d97706,#e11d48)">DKA</div>
+              <div>
+                <div class="r-name">Datik Kalsom Aziz</div>
+                <div class="r-title">Director</div>
+              </div>
+              <div class="r-check"><i class="bi bi-check2"></i></div>
+            </div>
+          </div>
+
+          <!-- Hidden select for backend compatibility -->
+          <select id="recipientSelect">
+            <option>Datuk Wira Syamsul Azly Akbar</option>
+            <option>Datin Wira Ardiana Zanaria Abu Zubir</option>
+            <option>Datik Kalsom Aziz</option>
+          </select>
+
+          <button id="startBtn" class="btn btn-primary" style="min-width:220px;padding:.75rem 1.5rem" onclick="startNewBatch()">
+            <i class="bi bi-plus-circle"></i> Start New Draft
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Entry form -->
+      <div id="entryStep" class="hidden">
+        <div class="card">
+          <!-- Header -->
+          <div class="entry-header">
+            <div class="entry-header-left">
+              <div class="card-icon card-icon-blue"><i class="bi bi-file-earmark-text"></i></div>
+              <div>
+                <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+                  <span style="font-size:.9rem;font-weight:700;color:var(--ink)">Claim Entry</span>
+                  <span class="ref-badge"><i class="bi bi-hash"></i><span id="activeRef"></span></span>
+                </div>
+                <div class="recipient-display" style="margin-top:.15rem">
+                  Submitting to: <strong id="activeRecipient"></strong>
+                </div>
+              </div>
+            </div>
+            <div class="total-pill">
+              <span class="tp-label">Grand Total</span>
+              <span class="tp-amount">RM <span id="grandTotal">0.00</span></span>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="table-wrap">
+            <table class="entry-table">
+              <thead>
+                <tr>
+                  <th style="width:130px">Date</th>
+                  <th style="width:130px">Type</th>
+                  <th style="width:115px">Invoice No</th>
+                  <th>Description</th>
+                  <th style="width:110px">Pay Via</th>
+                  <th style="width:130px">Amount (RM)</th>
+                  <th style="width:44px"></th>
+                </tr>
+              </thead>
+              <tbody id="itemTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Footer actions -->
+          <div class="entry-footer">
+            <button class="add-row-btn" onclick="addRow()">
+              <i class="bi bi-plus-lg"></i> Add Line Item
+            </button>
+            <div style="margin-left:auto;display:flex;gap:.6rem;align-items:center">
+              <button id="saveBtn" class="btn btn-primary" onclick="submitBatch()">
+                <i class="bi bi-floppy"></i> Save as Draft
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon-sq" onclick="cancelEntry()" title="Discard">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CLAIM RECORD TAB ───────────────────────────────────── -->
+    <div id="pane-history" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon card-icon-violet"><i class="bi bi-journal-text"></i></div>
+          <h3>Claim Record</h3>
+          <button class="btn btn-ghost btn-sm ms-auto" onclick="loadHistory()" style="margin-left:auto">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+
+        <div class="search-wrap">
+          <div class="search-inner">
+            <i class="bi bi-search"></i>
+            <input id="historySearch" type="text" placeholder="Search ref, recipient, status…" oninput="filterHistory()">
+          </div>
+        </div>
+
+        <div id="historyLoader" class="hidden" style="padding:2rem;text-align:center;color:var(--ink-3)">
+          <span class="spin" style="margin-right:.5rem"></span> Loading claims…
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
             <thead>
-              <tr><th>Ref No</th><th>Recipient</th><th>Total</th><th>Status</th><th>Payment</th><th>Action</th></tr>
+              <tr>
+                <th>Ref No</th>
+                <th>Recipient</th>
+                <th>Date</th>
+                <th>Total (RM)</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Actions</th>
+              </tr>
             </thead>
             <tbody id="historyBody"></tbody>
           </table>
@@ -126,341 +1289,660 @@
       </div>
     </div>
 
-    <!-- PAYMENT TAB -->
-    <div id="paymentTab" class="tab-pane fade">
-      <div class="card p-3">
-        <div id="paymentLoader" class="text-center p-3 hidden">
-          <div class="spinner-border text-success"></div>
-          <p class="mt-2 mb-0 text-muted">Checking payments…</p>
+  </div><!-- /contentArea -->
+
+  <!-- Side Panel Overlay -->
+  <div id="sidePanelOverlay" onclick="closeDetailPanel()"></div>
+
+  <!-- Side Panel -->
+  <aside id="sidePanel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+    <div class="panel-hdr">
+      <div class="panel-hdr-left">
+        <div class="panel-hdr-icon"><i class="bi bi-receipt"></i></div>
+        <div>
+          <h4 id="panelTitle">Claim Details</h4>
+          <div id="panelRefLabel" class="panel-sub"></div>
         </div>
-        <h5 class="mb-3">Pending Payments</h5>
-        <div class="table-responsive">
-          <table class="table table-sm table-hover mb-0">
-            <thead>
-              <tr class="table-light">
-                <th><input type="checkbox" id="checkAll" onclick="toggleAllPay(this)"></th>
-                <th>Ref No</th><th>Recipient</th><th>Amount (RM)</th>
-              </tr>
-            </thead>
-            <tbody id="paymentBody"></tbody>
-          </table>
-        </div>
-        <button id="payBtn" class="btn btn-success mt-3 px-4 fw-bold" onclick="processPayment()">
-          Mark Selected as Paid
-        </button>
+      </div>
+      <button class="panel-close" onclick="closeDetailPanel()" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="panel-body">
+      <div id="panelLoader" style="padding:3rem;text-align:center;color:var(--ink-3)">
+        <span class="spin" style="margin-right:.5rem"></span> Loading claim details…
+      </div>
+      <div id="panelContent" class="hidden">
+        <table class="panel-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="chk" id="panelCheckAll" onchange="toggleAllPanelItems(this)" aria-label="Select all"></th>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Invoice No</th>
+              <th>Description</th>
+              <th>Pay Via</th>
+              <th style="text-align:right">Amount (RM)</th>
+            </tr>
+          </thead>
+          <tbody id="panelBody"></tbody>
+        </table>
       </div>
     </div>
 
-  </div>
-</div>
+    <div id="panelFooter" class="panel-footer hidden">
+      <div id="panelSummary" class="panel-totals"></div>
+      <div class="panel-sel-row">
+        <span id="panelSelCount" class="sel-label">0 items selected</span>
+        <span id="panelSelTotal" class="sel-amount">RM 0.00</span>
+      </div>
+      <div id="panelSubmitSection" class="hidden" style="margin-bottom:.6rem">
+        <button id="panelSubmitBtn" class="btn btn-primary btn-full" onclick="submitDraftFromPanel()">
+          <i class="bi bi-send"></i> Submit Selected Items
+        </button>
+      </div>
+      <button class="btn btn-success-ghost btn-sm btn-full" onclick="generateReport(panelCurrentRef)">
+        <i class="bi bi-printer"></i> Print / Generate Report
+      </button>
+    </div>
+  </aside>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div><!-- /mainView -->
+
+<!-- Printable report -->
+<div id="reportView"></div>
+
 <script>
-// ── state ──────────────────────────────────────────────────────────────────
-let currentUser = null;
-let editingRef  = null;
+// ── state ─────────────────────────────────────────────────────────────────
+let currentUser     = null;
+let editingRef      = null;
+let historyData     = [];
+let panelCurrentRef = null;
+let selectedRecipient = 'Datuk Wira Syamsul Azly Akbar';
 
-// ── toast ──────────────────────────────────────────────────────────────────
+// ── recipient selection ───────────────────────────────────────────────────
+function selectRecipient(el, name) {
+  document.querySelectorAll('.recipient-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRecipient = name;
+  // Sync the hidden select
+  const sel = document.getElementById('recipientSelect');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === name || sel.options[i].text === name) {
+      sel.selectedIndex = i; break;
+    }
+  }
+}
+
+// ── toast ─────────────────────────────────────────────────────────────────
 function toast(msg, isError = false) {
-  const el = document.createElement("div");
-  el.className = "toast-msg " + (isError ? "toast-err" : "toast-ok");
-  el.textContent = msg;
-  document.getElementById("toast-container").appendChild(el);
+  const el = document.createElement('div');
+  el.className = 'toast ' + (isError ? 'toast-err' : 'toast-ok');
+  el.innerHTML = `<i class="bi ${isError ? 'bi-x-circle' : 'bi-check-circle'}"></i><span>${esc(msg)}</span>`;
+  document.getElementById('toast-container').appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
 
-// ── auth helpers ───────────────────────────────────────────────────────────
+// ── tab management ────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'history') loadHistory();
+}
+
+// ── auth ──────────────────────────────────────────────────────────────────
 function toggleAuth(showLogin) {
-  document.getElementById("loginBox").classList.toggle("hidden", !showLogin);
-  document.getElementById("regBox").classList.toggle("hidden", showLogin);
+  document.getElementById('loginBox').classList.toggle('hidden', !showLogin);
+  document.getElementById('regBox').classList.toggle('hidden', showLogin);
 }
 
 function handleLogin() {
-  const id   = document.getElementById("lId").value.trim();
-  const pass = document.getElementById("lPass").value;
-  if (!id || !pass) { toast("Please enter ID and password.", true); return; }
-
-  setBtn("loginBtn", "Checking…", true);
+  const id   = document.getElementById('lId').value.trim();
+  const pass = document.getElementById('lPass').value;
+  if (!id || !pass) { toast('Please enter your User ID and password.', true); return; }
+  setBtn('loginBtn', '<span class="spin"></span> Signing in…', true);
   google.script.run
     .withSuccessHandler(res => {
-      setBtn("loginBtn", "Login", false);
+      setBtn('loginBtn', '<i class="bi bi-box-arrow-in-right"></i> Sign in', false);
       if (res.success) { currentUser = res; initApp(); }
       else toast(res.message, true);
     })
-    .withFailureHandler(err => { setBtn("loginBtn", "Login", false); toast("Server error.", true); })
+    .withFailureHandler(() => {
+      setBtn('loginBtn', '<i class="bi bi-box-arrow-in-right"></i> Sign in', false);
+      toast('Server error. Please try again.', true);
+    })
     .login(id, pass);
 }
 
 function handleReg() {
-  const name = document.getElementById("rName").value.trim();
-  const id   = document.getElementById("rId").value.trim();
-  const pass = document.getElementById("rPass").value;
-  if (!name || !id || !pass) { toast("All fields are required.", true); return; }
-
-  setBtn("regBtn", "Registering…", true);
+  const name = document.getElementById('rName').value.trim();
+  const id   = document.getElementById('rId').value.trim();
+  const pass = document.getElementById('rPass').value;
+  if (!name || !id || !pass) { toast('All fields are required.', true); return; }
+  setBtn('regBtn', '<span class="spin"></span> Registering…', true);
   google.script.run
     .withSuccessHandler(res => {
-      setBtn("regBtn", "Register", false);
+      setBtn('regBtn', '<i class="bi bi-person-check"></i> Create account', false);
       toast(res.message, !res.success);
       if (res.success) toggleAuth(true);
     })
-    .withFailureHandler(() => { setBtn("regBtn", "Register", false); toast("Server error.", true); })
+    .withFailureHandler(() => {
+      setBtn('regBtn', '<i class="bi bi-person-check"></i> Create account', false);
+      toast('Server error. Please try again.', true);
+    })
     .registerUser(id, pass, name);
 }
 
-function logout() { currentUser = null; location.reload(); }
-
-// ── init ───────────────────────────────────────────────────────────────────
-function initApp() {
-  document.getElementById("authView").classList.add("hidden");
-  document.getElementById("mainView").classList.remove("hidden");
-  document.getElementById("userGreet").textContent = "Hello, " + currentUser.name;
-  loadHistory();
+function logout() {
+  currentUser = null; editingRef = null;
+  closeDetailPanel();
+  document.getElementById('mainView').classList.add('hidden');
+  document.getElementById('authView').classList.remove('hidden');
+  document.getElementById('loginBox').classList.remove('hidden');
+  document.getElementById('regBox').classList.add('hidden');
+  document.getElementById('lId').value = '';
+  document.getElementById('lPass').value = '';
 }
 
-// ── claim form ─────────────────────────────────────────────────────────────
+// ── init ──────────────────────────────────────────────────────────────────
+function getInitials(name) {
+  return (name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+}
+
+function initApp() {
+  document.getElementById('authView').classList.add('hidden');
+  document.getElementById('mainView').classList.remove('hidden');
+  document.getElementById('userAvatar').textContent = getInitials(currentUser.name);
+  document.getElementById('userGreet').textContent  = currentUser.name;
+}
+
+// ── claim form ────────────────────────────────────────────────────────────
 function startNewBatch() {
-  setBtn("startBtn", "Generating Ref…", true);
+  setBtn('startBtn', '<span class="spin"></span> Generating…', true);
   google.script.run
     .withSuccessHandler(res => {
-      setBtn("startBtn", "Start New Draft", false);
+      setBtn('startBtn', '<i class="bi bi-plus-circle"></i> Start New Draft', false);
       if (!res.success) { toast(res.message, true); return; }
       editingRef = res.refNo;
-      openEntryStep(res.refNo);
+      openEntryStep(res.refNo, selectedRecipient);
       addRow();
     })
-    .withFailureHandler(() => { setBtn("startBtn", "Start New Draft", false); toast("Server error.", true); })
-    .createInitialDraft(currentUser.userId, document.getElementById("recipientSelect").value);
+    .withFailureHandler(() => {
+      setBtn('startBtn', '<i class="bi bi-plus-circle"></i> Start New Draft', false);
+      toast('Server error.', true);
+    })
+    .createInitialDraft(currentUser.userId, selectedRecipient);
 }
 
-function openEntryStep(refNo) {
-  document.getElementById("activeRef").textContent = refNo;
-  document.getElementById("itemTableBody").innerHTML = "";
-  document.getElementById("selectionStep").classList.add("hidden");
-  document.getElementById("entryStep").classList.remove("hidden");
+function openEntryStep(refNo, recipient) {
+  document.getElementById('activeRef').textContent = refNo;
+  document.getElementById('activeRecipient').textContent = recipient || '';
+  document.getElementById('itemTableBody').innerHTML = '';
+  document.getElementById('selectionStep').classList.add('hidden');
+  document.getElementById('entryStep').classList.remove('hidden');
 }
 
 function addRow(data = {}) {
-  const tr = document.createElement("tr");
-  tr.className = "item-row";
+  const tr = document.createElement('tr');
+  tr.className = 'item-row';
 
-  const types = ["Petrol","TnG","Refreshment","Medical","Others"];
-  const opts  = types.map(t =>
-    `<option${t === data.type ? " selected" : ""}>${esc(t)}</option>`
-  ).join("");
+  const types   = ['Petrol','TnG','Refreshment','Medical','Others'];
+  const typeOpts = types.map(t =>
+    `<option${t === data.type ? ' selected' : ''}>${esc(t)}</option>`
+  ).join('');
+
+  const payVias = ['Cash','MBB 1','MBB 2','CIMB','SC','UOB'];
+  const viaOpts = payVias.map(v =>
+    `<option${v === data.paymentVia ? ' selected' : ''}>${esc(v)}</option>`
+  ).join('');
 
   tr.innerHTML = `
-    <td><input type="date" class="table-input i-date" value="${esc(data.date || "")}"></td>
-    <td><select class="table-input i-type">${opts}</select></td>
-    <td><input type="text" class="table-input i-inv" value="${esc(data.invNo || "")}" placeholder="Inv #" maxlength="50"></td>
-    <td><input type="text" class="table-input i-desc" value="${esc(data.description || "")}" placeholder="Description" maxlength="200"></td>
-    <td><input type="number" class="table-input i-amt" min="0" step="0.01" oninput="calc()" value="${parseFloat(data.amount) || ""}"></td>
-    <td><button type="button" class="btn btn-sm text-danger fw-bold" onclick="this.closest('tr').remove();calc()">×</button></td>
-  `;
-  document.getElementById("itemTableBody").appendChild(tr);
+    <td><input type="date" class="t-input i-date" value="${esc(data.date || '')}"></td>
+    <td><select class="t-input i-type">${typeOpts}</select></td>
+    <td><input type="text" class="t-input i-inv" value="${esc(data.invNo || '')}" placeholder="INV-" maxlength="50" style="text-transform:uppercase;font-family:'DM Mono',monospace;font-size:12.5px"></td>
+    <td><input type="text" class="t-input i-desc" value="${esc(data.description || '')}" placeholder="Description" maxlength="200" style="text-transform:uppercase"></td>
+    <td><select class="t-input i-via">${viaOpts}</select></td>
+    <td>
+      <div style="display:flex;align-items:center;gap:5px">
+        <span style="font-size:12px;color:var(--ink-3);font-weight:600;font-family:'DM Mono',monospace">RM</span>
+        <input type="number" class="t-input i-amt" min="0" step="0.01" oninput="calc()"
+               value="${parseFloat(data.amount) || ''}" placeholder="0.00"
+               style="flex:1;font-family:'DM Mono',monospace">
+      </div>
+    </td>
+    <td>
+      <button type="button" class="btn btn-danger-ghost btn-icon-sq" onclick="this.closest('tr').remove();calc()">
+        <i class="bi bi-trash3"></i>
+      </button>
+    </td>`;
+  document.getElementById('itemTableBody').appendChild(tr);
   calc();
 }
 
 function calc() {
   let total = 0;
-  document.querySelectorAll(".i-amt").forEach(i => total += parseFloat(i.value) || 0);
-  document.getElementById("grandTotal").textContent = total.toFixed(2);
+  document.querySelectorAll('.i-amt').forEach(i => total += parseFloat(i.value) || 0);
+  document.getElementById('grandTotal').textContent = total.toFixed(2);
 }
 
-function submitBatch(isDraft) {
-  const rows = document.querySelectorAll(".item-row");
-  if (!rows.length) { toast("Add at least one line item.", true); return; }
-
-  const items = [];
-  let valid = true;
+function submitBatch() {
+  const rows = document.querySelectorAll('.item-row');
+  if (!rows.length) { toast('Add at least one line item before saving.', true); return; }
+  const items = []; let valid = true;
   rows.forEach(r => {
-    const amount = parseFloat(r.querySelector(".i-amt").value);
-    if (!r.querySelector(".i-date").value) { valid = false; }
-    if (isNaN(amount) || amount < 0)       { valid = false; }
+    const amount = parseFloat(r.querySelector('.i-amt').value);
+    if (!r.querySelector('.i-date').value) valid = false;
+    if (isNaN(amount) || amount < 0)       valid = false;
     items.push({
-      date:        r.querySelector(".i-date").value,
-      type:        r.querySelector(".i-type").value,
-      invNo:       r.querySelector(".i-inv").value,
-      description: r.querySelector(".i-desc").value,
+      date:        r.querySelector('.i-date').value,
+      type:        r.querySelector('.i-type').value,
+      invNo:       r.querySelector('.i-inv').value.toUpperCase(),
+      description: r.querySelector('.i-desc').value.toUpperCase(),
+      paymentVia:  r.querySelector('.i-via').value,
       amount:      isNaN(amount) ? 0 : amount
     });
   });
+  if (!valid) { toast('Please fill in all dates and enter valid amounts.', true); return; }
 
-  if (!valid) { toast("Please fill in all dates and valid amounts.", true); return; }
-
-  setBtn("saveBtn", "Saving…", true);
-  setBtn("subBtn",  "Submitting…", true);
-
+  setBtn('saveBtn', '<span class="spin"></span> Saving…', true);
   google.script.run
     .withSuccessHandler(res => {
-      setBtn("saveBtn", "Save Draft", false);
-      setBtn("subBtn",  "Submit Final Claim", false);
+      setBtn('saveBtn', '<i class="bi bi-floppy"></i> Save as Draft', false);
       toast(res.message, !res.success);
-      if (res.success) { cancelEntry(); loadHistory(); }
+      if (res.success) cancelEntry();
     })
     .withFailureHandler(() => {
-      setBtn("saveBtn", "Save Draft", false);
-      setBtn("subBtn",  "Submit Final Claim", false);
-      toast("Server error. Please try again.", true);
+      setBtn('saveBtn', '<i class="bi bi-floppy"></i> Save as Draft', false);
+      toast('Server error. Please try again.', true);
     })
-    .saveBatchClaims(
-      items,
-      currentUser.userId,
-      document.getElementById("recipientSelect").value,
-      isDraft,
-      editingRef
-    );
+    .saveBatchClaims(items, currentUser.userId, selectedRecipient, true, editingRef);
 }
 
 function cancelEntry() {
-  document.getElementById("selectionStep").classList.remove("hidden");
-  document.getElementById("entryStep").classList.add("hidden");
-  document.getElementById("itemTableBody").innerHTML = "";
+  document.getElementById('selectionStep').classList.remove('hidden');
+  document.getElementById('entryStep').classList.add('hidden');
+  document.getElementById('itemTableBody').innerHTML = '';
   editingRef = null;
   calc();
 }
 
-// ── history ────────────────────────────────────────────────────────────────
+// ── history ───────────────────────────────────────────────────────────────
 function loadHistory() {
-  const loader = document.getElementById("historyLoader");
-  const body   = document.getElementById("historyBody");
-  loader.classList.remove("hidden");
-  body.innerHTML = "";
+  const loader = document.getElementById('historyLoader');
+  const body   = document.getElementById('historyBody');
+  loader.classList.remove('hidden');
+  body.innerHTML = '';
+  document.getElementById('historySearch').value = '';
 
   google.script.run
     .withSuccessHandler(data => {
-      loader.classList.add("hidden");
-      if (!data.length) {
-        body.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No records found.</td></tr>';
-        return;
-      }
-      const frag = document.createDocumentFragment();
-      data.forEach(r => {
-        const tr = document.createElement("tr");
-        const shortRec = esc(r.recipient.split(" ").pop());
-        tr.innerHTML = `
-          <td class="fw-bold">${esc(r.refNo)}</td>
-          <td>${shortRec}</td>
-          <td>RM ${r.total.toFixed(2)}</td>
-          <td><span class="status-${esc(r.status)}">${esc(r.status)}</span></td>
-          <td class="${r.payStatus === "Paid" ? "text-success fw-bold" : ""}">${esc(r.payStatus)}</td>
-          <td></td>`;
-        if (r.status === "Draft") {
-          const btn = document.createElement("button");
-          btn.className = "btn btn-sm btn-info py-0";
-          btn.textContent = "Edit";
-          btn.onclick = () => editDraft(r.refNo, r.recipient);
-          tr.lastElementChild.appendChild(btn);
-        } else {
-          tr.lastElementChild.textContent = "-";
-        }
-        frag.appendChild(tr);
-      });
-      body.appendChild(frag);
+      loader.classList.add('hidden');
+      historyData = data;
+      renderHistory(data);
     })
     .withFailureHandler(() => {
-      loader.classList.add("hidden");
-      toast("Failed to load history.", true);
+      loader.classList.add('hidden');
+      toast('Failed to load claims.', true);
     })
     .getUserClaims(currentUser.userId);
+}
+
+function filterHistory() {
+  const q = document.getElementById('historySearch').value.trim().toLowerCase();
+  if (!q) { renderHistory(historyData); return; }
+  renderHistory(historyData.filter(r =>
+    r.refNo.toLowerCase().includes(q)       ||
+    (r.recipient || '').toLowerCase().includes(q) ||
+    (r.status    || '').toLowerCase().includes(q) ||
+    (r.payStatus || '').toLowerCase().includes(q)
+  ));
+}
+
+function renderHistory(data) {
+  const body = document.getElementById('historyBody');
+  body.innerHTML = '';
+
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="7">
+      <div class="empty-state">
+        <div class="es-icon"><i class="bi bi-inbox"></i></div>
+        <h4>No claims yet</h4>
+        <p>Start a new draft from the Claim Form tab to get going.</p>
+      </div></td></tr>`;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  data.forEach(r => {
+    const tr = document.createElement('tr');
+    const initials  = getInitials(r.recipient);
+    const shortName = esc((r.recipient || '').split(' ').filter(Boolean).pop() || r.recipient);
+
+    tr.innerHTML = `
+      <td>
+        <button class="ref-chip" onclick="openDetailPanel('${esc(r.refNo)}','${esc(r.status)}')">
+          <i class="bi bi-hash"></i>${esc(r.refNo)}
+        </button>
+      </td>
+      <td>
+        <div class="rec-tag">
+          <div class="rec-avatar">${initials}</div>
+          <span title="${esc(r.recipient || '')}">${shortName}</span>
+        </div>
+      </td>
+      <td style="color:var(--ink-3);font-size:.82rem">${formatDate(r.date)}</td>
+      <td style="font-weight:700;font-family:'DM Mono',monospace;font-size:.85rem">RM ${r.total.toFixed(2)}</td>
+      <td><span class="badge badge-${(r.status||'').toLowerCase()}">${esc(r.status)}</span></td>
+      <td><span class="badge badge-${(r.payStatus||'').toLowerCase()}">${esc(r.payStatus)}</span></td>
+      <td></td>`;
+
+    const actionCell = tr.lastElementChild;
+    actionCell.style.cssText = 'display:flex;align-items:center;gap:.4rem;padding:.8rem 1rem';
+
+    if (r.status === 'Draft') {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-amber-ghost btn-xs';
+      editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
+      editBtn.onclick   = () => editDraft(r.refNo, r.recipient);
+      actionCell.appendChild(editBtn);
+    }
+
+    const viewBtn = document.createElement('button');
+    viewBtn.className = 'btn btn-ghost btn-xs';
+    viewBtn.innerHTML = '<i class="bi bi-eye"></i> View';
+    viewBtn.onclick   = () => openDetailPanel(r.refNo, r.status);
+    actionCell.appendChild(viewBtn);
+
+    frag.appendChild(tr);
+  });
+  body.appendChild(frag);
 }
 
 function editDraft(ref, rec) {
   editingRef = ref;
-  // Pre-select recipient in the dropdown
-  const sel = document.getElementById("recipientSelect");
-  for (let i = 0; i < sel.options.length; i++) {
-    if (sel.options[i].value === rec) { sel.selectedIndex = i; break; }
-  }
-
-  openEntryStep(ref);
-  document.getElementById("itemTableBody").innerHTML =
-    '<tr><td colspan="6" class="text-center text-muted">Loading draft…</td></tr>';
+  selectedRecipient = rec;
+  switchTab('claim');
+  openEntryStep(ref, rec);
+  document.getElementById('itemTableBody').innerHTML =
+    `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--ink-3)">
+       <span class="spin" style="margin-right:.5rem"></span> Loading draft…
+     </td></tr>`;
 
   google.script.run
     .withSuccessHandler(items => {
-      document.getElementById("itemTableBody").innerHTML = "";
+      document.getElementById('itemTableBody').innerHTML = '';
       items.forEach(it => addRow(it));
-      if (!document.getElementById("itemTableBody").hasChildNodes()) addRow();
-      document.getElementById("claimTabBtn").click();
+      if (!document.getElementById('itemTableBody').hasChildNodes()) addRow();
       calc();
     })
-    .withFailureHandler(() => toast("Failed to load draft.", true))
+    .withFailureHandler(() => toast('Failed to load draft details.', true))
     .getDraftDetails(ref, currentUser.userId);
 }
 
-// ── payments ───────────────────────────────────────────────────────────────
-function loadPaymentList() {
-  const loader = document.getElementById("paymentLoader");
-  const body   = document.getElementById("paymentBody");
-  loader.classList.remove("hidden");
-  body.innerHTML = "";
-  document.getElementById("checkAll").checked = false;
+// ── side panel ────────────────────────────────────────────────────────────
+function openDetailPanel(refNo, claimStatus) {
+  panelCurrentRef = refNo;
+  document.getElementById('panelRefLabel').textContent = refNo;
+  document.getElementById('panelBody').innerHTML = '';
+  document.getElementById('panelSummary').innerHTML = '';
+  document.getElementById('panelLoader').classList.remove('hidden');
+  document.getElementById('panelContent').classList.add('hidden');
+  document.getElementById('panelFooter').classList.add('hidden');
+
+  const chkAll = document.getElementById('panelCheckAll');
+  if (chkAll) { chkAll.checked = false; chkAll.indeterminate = false; }
+
+  document.getElementById('sidePanelOverlay').classList.add('open');
+  document.getElementById('sidePanel').classList.add('open');
+  document.body.style.overflow = 'hidden';
 
   google.script.run
-    .withSuccessHandler(data => {
-      loader.classList.add("hidden");
-      const pending = data.filter(r => r.status === "Submitted" && r.payStatus === "Unpaid");
-      if (!pending.length) {
-        body.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No pending payments.</td></tr>';
-        return;
+    .withSuccessHandler(items => {
+      document.getElementById('panelLoader').classList.add('hidden');
+      document.getElementById('panelContent').classList.remove('hidden');
+      document.getElementById('panelFooter').classList.remove('hidden');
+
+      const hasDraft = items.some(it => it.claimStatus === 'Draft');
+      document.getElementById('panelSubmitSection').classList.toggle('hidden', !hasDraft);
+
+      const tbody = document.getElementById('panelBody');
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--ink-3)">No items found.</td></tr>`;
+      } else {
+        let total = 0;
+        const frag = document.createDocumentFragment();
+        items.forEach(it => {
+          const tr     = document.createElement('tr');
+          const amount = parseFloat(it.amount || 0);
+          const isDraft = it.claimStatus !== 'Submitted';
+          total += amount;
+          tr.dataset.amount  = amount;
+          tr.dataset.rowNum  = it.rowNum;
+          tr.dataset.isDraft = isDraft ? '1' : '0';
+
+          if (isDraft) {
+            tr.innerHTML = `
+              <td><input type="checkbox" class="chk panel-item-chk" value="${it.rowNum}" onchange="updatePanelSelectionInfo()"></td>
+              <td style="color:var(--ink-3);font-size:.82rem">${esc(formatDate(it.date))}</td>
+              <td>${esc(it.type || '')}</td>
+              <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
+              <td>${esc(it.description || '')}</td>
+              <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
+              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace">RM ${amount.toFixed(2)}</td>`;
+          } else {
+            tr.className = 'submitted-row';
+            tr.innerHTML = `
+              <td><i class="bi bi-check-circle-fill" style="color:var(--emerald);font-size:.95rem" title="Submitted"></i></td>
+              <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
+              <td>${esc(it.type || '')}</td>
+              <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
+              <td>${esc(it.description || '')}</td>
+              <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
+              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${amount.toFixed(2)}</td>`;
+          }
+          frag.appendChild(tr);
+        });
+        tbody.appendChild(frag);
+
+        document.getElementById('panelSummary').innerHTML = `
+          <div class="panel-total-item">
+            <div class="pt-label">Total Claim</div>
+            <div class="pt-val">RM ${total.toFixed(2)}</div>
+          </div>`;
+
+        updatePanelSelectionInfo();
       }
-      const frag = document.createDocumentFragment();
-      pending.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="checkbox" class="pay-chk" value="${esc(r.refNo)}"></td>
-          <td>${esc(r.refNo)}</td>
-          <td>${esc(r.recipient)}</td>
-          <td>RM ${r.total.toFixed(2)}</td>`;
-        frag.appendChild(tr);
-      });
-      body.appendChild(frag);
     })
     .withFailureHandler(() => {
-      loader.classList.add("hidden");
-      toast("Failed to load payments.", true);
+      document.getElementById('panelLoader').classList.add('hidden');
+      toast('Failed to load claim details.', true);
     })
-    .getUserClaims(currentUser.userId);
+    .getDraftDetails(refNo, currentUser.userId);
 }
 
-function processPayment() {
-  const sel = Array.from(document.querySelectorAll(".pay-chk:checked")).map(c => c.value);
-  if (!sel.length) { toast("Select at least one claim.", true); return; }
+function toggleAllPanelItems(src) {
+  document.querySelectorAll('.panel-item-chk').forEach(c => c.checked = src.checked);
+  updatePanelSelectionInfo();
+}
 
-  setBtn("payBtn", "Updating…", true);
+function updatePanelSelectionInfo() {
+  const checked  = Array.from(document.querySelectorAll('.panel-item-chk:checked'));
+  const selTotal = checked.reduce((s, c) => s + parseFloat(c.closest('tr').dataset.amount || 0), 0);
+  const allChks  = document.querySelectorAll('.panel-item-chk');
+  document.getElementById('panelSelCount').textContent =
+    checked.length + ' item' + (checked.length !== 1 ? 's' : '') + ' selected';
+  document.getElementById('panelSelTotal').textContent = 'RM ' + selTotal.toFixed(2);
+  const chkAll = document.getElementById('panelCheckAll');
+  if (chkAll) {
+    chkAll.checked       = allChks.length > 0 && checked.length === allChks.length;
+    chkAll.indeterminate = checked.length > 0 && checked.length < allChks.length;
+  }
+}
+
+function closeDetailPanel() {
+  document.getElementById('sidePanelOverlay').classList.remove('open');
+  document.getElementById('sidePanel').classList.remove('open');
+  document.body.style.overflow = '';
+  panelCurrentRef = null;
+}
+
+function submitDraftFromPanel() {
+  if (!panelCurrentRef) return;
+  const rowNums = Array.from(document.querySelectorAll('.panel-item-chk:checked'))
+                       .map(c => parseInt(c.value, 10));
+  if (!rowNums.length) { toast('Please select at least one item to submit.', true); return; }
+
+  setBtn('panelSubmitBtn', '<span class="spin"></span> Submitting…', true);
   google.script.run
     .withSuccessHandler(res => {
-      setBtn("payBtn", "Mark Selected as Paid", false);
-      toast(res.success ? "Payment recorded." : "Update failed.", !res.success);
-      if (res.success) { loadPaymentList(); loadHistory(); }
+      setBtn('panelSubmitBtn', '<i class="bi bi-send"></i> Submit Selected Items', false);
+      toast(res.success ? 'Selected items submitted.' : (res.message || 'Update failed.'), !res.success);
+      if (res.success) { closeDetailPanel(); loadHistory(); }
     })
-    .withFailureHandler(() => { setBtn("payBtn", "Mark Selected as Paid", false); toast("Server error.", true); })
-    .processPayments(sel, currentUser.userId);
+    .withFailureHandler(() => {
+      setBtn('panelSubmitBtn', '<i class="bi bi-send"></i> Submit Selected Items', false);
+      toast('Server error.', true);
+    })
+    .submitSelectedRows(rowNums, currentUser.userId);
 }
 
-function toggleAllPay(src) {
-  document.querySelectorAll(".pay-chk").forEach(c => c.checked = src.checked);
-}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('sidePanel').classList.contains('open')) closeDetailPanel();
+});
 
-// ── utils ──────────────────────────────────────────────────────────────────
+// ── utils ─────────────────────────────────────────────────────────────────
 function esc(str) {
-  return String(str ?? "")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-
-function setBtn(id, label, disabled) {
+function setBtn(id, html, disabled) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.textContent = label;
-  el.disabled    = disabled;
+  el.innerHTML = html;
+  el.disabled  = disabled;
+}
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-MY', { day:'2-digit', month:'short', year:'numeric' });
+  } catch (_) { return '—'; }
 }
 
-// ── bootstrap (no localStorage for credentials) ────────────────────────────
-window.onload = () => {
-  // Session is not persisted — user must log in each page load (security)
-};
+// ── report ────────────────────────────────────────────────────────────────
+function generateReport(refNo) {
+  if (!refNo) return;
+  const checked = Array.from(document.querySelectorAll('.panel-item-chk:checked'))
+                       .map(c => parseInt(c.value, 10));
+  toast('Generating report…');
+  google.script.run
+    .withSuccessHandler(data => {
+      if (!data) { toast('Report data not found.', true); return; }
+      if (checked.length) {
+        data.items = data.items.filter(it => checked.includes(it.rowNum));
+        data.total = data.items.reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
+      }
+      renderAndPrintReport(data);
+    })
+    .withFailureHandler(() => toast('Failed to generate report.', true))
+    .getClaimReport(refNo);
+}
+
+function renderAndPrintReport(d) {
+  const fmt = n => parseFloat(n || 0).toFixed(2);
+  const now = new Date().toLocaleDateString('en-MY', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  const itemRows = d.items.map((it, i) => `
+    <tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${esc(it.date || '—')}</td>
+      <td>${esc(it.type || '')}</td>
+      <td style="font-family:'DM Mono',monospace">${esc(it.invNo || '—')}</td>
+      <td>${esc(it.description || '')}</td>
+      <td>${esc(it.paymentVia || '')}</td>
+      <td style="text-align:right">${fmt(it.amount)}</td>
+    </tr>`).join('');
+
+  const sigBox = (label, name, sub) => `
+    <div class="rpt-sig">
+      <div class="rpt-sig-label">${label}</div>
+      <div class="rpt-sig-name">${esc(name || '')}</div>
+      ${sub ? `<div class="rpt-sig-id">${esc(sub)}</div>` : ''}
+      <div class="rpt-sig-line"></div>
+      <div class="rpt-sig-cap">Signature &amp; Date</div>
+    </div>`;
+
+  document.getElementById('reportView').innerHTML = `
+    <div class="rpt-page">
+      <div class="rpt-top">
+        <div class="rpt-brand">
+          <div class="rpt-brand-mark"><i class="bi bi-clipboard2-check-fill"></i></div>
+          <div>
+            <h1>ClaimFlow</h1>
+            <p>Director Claim Management Portal</p>
+          </div>
+        </div>
+        <div class="rpt-stamp">
+          <strong>Claim Submission Report</strong>
+          Generated ${esc(now)}
+        </div>
+      </div>
+
+      <div class="rpt-meta">
+        <div class="rpt-meta-item">
+          <div class="m-label">Reference No</div>
+          <div class="m-val" style="font-family:'DM Mono',monospace">${esc(d.refNo)}</div>
+        </div>
+        <div class="rpt-meta-item">
+          <div class="m-label">Submitted Date</div>
+          <div class="m-val">${esc(d.submittedDate || '—')}</div>
+        </div>
+        <div class="rpt-meta-item" style="grid-column:1/-1">
+          <div class="m-label">Submitted To</div>
+          <div class="m-val">${esc(d.recipient)}</div>
+        </div>
+      </div>
+
+      <table class="rpt-table">
+        <thead>
+          <tr>
+            <th style="width:32px;text-align:center">No</th>
+            <th style="width:90px">Date</th>
+            <th style="width:90px">Type</th>
+            <th style="width:120px">Invoice No</th>
+            <th>Description</th>
+            <th style="width:75px">Pay Via</th>
+            <th style="width:95px;text-align:right">Amount (RM)</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="6" style="text-align:right;padding-right:.75rem">TOTAL (RM)</td>
+            <td style="text-align:right">${fmt(d.total)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="rpt-sigs">
+        ${sigBox('Prepared By', d.preparedBy, d.preparedById)}
+        ${sigBox('Checked By',  d.checkedBy, '')}
+        ${sigBox('Approved By', d.approvedBy, '')}
+      </div>
+
+      <div class="rpt-footer">
+        Generated on ${esc(now)} &nbsp;·&nbsp; ClaimFlow — Director Claim Portal
+      </div>
+    </div>`;
+
+  document.getElementById('reportView').style.display = 'block';
+  window.print();
+  document.getElementById('reportView').style.display = 'none';
+}
 </script>
 </body>
 </html>
