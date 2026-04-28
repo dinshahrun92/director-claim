@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f4f6f9; font-size: 13px; }
+    .hidden { display: none !important; }
+    .card  { border: none; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+    .status-Draft     { background:#fff3cd; color:#856404; padding:3px 8px; border-radius:10px; font-weight:600; white-space:nowrap; }
+    .status-Submitted { background:#d1ecf1; color:#0c5460; padding:3px 8px; border-radius:10px; font-weight:600; white-space:nowrap; }
+    .table-input { border:1px solid #ddd; padding:4px 6px; border-radius:4px; width:100%; box-sizing:border-box; }
+    .nav-pills .nav-link.active { background-color:#0d6efd; }
+    #toast-container { position:fixed; bottom:1.5rem; right:1.5rem; z-index:9999; display:flex; flex-direction:column; gap:.5rem; }
+    .toast-msg { padding:.6rem 1rem; border-radius:8px; color:#fff; font-size:13px; min-width:220px;
+                 animation: fadeup .25s ease; }
+    .toast-ok  { background:#198754; }
+    .toast-err { background:#dc3545; }
+    @keyframes fadeup { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  </style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ── AUTH ── -->
+<div id="authView" class="container mt-5" style="max-width:400px">
+  <div id="loginBox" class="card p-4">
+    <h4 class="text-center mb-4 text-primary">Claim Portal Login</h4>
+    <input type="text"     id="lId"   class="form-control mb-2" placeholder="User ID"  autocomplete="username">
+    <input type="password" id="lPass" class="form-control mb-3" placeholder="Password" autocomplete="current-password">
+    <button id="loginBtn" class="btn btn-primary w-100" onclick="handleLogin()">Login</button>
+    <button class="btn btn-link w-100 btn-sm mt-2 text-decoration-none" onclick="toggleAuth(false)">New user? Register here</button>
+  </div>
+  <div id="regBox" class="card p-4 hidden">
+    <h4 class="text-center mb-4 text-success">Create Account</h4>
+    <input type="text"     id="rName" class="form-control mb-2" placeholder="Full Name">
+    <input type="text"     id="rId"   class="form-control mb-2" placeholder="User ID (min 3 chars)">
+    <input type="password" id="rPass" class="form-control mb-3" placeholder="Password (min 4 chars)">
+    <button id="regBtn" class="btn btn-success w-100" onclick="handleReg()">Register</button>
+    <button class="btn btn-link w-100 btn-sm mt-2 text-decoration-none" onclick="toggleAuth(true)">Back to Login</button>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="mainView" class="container py-4 hidden">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 id="userGreet" class="text-primary fw-bold mb-0"></h4>
+    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+  </div>
+
+  <ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#claimTab"
+              id="claimTabBtn">Claim Form</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#historyTab"
+              onclick="loadHistory()">History / Drafts</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#paymentTab"
+              onclick="loadPaymentList()">Payment Tracking</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- FORM TAB -->
+    <div id="claimTab" class="tab-pane fade show active">
+
+      <div id="selectionStep" class="card p-5 text-center">
+        <h5 class="mb-4">To whom are you submitting this claim?</h5>
+        <select id="recipientSelect" class="form-select w-50 mx-auto mb-4">
+          <option>Datuk Wira Syamsul Azly Akbar</option>
+          <option>Datin Wira Ardiana Zanaria Abu Zubir</option>
+          <option>Datik Kalsom Aziz</option>
+        </select>
+        <button id="startBtn" class="btn btn-primary btn-lg px-5" onclick="startNewBatch()">
+          Start New Draft
+        </button>
+      </div>
+
+      <div id="entryStep" class="card p-4 hidden">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h6 class="mb-0">Ref: <span id="activeRef" class="badge bg-dark"></span></h6>
+          <h5 class="text-primary fw-bold mb-0">Total: RM <span id="grandTotal">0.00</span></h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm align-middle">
+            <thead>
+              <tr class="table-light">
+                <th>Date</th><th>Type</th><th>Inv No</th><th>Description</th><th>Amount (RM)</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="itemTableBody"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm mb-4" onclick="addRow()">+ Add Line Item</button>
+        <div class="d-flex gap-2 flex-wrap">
+          <button id="saveBtn" class="btn btn-warning fw-bold flex-fill" onclick="submitBatch(true)">Save Draft</button>
+          <button id="subBtn"  class="btn btn-primary fw-bold flex-fill" onclick="submitBatch(false)">Submit Final Claim</button>
+          <button class="btn btn-light" onclick="cancelEntry()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="historyTab" class="tab-pane fade">
+      <div class="card p-3">
+        <div id="historyLoader" class="text-center p-3 hidden">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-2 mb-0 text-muted">Loading history…</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mt-2 mb-0">
+            <thead>
+              <tr><th>Ref No</th><th>Recipient</th><th>Total</th><th>Status</th><th>Payment</th><th>Action</th></tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT TAB -->
+    <div id="paymentTab" class="tab-pane fade">
+      <div class="card p-3">
+        <div id="paymentLoader" class="text-center p-3 hidden">
+          <div class="spinner-border text-success"></div>
+          <p class="mt-2 mb-0 text-muted">Checking payments…</p>
+        </div>
+        <h5 class="mb-3">Pending Payments</h5>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead>
+              <tr class="table-light">
+                <th><input type="checkbox" id="checkAll" onclick="toggleAllPay(this)"></th>
+                <th>Ref No</th><th>Recipient</th><th>Amount (RM)</th>
+              </tr>
+            </thead>
+            <tbody id="paymentBody"></tbody>
+          </table>
+        </div>
+        <button id="payBtn" class="btn btn-success mt-3 px-4 fw-bold" onclick="processPayment()">
+          Mark Selected as Paid
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── state ──────────────────────────────────────────────────────────────────
+let currentUser = null;
+let editingRef  = null;
+
+// ── toast ──────────────────────────────────────────────────────────────────
+function toast(msg, isError = false) {
+  const el = document.createElement("div");
+  el.className = "toast-msg " + (isError ? "toast-err" : "toast-ok");
+  el.textContent = msg;
+  document.getElementById("toast-container").appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── auth helpers ───────────────────────────────────────────────────────────
+function toggleAuth(showLogin) {
+  document.getElementById("loginBox").classList.toggle("hidden", !showLogin);
+  document.getElementById("regBox").classList.toggle("hidden", showLogin);
+}
+
+function handleLogin() {
+  const id   = document.getElementById("lId").value.trim();
+  const pass = document.getElementById("lPass").value;
+  if (!id || !pass) { toast("Please enter ID and password.", true); return; }
+
+  setBtn("loginBtn", "Checking…", true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn("loginBtn", "Login", false);
+      if (res.success) { currentUser = res; initApp(); }
+      else toast(res.message, true);
+    })
+    .withFailureHandler(err => { setBtn("loginBtn", "Login", false); toast("Server error.", true); })
+    .login(id, pass);
+}
+
+function handleReg() {
+  const name = document.getElementById("rName").value.trim();
+  const id   = document.getElementById("rId").value.trim();
+  const pass = document.getElementById("rPass").value;
+  if (!name || !id || !pass) { toast("All fields are required.", true); return; }
+
+  setBtn("regBtn", "Registering…", true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn("regBtn", "Register", false);
+      toast(res.message, !res.success);
+      if (res.success) toggleAuth(true);
+    })
+    .withFailureHandler(() => { setBtn("regBtn", "Register", false); toast("Server error.", true); })
+    .registerUser(id, pass, name);
+}
+
+function logout() { currentUser = null; location.reload(); }
+
+// ── init ───────────────────────────────────────────────────────────────────
+function initApp() {
+  document.getElementById("authView").classList.add("hidden");
+  document.getElementById("mainView").classList.remove("hidden");
+  document.getElementById("userGreet").textContent = "Hello, " + currentUser.name;
+  loadHistory();
+}
+
+// ── claim form ─────────────────────────────────────────────────────────────
+function startNewBatch() {
+  setBtn("startBtn", "Generating Ref…", true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn("startBtn", "Start New Draft", false);
+      if (!res.success) { toast(res.message, true); return; }
+      editingRef = res.refNo;
+      openEntryStep(res.refNo);
+      addRow();
+    })
+    .withFailureHandler(() => { setBtn("startBtn", "Start New Draft", false); toast("Server error.", true); })
+    .createInitialDraft(currentUser.userId, document.getElementById("recipientSelect").value);
+}
+
+function openEntryStep(refNo) {
+  document.getElementById("activeRef").textContent = refNo;
+  document.getElementById("itemTableBody").innerHTML = "";
+  document.getElementById("selectionStep").classList.add("hidden");
+  document.getElementById("entryStep").classList.remove("hidden");
+}
+
+function addRow(data = {}) {
+  const tr = document.createElement("tr");
+  tr.className = "item-row";
+
+  const types = ["Petrol","TnG","Refreshment","Medical","Others"];
+  const opts  = types.map(t =>
+    `<option${t === data.type ? " selected" : ""}>${esc(t)}</option>`
+  ).join("");
+
+  tr.innerHTML = `
+    <td><input type="date" class="table-input i-date" value="${esc(data.date || "")}"></td>
+    <td><select class="table-input i-type">${opts}</select></td>
+    <td><input type="text" class="table-input i-inv" value="${esc(data.invNo || "")}" placeholder="Inv #" maxlength="50"></td>
+    <td><input type="text" class="table-input i-desc" value="${esc(data.description || "")}" placeholder="Description" maxlength="200"></td>
+    <td><input type="number" class="table-input i-amt" min="0" step="0.01" oninput="calc()" value="${parseFloat(data.amount) || ""}"></td>
+    <td><button type="button" class="btn btn-sm text-danger fw-bold" onclick="this.closest('tr').remove();calc()">×</button></td>
+  `;
+  document.getElementById("itemTableBody").appendChild(tr);
+  calc();
+}
+
+function calc() {
+  let total = 0;
+  document.querySelectorAll(".i-amt").forEach(i => total += parseFloat(i.value) || 0);
+  document.getElementById("grandTotal").textContent = total.toFixed(2);
+}
+
+function submitBatch(isDraft) {
+  const rows = document.querySelectorAll(".item-row");
+  if (!rows.length) { toast("Add at least one line item.", true); return; }
+
+  const items = [];
+  let valid = true;
+  rows.forEach(r => {
+    const amount = parseFloat(r.querySelector(".i-amt").value);
+    if (!r.querySelector(".i-date").value) { valid = false; }
+    if (isNaN(amount) || amount < 0)       { valid = false; }
+    items.push({
+      date:        r.querySelector(".i-date").value,
+      type:        r.querySelector(".i-type").value,
+      invNo:       r.querySelector(".i-inv").value,
+      description: r.querySelector(".i-desc").value,
+      amount:      isNaN(amount) ? 0 : amount
+    });
+  });
+
+  if (!valid) { toast("Please fill in all dates and valid amounts.", true); return; }
+
+  setBtn("saveBtn", "Saving…", true);
+  setBtn("subBtn",  "Submitting…", true);
+
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn("saveBtn", "Save Draft", false);
+      setBtn("subBtn",  "Submit Final Claim", false);
+      toast(res.message, !res.success);
+      if (res.success) { cancelEntry(); loadHistory(); }
+    })
+    .withFailureHandler(() => {
+      setBtn("saveBtn", "Save Draft", false);
+      setBtn("subBtn",  "Submit Final Claim", false);
+      toast("Server error. Please try again.", true);
+    })
+    .saveBatchClaims(
+      items,
+      currentUser.userId,
+      document.getElementById("recipientSelect").value,
+      isDraft,
+      editingRef
+    );
+}
+
+function cancelEntry() {
+  document.getElementById("selectionStep").classList.remove("hidden");
+  document.getElementById("entryStep").classList.add("hidden");
+  document.getElementById("itemTableBody").innerHTML = "";
+  editingRef = null;
+  calc();
+}
+
+// ── history ────────────────────────────────────────────────────────────────
+function loadHistory() {
+  const loader = document.getElementById("historyLoader");
+  const body   = document.getElementById("historyBody");
+  loader.classList.remove("hidden");
+  body.innerHTML = "";
+
+  google.script.run
+    .withSuccessHandler(data => {
+      loader.classList.add("hidden");
+      if (!data.length) {
+        body.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No records found.</td></tr>';
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      data.forEach(r => {
+        const tr = document.createElement("tr");
+        const shortRec = esc(r.recipient.split(" ").pop());
+        tr.innerHTML = `
+          <td class="fw-bold">${esc(r.refNo)}</td>
+          <td>${shortRec}</td>
+          <td>RM ${r.total.toFixed(2)}</td>
+          <td><span class="status-${esc(r.status)}">${esc(r.status)}</span></td>
+          <td class="${r.payStatus === "Paid" ? "text-success fw-bold" : ""}">${esc(r.payStatus)}</td>
+          <td></td>`;
+        if (r.status === "Draft") {
+          const btn = document.createElement("button");
+          btn.className = "btn btn-sm btn-info py-0";
+          btn.textContent = "Edit";
+          btn.onclick = () => editDraft(r.refNo, r.recipient);
+          tr.lastElementChild.appendChild(btn);
+        } else {
+          tr.lastElementChild.textContent = "-";
+        }
+        frag.appendChild(tr);
+      });
+      body.appendChild(frag);
+    })
+    .withFailureHandler(() => {
+      loader.classList.add("hidden");
+      toast("Failed to load history.", true);
+    })
+    .getUserClaims(currentUser.userId);
+}
+
+function editDraft(ref, rec) {
+  editingRef = ref;
+  // Pre-select recipient in the dropdown
+  const sel = document.getElementById("recipientSelect");
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === rec) { sel.selectedIndex = i; break; }
+  }
+
+  openEntryStep(ref);
+  document.getElementById("itemTableBody").innerHTML =
+    '<tr><td colspan="6" class="text-center text-muted">Loading draft…</td></tr>';
+
+  google.script.run
+    .withSuccessHandler(items => {
+      document.getElementById("itemTableBody").innerHTML = "";
+      items.forEach(it => addRow(it));
+      if (!document.getElementById("itemTableBody").hasChildNodes()) addRow();
+      document.getElementById("claimTabBtn").click();
+      calc();
+    })
+    .withFailureHandler(() => toast("Failed to load draft.", true))
+    .getDraftDetails(ref, currentUser.userId);
+}
+
+// ── payments ───────────────────────────────────────────────────────────────
+function loadPaymentList() {
+  const loader = document.getElementById("paymentLoader");
+  const body   = document.getElementById("paymentBody");
+  loader.classList.remove("hidden");
+  body.innerHTML = "";
+  document.getElementById("checkAll").checked = false;
+
+  google.script.run
+    .withSuccessHandler(data => {
+      loader.classList.add("hidden");
+      const pending = data.filter(r => r.status === "Submitted" && r.payStatus === "Unpaid");
+      if (!pending.length) {
+        body.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No pending payments.</td></tr>';
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      pending.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" class="pay-chk" value="${esc(r.refNo)}"></td>
+          <td>${esc(r.refNo)}</td>
+          <td>${esc(r.recipient)}</td>
+          <td>RM ${r.total.toFixed(2)}</td>`;
+        frag.appendChild(tr);
+      });
+      body.appendChild(frag);
+    })
+    .withFailureHandler(() => {
+      loader.classList.add("hidden");
+      toast("Failed to load payments.", true);
+    })
+    .getUserClaims(currentUser.userId);
+}
+
+function processPayment() {
+  const sel = Array.from(document.querySelectorAll(".pay-chk:checked")).map(c => c.value);
+  if (!sel.length) { toast("Select at least one claim.", true); return; }
+
+  setBtn("payBtn", "Updating…", true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn("payBtn", "Mark Selected as Paid", false);
+      toast(res.success ? "Payment recorded." : "Update failed.", !res.success);
+      if (res.success) { loadPaymentList(); loadHistory(); }
+    })
+    .withFailureHandler(() => { setBtn("payBtn", "Mark Selected as Paid", false); toast("Server error.", true); })
+    .processPayments(sel, currentUser.userId);
+}
+
+function toggleAllPay(src) {
+  document.querySelectorAll(".pay-chk").forEach(c => c.checked = src.checked);
+}
+
+// ── utils ──────────────────────────────────────────────────────────────────
+function esc(str) {
+  return String(str ?? "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+function setBtn(id, label, disabled) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = label;
+  el.disabled    = disabled;
+}
+
+// ── bootstrap (no localStorage for credentials) ────────────────────────────
+window.onload = () => {
+  // Session is not persisted — user must log in each page load (security)
+};
+</script>
+</body>
+</html>
