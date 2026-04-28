@@ -165,9 +165,11 @@ function getUserClaims(userId) { // eslint-disable-line no-unused-vars
   for (let i = 1; i < claimsData.length; i++) {
     const ref = claimsData[i][0].toString();
     if (!ref) continue;
-    if (claimsData[i][6] === "New Draft Created") continue; // skip placeholder rows
 
+    const isPlaceholder = claimsData[i][6] === "New Draft Created";
     const ownerId = claimsData[i][1].toString();
+
+    // Always create the group entry so even fresh drafts appear in the listing
     if (!grouped[ref]) {
       grouped[ref] = {
         refNo:      ref,
@@ -181,9 +183,13 @@ function getUserClaims(userId) { // eslint-disable-line no-unused-vars
         date:       claimsData[i][12]
       };
     }
+
+    // Placeholder rows (initial draft marker) don't count toward totals
+    if (isPlaceholder) continue;
+
     grouped[ref].total      += parseFloat(claimsData[i][7]) || 0;
     grouped[ref].totalItems += 1;
-    if ((claimsData[i][10] || "").toString() === "Paid") {
+    if ((claimsData[i][10] || "").toString().toLowerCase() === "paid") {
       grouped[ref].paidItems += 1;
     }
   }
