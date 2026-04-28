@@ -98,7 +98,7 @@ function createInitialDraft(userId, recipient) {
                 + "-" + Math.floor(1000 + Math.random() * 9000);
 
     // RefNo is generated here and returned to the client; no sheet row is written.
-    // The draft only persists once the user clicks Save/Submit (saveBatchClaims).
+    // The draft only persists once the user clicks Save as Draft (saveBatchClaims).
     // An abandoned session simply leaves no trace in the sheet.
     return { success: true, refNo };
   } catch (e) {
