@@ -1458,6 +1458,7 @@ function initApp() {
   document.getElementById('mainView').classList.remove('hidden');
   document.getElementById('userAvatar').textContent = getInitials(currentUser.name);
   document.getElementById('userGreet').textContent  = currentUser.name;
+  switchTab('history');
 }
 
 // ── claim form ────────────────────────────────────────────────────────────
@@ -1553,7 +1554,7 @@ function submitBatch() {
     .withSuccessHandler(res => {
       setBtn('saveBtn', '<i class="bi bi-floppy"></i> Save as Draft', false);
       toast(res.message, !res.success);
-      if (res.success) cancelEntry();
+      if (res.success) { cancelEntry(); switchTab('history'); }
     })
     .withFailureHandler(() => {
       setBtn('saveBtn', '<i class="bi bi-floppy"></i> Save as Draft', false);
