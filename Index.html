@@ -1275,6 +1275,7 @@
             <thead>
               <tr>
                 <th>Ref No</th>
+                <th>Submitted By</th>
                 <th>Recipient</th>
                 <th>Date</th>
                 <th>Total (RM)</th>
@@ -1594,10 +1595,12 @@ function filterHistory() {
   const q = document.getElementById('historySearch').value.trim().toLowerCase();
   if (!q) { renderHistory(historyData); return; }
   renderHistory(historyData.filter(r =>
-    r.refNo.toLowerCase().includes(q)       ||
-    (r.recipient || '').toLowerCase().includes(q) ||
-    (r.status    || '').toLowerCase().includes(q) ||
-    (r.payStatus || '').toLowerCase().includes(q)
+    r.refNo.toLowerCase().includes(q)              ||
+    (r.recipient  || '').toLowerCase().includes(q) ||
+    (r.ownerName  || '').toLowerCase().includes(q) ||
+    (r.ownerId    || '').toLowerCase().includes(q) ||
+    (r.status     || '').toLowerCase().includes(q) ||
+    (r.payStatus  || '').toLowerCase().includes(q)
   ));
 }
 
@@ -1606,7 +1609,7 @@ function renderHistory(data) {
   body.innerHTML = '';
 
   if (!data.length) {
-    body.innerHTML = `<tr><td colspan="7">
+    body.innerHTML = `<tr><td colspan="8">
       <div class="empty-state">
         <div class="es-icon"><i class="bi bi-inbox"></i></div>
         <h4>No claims yet</h4>
@@ -1627,6 +1630,7 @@ function renderHistory(data) {
           <i class="bi bi-hash"></i>${esc(r.refNo)}
         </button>
       </td>
+      <td style="font-size:.82rem;color:var(--ink-2)">${esc(r.ownerName || r.ownerId || '')}</td>
       <td>
         <div class="rec-tag">
           <div class="rec-avatar">${initials}</div>
@@ -1642,7 +1646,7 @@ function renderHistory(data) {
     const actionCell = tr.lastElementChild;
     actionCell.style.cssText = 'display:flex;align-items:center;gap:.4rem;padding:.8rem 1rem';
 
-    if (r.status === 'Draft') {
+    if (r.status === 'Draft' && r.ownerId === currentUser.userId) {
       const editBtn = document.createElement('button');
       editBtn.className = 'btn btn-amber-ghost btn-xs';
       editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
@@ -1699,6 +1703,10 @@ function openDetailPanel(refNo, claimStatus) {
   document.getElementById('sidePanel').classList.add('open');
   document.body.style.overflow = 'hidden';
 
+  // Determine if current user owns this claim (to control submit button visibility)
+  const claimInfo = historyData.find(r => r.refNo === refNo);
+  const isOwner   = !claimInfo || claimInfo.ownerId === currentUser.userId;
+
   google.script.run
     .withSuccessHandler(items => {
       document.getElementById('panelLoader').classList.add('hidden');
@@ -1706,19 +1714,23 @@ function openDetailPanel(refNo, claimStatus) {
       document.getElementById('panelFooter').classList.remove('hidden');
 
       const hasDraft = items.some(it => it.claimStatus === 'Draft');
-      document.getElementById('panelSubmitSection').classList.toggle('hidden', !hasDraft);
+      document.getElementById('panelSubmitSection').classList.toggle('hidden', !hasDraft || !isOwner);
 
       const tbody = document.getElementById('panelBody');
       if (!items.length) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--ink-3)">No items found.</td></tr>`;
       } else {
-        let total = 0;
+        let totalAll = 0, paidTotal = 0;
         const frag = document.createDocumentFragment();
         items.forEach(it => {
-          const tr     = document.createElement('tr');
-          const amount = parseFloat(it.amount || 0);
-          const isDraft = it.claimStatus !== 'Submitted';
-          total += amount;
+          const tr      = document.createElement('tr');
+          const amount  = parseFloat(it.amount || 0);
+          const isPaid  = (it.paymentStatus || '').toString() === 'Paid';
+          const isDraft = it.claimStatus === 'Draft' && !isPaid;
+
+          totalAll += amount;
+          if (isPaid) paidTotal += amount;
+
           tr.dataset.amount  = amount;
           tr.dataset.rowNum  = it.rowNum;
           tr.dataset.isDraft = isDraft ? '1' : '0';
@@ -1732,26 +1744,49 @@ function openDetailPanel(refNo, claimStatus) {
               <td>${esc(it.description || '')}</td>
               <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
               <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace">RM ${amount.toFixed(2)}</td>`;
-          } else {
+          } else if (isPaid) {
             tr.className = 'submitted-row';
             tr.innerHTML = `
-              <td><i class="bi bi-check-circle-fill" style="color:var(--emerald);font-size:.95rem" title="Submitted"></i></td>
+              <td><i class="bi bi-cash-coin" style="color:var(--emerald);font-size:.95rem" title="Paid"></i></td>
               <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
               <td>${esc(it.type || '')}</td>
               <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
               <td>${esc(it.description || '')}</td>
               <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${amount.toFixed(2)}</td>`;
+              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${amount.toFixed(2)} <span style="font-size:.68rem;font-weight:500">(Paid)</span></td>`;
+          } else {
+            tr.className = 'submitted-row';
+            tr.innerHTML = `
+              <td><i class="bi bi-check-circle-fill" style="color:var(--brand);font-size:.95rem" title="Submitted"></i></td>
+              <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
+              <td>${esc(it.type || '')}</td>
+              <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
+              <td>${esc(it.description || '')}</td>
+              <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
+              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--brand)">RM ${amount.toFixed(2)}</td>`;
           }
           frag.appendChild(tr);
         });
         tbody.appendChild(frag);
 
-        document.getElementById('panelSummary').innerHTML = `
+        const remaining = totalAll - paidTotal;
+        let summaryHtml = `
           <div class="panel-total-item">
             <div class="pt-label">Total Claim</div>
-            <div class="pt-val">RM ${total.toFixed(2)}</div>
+            <div class="pt-val">RM ${totalAll.toFixed(2)}</div>
           </div>`;
+        if (paidTotal > 0) {
+          summaryHtml += `
+          <div class="panel-total-item">
+            <div class="pt-label">Already Paid</div>
+            <div class="pt-val" style="color:var(--emerald)">RM ${paidTotal.toFixed(2)}</div>
+          </div>
+          <div class="panel-total-item">
+            <div class="pt-label">Remaining</div>
+            <div class="pt-val" style="color:var(--rose)">RM ${remaining.toFixed(2)}</div>
+          </div>`;
+        }
+        document.getElementById('panelSummary').innerHTML = summaryHtml;
 
         updatePanelSelectionInfo();
       }

@@ -151,43 +151,65 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
 }
 
 function getUserClaims(userId) {
-  userId = sanitize(userId);
-  if (!userId) return [];
+  // Returns all claims from all users (userId param retained for compatibility)
+  const claimsData = getSheet("App_Claims").getDataRange().getValues();
+  const usersData  = getSheet("App_Users").getDataRange().getValues();
 
-  const data    = getSheet("App_Claims").getDataRange().getValues();
-  const grouped = {};
-
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][1].toString() !== userId) continue;
-
-    const ref = data[i][0].toString();
-    if (!grouped[ref]) {
-      grouped[ref] = {
-        refNo:     ref,
-        recipient: data[i][2] || "",
-        total:     0,
-        status:    data[i][9]  || "",
-        payStatus: data[i][10] || "",
-        date:      data[i][12]
-      };
-    }
-    grouped[ref].total += parseFloat(data[i][7]) || 0;
+  // Build userId → fullName map
+  const userMap = {};
+  for (let i = 1; i < usersData.length; i++) {
+    userMap[usersData[i][0].toString()] = usersData[i][2] || usersData[i][0].toString();
   }
 
-  return Object.values(grouped).sort((a, b) => new Date(b.date) - new Date(a.date));
+  const grouped = {};
+  for (let i = 1; i < claimsData.length; i++) {
+    const ref = claimsData[i][0].toString();
+    if (!ref) continue;
+    if (claimsData[i][6] === "New Draft Created") continue; // skip placeholder rows
+
+    const ownerId = claimsData[i][1].toString();
+    if (!grouped[ref]) {
+      grouped[ref] = {
+        refNo:      ref,
+        ownerId:    ownerId,
+        ownerName:  userMap[ownerId] || ownerId,
+        recipient:  claimsData[i][2] || "",
+        total:      0,
+        status:     claimsData[i][9]  || "",
+        paidItems:  0,
+        totalItems: 0,
+        date:       claimsData[i][12]
+      };
+    }
+    grouped[ref].total      += parseFloat(claimsData[i][7]) || 0;
+    grouped[ref].totalItems += 1;
+    if ((claimsData[i][10] || "").toString() === "Paid") {
+      grouped[ref].paidItems += 1;
+    }
+  }
+
+  // Compute payStatus per group
+  const result = Object.values(grouped).map(g => {
+    let payStatus;
+    if (g.paidItems === 0)               payStatus = "Unpaid";
+    else if (g.paidItems >= g.totalItems) payStatus = "Paid";
+    else                                 payStatus = "Partial";
+    const { paidItems, totalItems, ...rest } = g;
+    return { ...rest, payStatus };
+  });
+
+  return result.sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 function getDraftDetails(refNo, userId) {
-  refNo  = sanitize(refNo);
-  userId = sanitize(userId);
-  if (!refNo || !userId) return [];
+  refNo = sanitize(refNo);
+  if (!refNo) return [];
 
   const data = getSheet("App_Claims").getDataRange().getValues();
   const rows = [];
 
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0].toString() !== refNo)   continue;
-    if (data[i][1].toString() !== userId)  continue; // ownership check
+    if (data[i][0].toString() !== refNo)    continue;
     if (data[i][6] === "New Draft Created") continue; // skip placeholder
 
     const rawDate = data[i][3];
@@ -197,11 +219,14 @@ function getDraftDetails(refNo, userId) {
     }
 
     rows.push({
-      date:        dateStr,
-      type:        data[i][4],
-      invNo:       data[i][5],
-      description: data[i][6],
-      amount:      data[i][7]
+      rowNum:        i + 1,
+      date:          dateStr,
+      type:          data[i][4],
+      invNo:         data[i][5],
+      description:   data[i][6],
+      amount:        data[i][7],
+      claimStatus:   data[i][9]  || "",
+      paymentStatus: data[i][10] || ""
     });
   }
   return rows;
@@ -230,4 +255,90 @@ function processPayments(refNoList, userId) {
     sheet.getRange(i + 1, 12).setValue(today);
   }
   return { success: true };
+}
+
+// ── submit selected draft rows ─────────────────────────────────────────────
+
+function submitSelectedRows(rowNums, userId) {
+  userId = sanitize(userId);
+  if (!userId) return { success: false, message: "Unauthorised." };
+  if (!Array.isArray(rowNums) || !rowNums.length)
+    return { success: false, message: "No rows selected." };
+
+  const sheet = getSheet("App_Claims");
+  const data  = sheet.getDataRange().getValues();
+
+  for (let i = 1; i < data.length; i++) {
+    const sheetRow = i + 1;
+    if (!rowNums.includes(sheetRow))           continue;
+    if (data[i][1].toString() !== userId)      continue; // ownership check
+    if (data[i][9].toString() !== "Draft")     continue; // only draft rows
+
+    sheet.getRange(sheetRow, 10).setValue("Submitted");
+  }
+  return { success: true };
+}
+
+// ── claim report data ──────────────────────────────────────────────────────
+
+function getClaimReport(refNo) {
+  refNo = sanitize(refNo);
+  if (!refNo) return null;
+
+  const claimsData = getSheet("App_Claims").getDataRange().getValues();
+  const usersData  = getSheet("App_Users").getDataRange().getValues();
+
+  let recipient = "", ownerId = "", submittedDate = "", total = 0;
+  const items = [];
+
+  for (let i = 1; i < claimsData.length; i++) {
+    if (claimsData[i][0].toString() !== refNo)    continue;
+    if (claimsData[i][6] === "New Draft Created")  continue;
+
+    if (!ownerId) {
+      ownerId   = claimsData[i][1] || "";
+      recipient = claimsData[i][2] || "";
+      const rawTs = claimsData[i][12];
+      if (rawTs) {
+        try { submittedDate = Utilities.formatDate(new Date(rawTs), "GMT+8", "dd MMM yyyy"); } catch (_) {}
+      }
+    }
+
+    const rawDate = claimsData[i][3];
+    let dateStr = "";
+    if (rawDate) {
+      try { dateStr = Utilities.formatDate(new Date(rawDate), "GMT+8", "dd MMM yyyy"); } catch (_) {}
+    }
+
+    const amount = parseFloat(claimsData[i][7]) || 0;
+    total += amount;
+    items.push({
+      rowNum:      i + 1,
+      date:        dateStr,
+      type:        claimsData[i][4],
+      invNo:       claimsData[i][5],
+      description: claimsData[i][6],
+      paymentVia:  "",
+      amount:      amount
+    });
+  }
+
+  if (!items.length) return null;
+
+  let ownerName = ownerId;
+  for (let i = 1; i < usersData.length; i++) {
+    if (usersData[i][0].toString() === ownerId) { ownerName = usersData[i][2]; break; }
+  }
+
+  return {
+    refNo,
+    recipient,
+    submittedDate,
+    total,
+    items,
+    preparedBy:   ownerName,
+    preparedById: ownerId,
+    checkedBy:    "",
+    approvedBy:   recipient
+  };
 }
