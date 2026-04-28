@@ -30,7 +30,7 @@ function setupSheets() {
     App_Users:  ["UserID","Password","FullName"],
     App_Claims: ["RefNo","UserID","Recipient","InvoiceDate","Type","InvoiceNo",
                  "Description","Amount","FileUrl","Status","PaymentStatus",
-                 "PaymentDate","Timestamp","CheckedBy","ApprovedBy"]
+                 "PaymentDate","Timestamp","CheckedBy","ApprovedBy","PaymentVia"]
   };
 
   Object.entries(schemas).forEach(([name, headers]) => {
@@ -161,7 +161,8 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
         "",
         ts,
         "", // CheckedBy
-        ""  // ApprovedBy
+        "", // ApprovedBy
+        sanitize(item.paymentVia)  // PaymentVia
       ]);
     });
 
@@ -260,6 +261,7 @@ function getDraftDetails(refNo, userId) {
       invNo:       data[i][5],
       description: data[i][6],
       amount:      data[i][7],
+      paymentVia:  (data[i][15] || "").toString(),
       rowNum:      i + 1,              // 1-based sheet row, used for per-item payment
       payStatus:   (data[i][10] || "").toString().trim()
     });
@@ -372,11 +374,35 @@ function getClaimDetails(refNo) {
       invNo:       data[i][5],
       description: data[i][6],
       amount:      data[i][7],
+      paymentVia:  (data[i][15] || "").toString(),
       rowNum:      i + 1,
       payStatus:   (data[i][10] || "").toString().trim()
     });
   }
   return rows;
+}
+
+// Changes all Draft rows for a reference number to Submitted status.
+function submitDraft(refNo, userId) {
+  refNo  = sanitize(refNo);
+  userId = sanitize(userId);
+  if (!refNo || !userId) return { success: false, message: "Invalid parameters." };
+
+  const sheet = getSheet("App_Claims");
+  const data  = sheet.getDataRange().getValues();
+  let updated = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0].toString() !== refNo)   continue;
+    if (data[i][1].toString() !== userId)  continue; // ownership check
+    if (data[i][9].toString().trim() !== "Draft") continue;
+    sheet.getRange(i + 1, 10).setValue("Submitted");
+    updated++;
+  }
+
+  if (!updated) return { success: false, message: "No draft rows found." };
+  SpreadsheetApp.flush();
+  return { success: true, message: "Claim submitted: " + refNo };
 }
 
 // Marks individual sheet rows (by 1-based row number) as Paid.
@@ -454,6 +480,8 @@ function getClaimReport(refNo) {
       invNo:       claimData[i][5].toString(),
       description: claimData[i][6].toString(),
       amount:      amount,
+      paymentVia:  (claimData[i][15] || "").toString(),
+      rowNum:      i + 1,
       payStatus:   (claimData[i][10] || "").toString().trim()
     });
   }

@@ -798,14 +798,8 @@
       </li>
       <li>
         <button class="tab-btn" id="tab-history" onclick="switchTab('history')">
-          <i class="bi bi-clock-history"></i>
-          <span class="tab-label">History &amp; Drafts</span>
-        </button>
-      </li>
-      <li>
-        <button class="tab-btn" id="tab-payment" onclick="switchTab('payment')">
-          <i class="bi bi-credit-card"></i>
-          <span class="tab-label">Payment Tracking</span>
+          <i class="bi bi-journal-text"></i>
+          <span class="tab-label">Claim Record</span>
         </button>
       </li>
     </ul>
@@ -865,6 +859,7 @@
                     <th style="width:130px">Type</th>
                     <th style="width:110px">Invoice No</th>
                     <th>Description</th>
+                    <th style="width:130px">Payment Via</th>
                     <th style="width:120px">Amount (RM)</th>
                     <th style="width:44px"></th>
                   </tr>
@@ -878,11 +873,8 @@
             </button>
           </div>
           <div class="card-body-pad" style="background:#f8fafc;border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:flex;gap:.6rem;flex-wrap:wrap">
-            <button id="saveBtn" class="btn btn-warning flex-fill" onclick="submitBatch(true)">
+            <button id="saveBtn" class="btn btn-warning flex-fill" onclick="submitBatch()">
               <i class="bi bi-floppy me-1"></i>Save as Draft
-            </button>
-            <button id="subBtn" class="btn btn-primary flex-fill" onclick="submitBatch(false)">
-              <i class="bi bi-send me-1"></i>Submit Final Claim
             </button>
             <button class="btn btn-sm" style="background:#fff;border:1.5px solid var(--border);color:var(--text-secondary)" onclick="cancelEntry()">
               <i class="bi bi-x-lg"></i>
@@ -892,12 +884,12 @@
       </div>
     </div>
 
-    <!-- ── HISTORY & DRAFTS TAB ───────────────────────────────────── -->
+    <!-- ── CLAIM RECORD TAB ───────────────────────────────────── -->
     <div id="pane-history" class="tab-pane">
       <div class="app-card">
         <div class="card-header-bar">
           <div class="header-icon" style="background:#f3e8ff;color:#7c3aed"><i class="bi bi-journal-text"></i></div>
-          <h6>Claim History &amp; Drafts</h6>
+          <h6>Claim Record</h6>
           <button class="btn btn-sm ms-auto" style="background:var(--bg);border:1px solid var(--border);color:var(--text-secondary);font-size:12px"
                   onclick="loadHistory()">
             <i class="bi bi-arrow-clockwise me-1"></i>Refresh
@@ -919,100 +911,20 @@
           <table class="app-table">
             <thead>
               <tr>
-                <th style="width:40px">
-                  <input type="checkbox" id="histCheckAll" class="form-check-input" onclick="toggleAllHist(this)" aria-label="Select all claims">
-                </th>
                 <th>Ref No</th>
                 <th>Recipient</th>
                 <th>Date</th>
                 <th>Total (RM)</th>
-                <th>Paid (RM)</th>
-                <th>Balance (RM)</th>
                 <th>Status</th>
-                <th>Payment</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="historyBody"></tbody>
           </table>
         </div>
-        <!-- Pay-selected footer (hidden until at least one checkbox ticked) -->
-        <div id="histPayFooter" class="hidden" style="padding:.85rem 1.25rem;background:#f8fafc;border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:flex;align-items:center;gap:.75rem">
-          <span id="histSelCount" style="font-size:13px;color:var(--text-secondary)"></span>
-          <button id="histPayBtn" class="btn btn-success px-4" onclick="payHistorySelected()">
-            <i class="bi bi-check2-circle me-1"></i>Pay Selected
-          </button>
-        </div>
       </div>
     </div>
 
-    <!-- ── PAYMENT TRACKING TAB ───────────────────────────────────── -->
-    <div id="pane-payment" class="tab-pane">
-      <!-- Stats row -->
-      <div class="row g-3 mb-3" id="paymentStats"></div>
-
-      <div class="app-card">
-        <!-- Sub-tab nav -->
-        <div style="display:flex;border-bottom:1.5px solid var(--border)">
-          <button id="paySubTabPending" class="pay-subtab active" onclick="switchPayTab('pending')">
-            <i class="bi bi-hourglass-split"></i>Pending
-          </button>
-          <button id="paySubTabPaid" class="pay-subtab" onclick="switchPayTab('paid')">
-            <i class="bi bi-check2-all"></i>Paid
-          </button>
-        </div>
-
-        <div id="paymentLoader" class="hidden" style="padding:2rem;text-align:center;color:var(--text-muted)">
-          <span class="spinner-sm"></span> Loading payments…
-        </div>
-
-        <!-- Pending sub-pane -->
-        <div id="paySubPending">
-          <div class="table-responsive">
-            <table class="app-table">
-              <thead>
-                <tr>
-                  <th style="width:40px">
-                    <input type="checkbox" id="checkAll" class="form-check-input" onclick="toggleAllPay(this)" aria-label="Select all pending claims">
-                  </th>
-                  <th>Ref No</th>
-                  <th>Recipient</th>
-                  <th>Amount (RM)</th>
-                  <th>Details</th>
-                  <th>Submitted Date</th>
-                  <th>Paid Date</th>
-                </tr>
-              </thead>
-              <tbody id="pendingBody"></tbody>
-            </table>
-          </div>
-          <div style="padding:.85rem 1.25rem;background:#f8fafc;border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius)">
-            <button id="payBtn" class="btn btn-success px-4" onclick="processPayment()">
-              <i class="bi bi-check2-circle me-1"></i>Mark Selected as Paid
-            </button>
-          </div>
-        </div>
-
-        <!-- Paid sub-pane -->
-        <div id="paySubPaid" class="hidden">
-          <div class="table-responsive">
-            <table class="app-table">
-              <thead>
-                <tr>
-                  <th>Ref No</th>
-                  <th>Recipient</th>
-                  <th>Amount (RM)</th>
-                  <th>Details</th>
-                  <th>Submitted Date</th>
-                  <th>Paid Date</th>
-                </tr>
-              </thead>
-              <tbody id="paidBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
 
   </div><!-- /contentArea -->
 
@@ -1038,10 +950,15 @@
           <table class="app-table" style="width:100%">
             <thead>
               <tr>
+                <th style="width:36px;text-align:center">
+                  <input type="checkbox" class="form-check-input" id="panelCheckAll"
+                    onchange="toggleAllPanelItems(this)" aria-label="Select all items">
+                </th>
                 <th>Date</th>
                 <th>Type</th>
                 <th>Invoice No</th>
                 <th>Description</th>
+                <th style="width:75px">Pay Via</th>
                 <th style="text-align:right">Amount (RM)</th>
               </tr>
             </thead>
@@ -1049,22 +966,22 @@
           </table>
       </div>
     </div>
-    <!-- Footer: summary stats + optional Pay button -->
+    <!-- Footer: summary + submit draft + generate report -->
     <div id="panelFooter" class="panel-footer hidden">
       <div id="panelSummary" class="panel-summary"></div>
-      <div id="panelPaySection" class="hidden">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;font-size:.82rem">
-          <span id="panelSelCount" style="color:var(--text-secondary)">0 items selected</span>
-          <span id="panelSelTotal" style="font-weight:700;color:var(--accent)">RM 0.00</span>
-        </div>
-        <button id="panelPayBtn" class="btn btn-success w-100" onclick="payFromPanel()" disabled>
-          <i class="bi bi-check2-circle me-1"></i>Pay Selected
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;font-size:.82rem">
+        <span id="panelSelCount" style="color:var(--text-secondary)">0 items selected</span>
+        <span id="panelSelTotal" style="font-weight:700;color:var(--accent)">RM 0.00</span>
+      </div>
+      <div id="panelSubmitSection" class="hidden" style="margin-bottom:.5rem">
+        <button id="panelSubmitBtn" class="btn btn-primary w-100" onclick="submitDraftFromPanel()">
+          <i class="bi bi-send me-1"></i>Submit Claim
         </button>
       </div>
-      <div style="margin-top:.6rem">
+      <div>
         <button class="btn btn-sm w-100" style="background:#f0fdf4;color:var(--success);border:1px solid #bbf7d0;font-size:12px"
                 onclick="generateReport(panelCurrentRef)">
-          <i class="bi bi-printer me-1"></i>Print / Download Report
+          <i class="bi bi-printer me-1"></i>Print / Generate Report
         </button>
       </div>
     </div>
@@ -1105,8 +1022,7 @@ function switchTab(name) {
   document.getElementById("pane-" + name).classList.add("active");
   document.getElementById("tab-" + name).classList.add("active");
 
-  if (name === "history")  loadHistory();
-  if (name === "payment")  loadPaymentList();
+  if (name === "history") loadHistory();
 }
 
 // ── auth helpers ───────────────────────────────────────────────────────────
@@ -1210,16 +1126,22 @@ function addRow(data = {}) {
   const tr = document.createElement("tr");
   tr.className = "item-row";
 
-  const types = ["Petrol","TnG","Refreshment","Medical","Others"];
-  const opts  = types.map(t =>
+  const types   = ["Petrol","TnG","Refreshment","Medical","Others"];
+  const typeOpts = types.map(t =>
     `<option${t === data.type ? " selected" : ""}>${esc(t)}</option>`
+  ).join("");
+
+  const payVias = ["Cash","MBB 1","MBB 2","CIMB","SC","UOB"];
+  const viaOpts = payVias.map(v =>
+    `<option${v === data.paymentVia ? " selected" : ""}>${esc(v)}</option>`
   ).join("");
 
   tr.innerHTML = `
     <td><input type="date" class="table-input i-date" value="${esc(data.date || "")}"></td>
-    <td><select class="table-input i-type">${opts}</select></td>
+    <td><select class="table-input i-type">${typeOpts}</select></td>
     <td><input type="text" class="table-input i-inv" value="${esc(data.invNo || "")}" placeholder="INV-" maxlength="50" style="text-transform:uppercase"></td>
     <td><input type="text" class="table-input i-desc" value="${esc(data.description || "")}" placeholder="Description" maxlength="200" style="text-transform:uppercase"></td>
+    <td><select class="table-input i-via">${viaOpts}</select></td>
     <td>
       <div style="display:flex;align-items:center;gap:4px">
         <span style="font-size:12px;color:var(--text-secondary);font-weight:500">RM</span>
@@ -1240,7 +1162,8 @@ function calc() {
   document.getElementById("grandTotal").textContent = total.toFixed(2);
 }
 
-function submitBatch(isDraft) {
+function submitBatch() {
+  const isDraft = true; // Claim Form always saves as draft
   const rows = document.querySelectorAll(".item-row");
   if (!rows.length) { toast("Add at least one line item before saving.", true); return; }
 
@@ -1255,6 +1178,7 @@ function submitBatch(isDraft) {
       type:        r.querySelector(".i-type").value,
       invNo:       r.querySelector(".i-inv").value.toUpperCase(),
       description: r.querySelector(".i-desc").value.toUpperCase(),
+      paymentVia:  r.querySelector(".i-via").value,
       amount:      isNaN(amount) ? 0 : amount
     });
   });
@@ -1262,20 +1186,16 @@ function submitBatch(isDraft) {
   if (!valid) { toast("Please fill in all dates and enter valid amounts.", true); return; }
 
   const saveLbl = '<i class="bi bi-floppy me-1"></i>Save as Draft';
-  const subLbl  = '<i class="bi bi-send me-1"></i>Submit Final Claim';
-  setBtn("saveBtn", '<span class="spinner-sm"></span> Saving…',     true);
-  setBtn("subBtn",  '<span class="spinner-sm"></span> Submitting…', true);
+  setBtn("saveBtn", '<span class="spinner-sm"></span> Saving…', true);
 
   google.script.run
     .withSuccessHandler(res => {
       setBtn("saveBtn", saveLbl, false);
-      setBtn("subBtn",  subLbl,  false);
       toast(res.message, !res.success);
-      if (res.success) { cancelEntry(); loadHistory(); }
+      if (res.success) { cancelEntry(); }
     })
     .withFailureHandler(() => {
       setBtn("saveBtn", saveLbl, false);
-      setBtn("subBtn",  subLbl,  false);
       toast("Server error. Please try again.", true);
     })
     .saveBatchClaims(
@@ -1295,14 +1215,13 @@ function cancelEntry() {
   calc();
 }
 
-// ── history ────────────────────────────────────────────────────────────────
+// ── history / claim record ─────────────────────────────────────────────────
 function loadHistory() {
   const loader = document.getElementById("historyLoader");
   const body   = document.getElementById("historyBody");
   loader.classList.remove("hidden");
   body.innerHTML = "";
   document.getElementById("historySearch").value = "";
-  document.getElementById("histPayFooter").classList.add("hidden");
 
   google.script.run
     .withSuccessHandler(data => {
@@ -1312,7 +1231,7 @@ function loadHistory() {
     })
     .withFailureHandler(() => {
       loader.classList.add("hidden");
-      toast("Failed to load history.", true);
+      toast("Failed to load claims.", true);
     })
     .getUserClaims(currentUser.userId);
 }
@@ -1332,11 +1251,9 @@ function filterHistory() {
 function renderHistory(data) {
   const body = document.getElementById("historyBody");
   body.innerHTML = "";
-  document.getElementById("histCheckAll").checked = false;
-  document.getElementById("histPayFooter").classList.add("hidden");
 
   if (!data.length) {
-    body.innerHTML = `<tr><td colspan="10">
+    body.innerHTML = `<tr><td colspan="6">
       <div class="empty-state">
         <i class="bi bi-inbox"></i>
         <p>No claims found. Start a new draft from the Claim Form tab.</p>
@@ -1351,34 +1268,14 @@ function renderHistory(data) {
     const initials      = getInitials(r.recipient);
     const shortName     = esc(r.recipient.split(" ").filter(Boolean).pop() || r.recipient);
     const formattedDate = formatDate(r.date);
-    const amountPaid    = r.amountPaid || 0;
-    const balance       = r.total - amountPaid;
-    const isPayable     = r.status === "Submitted" && r.payStatus !== "Paid";
 
-    // Checkbox cell (only enabled for payable rows)
-    const chkCell = document.createElement("td");
-    if (isPayable) {
-      const chk = document.createElement("input");
-      chk.type      = "checkbox";
-      chk.className = "form-check-input hist-chk";
-      chk.value     = r.refNo;
-      chk.setAttribute("aria-label", "Select claim " + r.refNo);
-      chk.onchange  = updateHistPayFooter;
-      chkCell.appendChild(chk);
-    }
-    tr.appendChild(chkCell);
-
-    // Clickable Ref No pill
-    const refCell = document.createElement("td");
-    const refBtn  = document.createElement("button");
-    refBtn.className   = "ref-pill ref-pill-btn";
-    refBtn.textContent = r.refNo;
-    refBtn.title       = "Click to view details";
-    refBtn.onclick     = () => openDetailPanel(r.refNo, { total: r.total, amountPaid, balance, isPayable });
-    refCell.appendChild(refBtn);
-    tr.appendChild(refCell);
-
-    tr.insertAdjacentHTML("beforeend", `
+    tr.innerHTML = `
+      <td>
+        <button class="ref-pill ref-pill-btn" title="Click to view details"
+                onclick="openDetailPanel('${esc(r.refNo)}','${esc(r.status)}')">
+          ${esc(r.refNo)}
+        </button>
+      </td>
       <td>
         <div class="recipient-tag">
           <span class="initials">${initials}</span>
@@ -1387,70 +1284,29 @@ function renderHistory(data) {
       </td>
       <td style="color:var(--text-secondary);font-size:.82rem">${formattedDate}</td>
       <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
-      <td style="font-weight:600;color:var(--success)">RM ${amountPaid.toFixed(2)}</td>
-      <td style="font-weight:600;color:${balance > 0 ? "var(--danger)" : "var(--success)"}">RM ${balance.toFixed(2)}</td>
       <td><span class="badge-status badge-${esc(r.status)}">${esc(r.status)}</span></td>
-      <td><span class="badge-status badge-${esc(r.payStatus)}">${esc(r.payStatus)}</span></td>
-      <td></td>`);
+      <td></td>`;
 
     const actionCell = tr.lastElementChild;
     if (r.status === "Draft") {
-      const btn = document.createElement("button");
-      btn.className    = "btn btn-sm";
-      btn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
-      btn.innerHTML    = '<i class="bi bi-pencil me-1"></i>Edit';
-      btn.onclick      = () => editDraft(r.refNo, r.recipient);
-      actionCell.appendChild(btn);
-    } else {
-      const btn = document.createElement("button");
-      btn.className    = "btn btn-sm";
-      btn.style.cssText = "background:#f0fdf4;color:var(--success);border:none;font-size:12px";
-      btn.innerHTML    = '<i class="bi bi-printer me-1"></i>Report';
-      btn.onclick      = () => generateReport(r.refNo);
-      actionCell.appendChild(btn);
+      const editBtn = document.createElement("button");
+      editBtn.className    = "btn btn-sm me-1";
+      editBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
+      editBtn.innerHTML    = '<i class="bi bi-pencil me-1"></i>Edit';
+      editBtn.onclick      = () => editDraft(r.refNo, r.recipient);
+      actionCell.appendChild(editBtn);
     }
+    // View button for all claims
+    const viewBtn = document.createElement("button");
+    viewBtn.className    = "btn btn-sm";
+    viewBtn.style.cssText = "background:var(--bg);border:1px solid var(--border);color:var(--text-secondary);font-size:12px";
+    viewBtn.innerHTML    = '<i class="bi bi-eye me-1"></i>View';
+    viewBtn.onclick      = () => openDetailPanel(r.refNo, r.status);
+    actionCell.appendChild(viewBtn);
+
     frag.appendChild(tr);
   });
   body.appendChild(frag);
-}
-
-function toggleAllHist(src) {
-  document.querySelectorAll(".hist-chk").forEach(c => c.checked = src.checked);
-  updateHistPayFooter();
-}
-
-function updateHistPayFooter() {
-  const sel     = document.querySelectorAll(".hist-chk:checked");
-  const footer  = document.getElementById("histPayFooter");
-  const countEl = document.getElementById("histSelCount");
-  if (sel.length) {
-    footer.classList.remove("hidden");
-    countEl.textContent = sel.length + " claim" + (sel.length > 1 ? "s" : "") + " selected";
-  } else {
-    footer.classList.add("hidden");
-  }
-  // Sync header checkbox state
-  const allChks = document.querySelectorAll(".hist-chk");
-  document.getElementById("histCheckAll").checked    = allChks.length > 0 && sel.length === allChks.length;
-  document.getElementById("histCheckAll").indeterminate = sel.length > 0 && sel.length < allChks.length;
-}
-
-function payHistorySelected() {
-  const sel = Array.from(document.querySelectorAll(".hist-chk:checked")).map(c => c.value);
-  if (!sel.length) { toast("Please select at least one claim to pay.", true); return; }
-
-  setBtn("histPayBtn", '<span class="spinner-sm"></span> Processing…', true);
-  google.script.run
-    .withSuccessHandler(res => {
-      setBtn("histPayBtn", '<i class="bi bi-check2-circle me-1"></i>Pay Selected', false);
-      toast(res.success ? "Payment recorded successfully." : "Update failed.", !res.success);
-      if (res.success) loadHistory();
-    })
-    .withFailureHandler(() => {
-      setBtn("histPayBtn", '<i class="bi bi-check2-circle me-1"></i>Pay Selected', false);
-      toast("Server error.", true);
-    })
-    .processPayments(sel, currentUser.userId);
 }
 
 function editDraft(ref, rec) {
@@ -1460,11 +1316,10 @@ function editDraft(ref, rec) {
     if (sel.options[i].value === rec) { sel.selectedIndex = i; break; }
   }
 
-  // Switch to claim form tab first
   switchTab("claim");
   openEntryStep(ref, rec);
   document.getElementById("itemTableBody").innerHTML =
-    `<tr class="loading-row"><td colspan="6"><span class="spinner-sm"></span> Loading draft…</td></tr>`;
+    `<tr class="loading-row"><td colspan="7"><span class="spinner-sm"></span> Loading draft…</td></tr>`;
 
   google.script.run
     .withSuccessHandler(items => {
@@ -1478,9 +1333,8 @@ function editDraft(ref, rec) {
 }
 
 // ── claim detail side panel ────────────────────────────────────────────────
-// isDirectorView = true → fetch via getClaimDetails (no ownership filter, for payment tab)
-// isDirectorView = false/omitted → fetch via getDraftDetails (own claims only, for history tab)
-function openDetailPanel(refNo, summaryData, isDirectorView) {
+// claimStatus: "Draft" | "Submitted"
+function openDetailPanel(refNo, claimStatus) {
   panelCurrentRef = refNo;
   document.getElementById("panelRefLabel").textContent = refNo;
   document.getElementById("panelBody").innerHTML = "";
@@ -1488,7 +1342,14 @@ function openDetailPanel(refNo, summaryData, isDirectorView) {
   document.getElementById("panelLoader").classList.remove("hidden");
   document.getElementById("panelContent").classList.add("hidden");
   document.getElementById("panelFooter").classList.add("hidden");
-  document.getElementById("panelPaySection").classList.add("hidden");
+
+  // Reset checkbox header
+  const chkAll = document.getElementById("panelCheckAll");
+  if (chkAll) { chkAll.checked = false; chkAll.indeterminate = false; }
+
+  // Show / hide Submit button depending on claim status
+  document.getElementById("panelSubmitSection")
+    .classList.toggle("hidden", claimStatus !== "Draft");
 
   document.getElementById("sidePanelOverlay").classList.add("panel-open");
   document.getElementById("sidePanel").classList.add("panel-open");
@@ -1500,101 +1361,57 @@ function openDetailPanel(refNo, summaryData, isDirectorView) {
       document.getElementById("panelContent").classList.remove("hidden");
       document.getElementById("panelFooter").classList.remove("hidden");
 
-      const { total, amountPaid, balance, isPayable } = summaryData;
-
-      // Always rebuild the checkbox column header from scratch on each open
-      // so stale state from a previous panel view never bleeds through.
-      const thead = document.querySelector("#sidePanel .app-table thead tr");
-      const existingChkTh = thead.querySelector(".panel-chk-th");
-      if (existingChkTh) existingChkTh.remove();
-      if (isPayable) {
-        const th = document.createElement("th");
-        th.className = "panel-chk-th";
-        th.style.cssText = "width:40px;min-width:40px;text-align:center";
-        th.innerHTML = `<input type="checkbox" class="form-check-input" id="panelCheckAll"
-          onchange="toggleAllPanelItems(this)" aria-label="Select all items">`;
-        thead.insertBefore(th, thead.firstElementChild);
-      }
-
       const tbody = document.getElementById("panelBody");
-      const colSpan = isPayable ? 6 : 5;
       if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;padding:2rem;color:var(--text-muted)">No items found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">No items found.</td></tr>`;
       } else {
+        let total = 0;
         const frag = document.createDocumentFragment();
         items.forEach(it => {
-          const tr       = document.createElement("tr");
-          const itemPaid = it.payStatus === "Paid";
-          const amount   = parseFloat(it.amount || 0);
+          const tr     = document.createElement("tr");
+          const amount = parseFloat(it.amount || 0);
+          total += amount;
           tr.dataset.amount = amount;
-
-          let cells = "";
-          if (isPayable) {
-            if (itemPaid) {
-              // Already paid: show a filled check icon — NOT selectable
-              cells += `<td style="text-align:center;padding-left:4px">
-                <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:1rem" title="Already paid"></i>
-              </td>`;
-            } else {
-              // Unpaid: show a checkbox so the user can select it
-              cells += `<td style="text-align:center;padding-left:4px">
-                <input type="checkbox" class="form-check-input panel-item-chk"
-                  value="${esc(it.rowNum)}"
-                  onchange="updatePanelSelectionFooter()"
-                  aria-label="Select ${esc(it.description || "item")}">
-              </td>`;
-            }
-          }
-
-          const opacity  = itemPaid ? "opacity:.55;" : "";
-          const amtColor = itemPaid ? "color:var(--success);" : "";
-          cells += `
-            <td style="${opacity}color:var(--text-secondary);font-size:.82rem">${esc(formatDate(it.date))}</td>
-            <td style="${opacity}">${esc(it.type || "")}</td>
-            <td style="${opacity}font-family:monospace;font-size:.82rem">${esc(it.invNo || "—")}</td>
-            <td style="${opacity}">${esc(it.description || "")}</td>
-            <td style="text-align:right;font-weight:600;${amtColor}${opacity}">RM ${amount.toFixed(2)}</td>`;
-          tr.innerHTML = cells;
-          if (itemPaid) tr.style.background = "#f0fdf4";
+          tr.dataset.rowNum = it.rowNum;
+          tr.innerHTML = `
+            <td style="text-align:center;padding-left:4px">
+              <input type="checkbox" class="form-check-input panel-item-chk"
+                value="${it.rowNum}"
+                onchange="updatePanelSelectionInfo()"
+                aria-label="Select ${esc(it.description || "item")}">
+            </td>
+            <td style="color:var(--text-secondary);font-size:.82rem">${esc(formatDate(it.date))}</td>
+            <td>${esc(it.type || "")}</td>
+            <td style="font-family:monospace;font-size:.82rem">${esc(it.invNo || "—")}</td>
+            <td>${esc(it.description || "")}</td>
+            <td style="font-size:.8rem;color:var(--text-secondary)">${esc(it.paymentVia || "")}</td>
+            <td style="text-align:right;font-weight:600">RM ${amount.toFixed(2)}</td>`;
           frag.appendChild(tr);
         });
         tbody.appendChild(frag);
-      }
 
-      document.getElementById("panelSummary").innerHTML = `
-        <div style="text-align:right">
-          <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Total Claim</div>
-          <div style="font-size:1rem;font-weight:700;color:var(--text)">RM ${total.toFixed(2)}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Amount Paid</div>
-          <div style="font-size:1rem;font-weight:700;color:var(--success)">RM ${amountPaid.toFixed(2)}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Balance</div>
-          <div style="font-size:1rem;font-weight:700;color:${balance > 0 ? "var(--danger)" : "var(--success)"}">RM ${balance.toFixed(2)}</div>
-        </div>`;
+        document.getElementById("panelSummary").innerHTML = `
+          <div style="text-align:right">
+            <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Total Claim</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text)">RM ${total.toFixed(2)}</div>
+          </div>`;
 
-      if (isPayable) {
-        document.getElementById("panelPaySection").classList.remove("hidden");
-        updatePanelSelectionFooter();
+        updatePanelSelectionInfo();
       }
     })
     .withFailureHandler(() => {
       document.getElementById("panelLoader").classList.add("hidden");
       toast("Failed to load claim details.", true);
     })
-    [isDirectorView ? "getClaimDetails" : "getDraftDetails"](
-      ...(isDirectorView ? [refNo] : [refNo, currentUser.userId])
-    );
+    .getDraftDetails(refNo, currentUser.userId);
 }
 
 function toggleAllPanelItems(src) {
   document.querySelectorAll(".panel-item-chk").forEach(c => c.checked = src.checked);
-  updatePanelSelectionFooter();
+  updatePanelSelectionInfo();
 }
 
-function updatePanelSelectionFooter() {
+function updatePanelSelectionInfo() {
   const checked  = Array.from(document.querySelectorAll(".panel-item-chk:checked"));
   const selTotal = checked.reduce((s, c) => s + parseFloat(c.closest("tr").dataset.amount || 0), 0);
   const allChks  = document.querySelectorAll(".panel-item-chk");
@@ -1602,9 +1419,6 @@ function updatePanelSelectionFooter() {
   document.getElementById("panelSelCount").textContent =
     checked.length + " item" + (checked.length !== 1 ? "s" : "") + " selected";
   document.getElementById("panelSelTotal").textContent = "RM " + selTotal.toFixed(2);
-
-  const btn = document.getElementById("panelPayBtn");
-  if (btn) btn.disabled = checked.length === 0;
 
   const chkAll = document.getElementById("panelCheckAll");
   if (chkAll) {
@@ -1620,28 +1434,24 @@ function closeDetailPanel() {
   panelCurrentRef = null;
 }
 
-function payFromPanel() {
+function submitDraftFromPanel() {
   if (!panelCurrentRef) return;
-  const rowNums = Array.from(document.querySelectorAll(".panel-item-chk:checked"))
-                       .map(c => parseInt(c.value, 10));
-  if (!rowNums.length) { toast("Please select at least one item to pay.", true); return; }
-
-  setBtn("panelPayBtn", '<span class="spinner-sm"></span> Processing…', true);
+  setBtn("panelSubmitBtn", '<span class="spinner-sm"></span> Submitting…', true);
   google.script.run
     .withSuccessHandler(res => {
-      setBtn("panelPayBtn", '<i class="bi bi-check2-circle me-1"></i>Pay Selected', false);
-      toast(res.success ? "Payment recorded successfully." : "Update failed.", !res.success);
+      setBtn("panelSubmitBtn", '<i class="bi bi-send me-1"></i>Submit Claim', false);
+      toast(res.success ? "Claim submitted successfully." : (res.message || "Update failed."), !res.success);
       if (res.success) {
+        document.getElementById("panelSubmitSection").classList.add("hidden");
         closeDetailPanel();
-        if (document.getElementById("pane-history").classList.contains("active"))  loadHistory();
-        if (document.getElementById("pane-payment").classList.contains("active"))  loadPaymentList();
+        loadHistory();
       }
     })
     .withFailureHandler(() => {
-      setBtn("panelPayBtn", '<i class="bi bi-check2-circle me-1"></i>Pay Selected', false);
+      setBtn("panelSubmitBtn", '<i class="bi bi-send me-1"></i>Submit Claim', false);
       toast("Server error.", true);
     })
-    .processRowPayments(rowNums, currentUser.userId);
+    .submitDraft(panelCurrentRef, currentUser.userId);
 }
 
 document.addEventListener("keydown", e => {
@@ -1649,151 +1459,6 @@ document.addEventListener("keydown", e => {
     closeDetailPanel();
   }
 });
-
-// ── payments ───────────────────────────────────────────────────────────────
-function switchPayTab(name) {
-  const isPending = name === "pending";
-  document.getElementById("paySubPending").classList.toggle("hidden", !isPending);
-  document.getElementById("paySubPaid").classList.toggle("hidden",    isPending);
-  document.getElementById("paySubTabPending").classList.toggle("active",  isPending);
-  document.getElementById("paySubTabPaid").classList.toggle("active",    !isPending);
-}
-
-function loadPaymentList() {
-  const loader = document.getElementById("paymentLoader");
-  const stats  = document.getElementById("paymentStats");
-  loader.classList.remove("hidden");
-  document.getElementById("pendingBody").innerHTML = "";
-  document.getElementById("paidBody").innerHTML    = "";
-  stats.innerHTML = "";
-  document.getElementById("checkAll").checked = false;
-
-  google.script.run
-    .withSuccessHandler(data => {
-      loader.classList.add("hidden");
-
-      const pending      = data.filter(r => r.status === "Submitted" && r.payStatus !== "Paid");
-      const paid         = data.filter(r => r.payStatus === "Paid");
-      const pendingTotal = pending.reduce((s, r) => s + (r.total - (r.amountPaid || 0)), 0);
-      const paidTotal    = paid.reduce((s, r) => s + r.total, 0);
-
-      stats.innerHTML = `
-        <div class="col-6 col-md-3">
-          <div class="stat-card">
-            <div class="stat-label">Pending Claims</div>
-            <div class="stat-value" style="color:var(--info)">${pending.length}</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="stat-card">
-            <div class="stat-label">Total Pending</div>
-            <div class="stat-value" style="color:var(--danger)">RM ${pendingTotal.toFixed(2)}</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="stat-card">
-            <div class="stat-label">Paid Claims</div>
-            <div class="stat-value" style="color:var(--success)">${paid.length}</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="stat-card">
-            <div class="stat-label">Total Paid</div>
-            <div class="stat-value" style="color:var(--success)">RM ${paidTotal.toFixed(2)}</div>
-          </div>
-        </div>`;
-
-      // ── Pending table ───────────────────────────────────────────────────
-      const pendingBody = document.getElementById("pendingBody");
-      if (!pending.length) {
-        pendingBody.innerHTML = `<tr><td colspan="7">
-          <div class="empty-state">
-            <i class="bi bi-check-circle" style="color:var(--success)"></i>
-            <p>No pending payments. All submitted claims have been processed.</p>
-          </div></td></tr>`;
-      } else {
-        const frag = document.createDocumentFragment();
-        pending.forEach(r => {
-          const tr     = document.createElement("tr");
-          const detBtn = document.createElement("button");
-          detBtn.className  = "btn btn-sm";
-          detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
-          detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
-          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: r.amountPaid || 0, balance: r.total - (r.amountPaid || 0), isPayable: true }, true);
-
-          tr.innerHTML = `
-            <td><input type="checkbox" class="form-check-input pay-chk" value="${esc(r.refNo)}"></td>
-            <td><span class="ref-pill">${esc(r.refNo)}</span></td>
-            <td style="color:var(--text-secondary)">${esc(r.recipient)}</td>
-            <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
-            <td></td>
-            <td style="color:var(--text-secondary);font-size:.82rem">${formatDate(r.date)}</td>
-            <td style="color:var(--text-muted);font-size:.82rem">—</td>`;
-          tr.children[4].appendChild(detBtn);
-          frag.appendChild(tr);
-        });
-        pendingBody.appendChild(frag);
-      }
-
-      // ── Paid table ──────────────────────────────────────────────────────
-      const paidBody = document.getElementById("paidBody");
-      if (!paid.length) {
-        paidBody.innerHTML = `<tr><td colspan="6">
-          <div class="empty-state">
-            <i class="bi bi-inbox"></i>
-            <p>No paid claims yet.</p>
-          </div></td></tr>`;
-      } else {
-        const frag = document.createDocumentFragment();
-        paid.forEach(r => {
-          const tr     = document.createElement("tr");
-          const detBtn = document.createElement("button");
-          detBtn.className  = "btn btn-sm";
-          detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
-          detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
-          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: r.total, balance: 0, isPayable: false }, true);
-
-          tr.innerHTML = `
-            <td><span class="ref-pill">${esc(r.refNo)}</span></td>
-            <td style="color:var(--text-secondary)">${esc(r.recipient)}</td>
-            <td style="font-weight:600">RM ${r.total.toFixed(2)}</td>
-            <td></td>
-            <td style="color:var(--text-secondary);font-size:.82rem">${formatDate(r.date)}</td>
-            <td style="color:var(--text-secondary);font-size:.82rem">${formatDate(r.paymentDate)}</td>`;
-          tr.children[3].appendChild(detBtn);
-          frag.appendChild(tr);
-        });
-        paidBody.appendChild(frag);
-      }
-    })
-    .withFailureHandler(() => {
-      loader.classList.add("hidden");
-      toast("Failed to load payment data.", true);
-    })
-    .getAllClaims();
-}
-
-function processPayment() {
-  const sel = Array.from(document.querySelectorAll(".pay-chk:checked")).map(c => c.value);
-  if (!sel.length) { toast("Please select at least one claim to mark as paid.", true); return; }
-
-  setBtn("payBtn", '<span class="spinner-sm"></span> Updating…', true);
-  google.script.run
-    .withSuccessHandler(res => {
-      setBtn("payBtn", '<i class="bi bi-check2-circle me-1"></i>Mark Selected as Paid', false);
-      toast(res.success ? "Payment recorded successfully." : "Update failed.", !res.success);
-      if (res.success) loadPaymentList();
-    })
-    .withFailureHandler(() => {
-      setBtn("payBtn", '<i class="bi bi-check2-circle me-1"></i>Mark Selected as Paid', false);
-      toast("Server error.", true);
-    })
-    .processPayments(sel, currentUser.userId);
-}
-
-function toggleAllPay(src) {
-  document.querySelectorAll(".pay-chk").forEach(c => c.checked = src.checked);
-}
 
 // ── utils ──────────────────────────────────────────────────────────────────
 function esc(str) {
@@ -1821,10 +1486,20 @@ function formatDate(dateStr) {
 // ── report generation ──────────────────────────────────────────────────────
 function generateReport(refNo) {
   if (!refNo) return;
+
+  // Collect selected row nums from panel (if any)
+  const checked = Array.from(document.querySelectorAll(".panel-item-chk:checked"))
+                       .map(c => parseInt(c.value, 10));
+
   toast("Generating report…");
   google.script.run
     .withSuccessHandler(data => {
       if (!data) { toast("Report data not found.", true); return; }
+      // Filter to selected items when user has made a selection
+      if (checked.length) {
+        data.items = data.items.filter(it => checked.includes(it.rowNum));
+        data.total = data.items.reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
+      }
       renderAndPrintReport(data);
     })
     .withFailureHandler(() => toast("Failed to generate report.", true))
@@ -1841,6 +1516,7 @@ function renderAndPrintReport(d) {
       <td>${esc(it.type || "")}</td>
       <td style="font-family:monospace">${esc(it.invNo || "—")}</td>
       <td>${esc(it.description || "")}</td>
+      <td>${esc(it.paymentVia || "")}</td>
       <td style="text-align:right">${fmt(it.amount)}</td>
     </tr>`).join("");
 
@@ -1892,13 +1568,14 @@ function renderAndPrintReport(d) {
             <th style="width:88px">Type</th>
             <th style="width:110px">Invoice No</th>
             <th>Description</th>
+            <th style="width:75px">Pay Via</th>
             <th style="width:90px;text-align:right">Amount (RM)</th>
           </tr>
         </thead>
         <tbody>${itemRows}</tbody>
         <tfoot>
           <tr>
-            <td colspan="5" style="text-align:right;padding-right:.75rem">TOTAL (RM)</td>
+            <td colspan="6" style="text-align:right;padding-right:.75rem">TOTAL (RM)</td>
             <td style="text-align:right">${fmt(d.total)}</td>
           </tr>
         </tfoot>
