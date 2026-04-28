@@ -183,7 +183,6 @@ function getUserClaims(userId) {
 
     const ref = data[i][0].toString();
     if (!grouped[ref]) {
-      // Format the Timestamp as a plain date string to avoid JSON serialization issues
       let dateStr = "";
       if (data[i][12]) {
         try {
@@ -200,16 +199,32 @@ function getUserClaims(userId) {
         refNo:        ref,
         recipient:    data[i][2] || "",
         total:        0,
+        amountPaid:   0,
+        _paidCount:   0,
+        _rowCount:    0,
         status:       data[i][9]  || "",
-        payStatus:    data[i][10] || "",
+        payStatus:    "Unpaid",   // recomputed below
         date:         dateStr,
         paymentDate:  paymentDateStr
       };
     }
-    grouped[ref].total += parseFloat(data[i][7]) || 0;
+    const amount = parseFloat(data[i][7]) || 0;
+    grouped[ref].total      += amount;
+    grouped[ref]._rowCount  += 1;
+    if ((data[i][10] || "").toString() === "Paid") {
+      grouped[ref]._paidCount += 1;
+      grouped[ref].amountPaid += amount;
+    }
   }
 
-  return Object.values(grouped).sort((a, b) => {
+  return Object.values(grouped).map(g => {
+    g.payStatus = g._paidCount === 0           ? "Unpaid"
+                : g._paidCount === g._rowCount ? "Paid"
+                :                                "Partial";
+    delete g._paidCount;
+    delete g._rowCount;
+    return g;
+  }).sort((a, b) => {
     const da = a.date ? new Date(a.date) : new Date(0);
     const db = b.date ? new Date(b.date) : new Date(0);
     return db - da;
@@ -242,7 +257,9 @@ function getDraftDetails(refNo, userId) {
       type:        data[i][4],
       invNo:       data[i][5],
       description: data[i][6],
-      amount:      data[i][7]
+      amount:      data[i][7],
+      rowNum:      i + 1,              // 1-based sheet row, used for per-item payment
+      payStatus:   (data[i][10] || "").toString()
     });
   }
   return rows;
@@ -270,5 +287,31 @@ function processPayments(refNoList, userId) {
     sheet.getRange(i + 1, 11).setValue("Paid");
     sheet.getRange(i + 1, 12).setValue(today);
   }
+  return { success: true };
+}
+
+// Marks individual sheet rows (by 1-based row number) as Paid.
+// Used by the per-item selection in the claim detail side panel.
+function processRowPayments(rowNums, userId) {
+  userId = sanitize(userId);
+  if (!userId) return { success: false, message: "Unauthorised." };
+  if (!Array.isArray(rowNums) || !rowNums.length)
+    return { success: false, message: "No rows provided." };
+
+  const sheet = getSheet("App_Claims");
+  const data  = sheet.getDataRange().getValues();
+  const today = new Date();
+
+  rowNums.forEach(rowNum => {
+    const idx = Number(rowNum);
+    if (!Number.isInteger(idx) || idx < 2 || idx > data.length) return; // skip header + OOB
+    const i = idx - 1; // 0-based index into data array
+    if (data[i][1].toString() !== userId)       return; // ownership check
+    if (data[i][9].toString() !== "Submitted")  return; // only submitted claims
+    if ((data[i][10] || "").toString() === "Paid") return; // skip already-paid rows
+    sheet.getRange(idx, 11).setValue("Paid");
+    sheet.getRange(idx, 12).setValue(today);
+  });
+
   return { success: true };
 }

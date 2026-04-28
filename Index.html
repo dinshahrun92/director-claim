@@ -325,6 +325,7 @@
     .badge-Submitted { background: var(--info-bg);    color: var(--info); }
     .badge-Paid      { background: var(--success-bg); color: var(--success); }
     .badge-Unpaid    { background: var(--danger-bg);  color: var(--danger); }
+    .badge-Partial   { background: #fff7ed;            color: #c2410c; }
 
     /* ── Ref pill ──────────────────────────────────────────────────────── */
     .ref-pill {
@@ -898,8 +899,12 @@
     <div id="panelFooter" class="panel-footer hidden">
       <div id="panelSummary" class="panel-summary"></div>
       <div id="panelPaySection" class="hidden">
-        <button id="panelPayBtn" class="btn btn-success w-100" onclick="payFromPanel()">
-          <i class="bi bi-check2-circle me-1"></i>Mark as Paid
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;font-size:.82rem">
+          <span id="panelSelCount" style="color:var(--text-secondary)">0 items selected</span>
+          <span id="panelSelTotal" style="font-weight:700;color:var(--accent)">RM 0.00</span>
+        </div>
+        <button id="panelPayBtn" class="btn btn-success w-100" onclick="payFromPanel()" disabled>
+          <i class="bi bi-check2-circle me-1"></i>Pay Selected
         </button>
       </div>
     </div>
@@ -1182,9 +1187,9 @@ function renderHistory(data) {
     const initials      = getInitials(r.recipient);
     const shortName     = esc(r.recipient.split(" ").filter(Boolean).pop() || r.recipient);
     const formattedDate = formatDate(r.date);
-    const amountPaid    = r.payStatus === "Paid" ? r.total : 0;
+    const amountPaid    = r.amountPaid || 0;
     const balance       = r.total - amountPaid;
-    const isPayable     = r.status === "Submitted" && r.payStatus === "Unpaid";
+    const isPayable     = r.status === "Submitted" && r.payStatus !== "Paid";
 
     // Checkbox cell (only enabled for payable rows)
     const chkCell = document.createElement("td");
@@ -1324,25 +1329,58 @@ function openDetailPanel(refNo, summaryData) {
       document.getElementById("panelContent").classList.remove("hidden");
       document.getElementById("panelFooter").classList.remove("hidden");
 
+      const { total, amountPaid, balance, isPayable } = summaryData;
+
+      // Manage checkbox column header
+      const thead = document.querySelector("#sidePanel .app-table thead tr");
+      const existingChkTh = thead.querySelector(".panel-chk-th");
+      if (isPayable && !existingChkTh) {
+        const th = document.createElement("th");
+        th.className = "panel-chk-th";
+        th.style.width = "36px";
+        th.innerHTML = `<input type="checkbox" class="form-check-input" id="panelCheckAll"
+          onclick="toggleAllPanelItems(this)" aria-label="Select all items">`;
+        thead.insertBefore(th, thead.firstChild);
+      } else if (!isPayable && existingChkTh) {
+        existingChkTh.remove();
+      }
+
       const tbody = document.getElementById("panelBody");
+      const colSpan = isPayable ? 6 : 5;
       if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted)">No items found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;padding:2rem;color:var(--text-muted)">No items found.</td></tr>`;
       } else {
         const frag = document.createDocumentFragment();
         items.forEach(it => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td style="color:var(--text-secondary);font-size:.82rem">${esc(formatDate(it.date))}</td>
-            <td>${esc(it.type || "")}</td>
-            <td style="font-family:monospace;font-size:.82rem">${esc(it.invNo || "—")}</td>
-            <td>${esc(it.description || "")}</td>
-            <td style="text-align:right;font-weight:600">RM ${parseFloat(it.amount || 0).toFixed(2)}</td>`;
+          const tr       = document.createElement("tr");
+          const itemPaid = it.payStatus === "Paid";
+          const amount   = parseFloat(it.amount || 0);
+          tr.dataset.amount = amount;
+
+          let cells = "";
+          if (isPayable) {
+            if (itemPaid) {
+              cells += `<td style="text-align:center"><i class="bi bi-check-circle-fill" style="color:var(--success);font-size:.95rem" title="Already paid"></i></td>`;
+            } else {
+              cells += `<td><input type="checkbox" class="form-check-input panel-item-chk" value="${esc(it.rowNum)}" onchange="updatePanelSelectionFooter()" aria-label="Select item"></td>`;
+            }
+          }
+
+          const opacity  = itemPaid ? "opacity:.55;" : "";
+          const amtColor = itemPaid ? "color:var(--success);" : "";
+          cells += `
+            <td style="${opacity}color:var(--text-secondary);font-size:.82rem">${esc(formatDate(it.date))}</td>
+            <td style="${opacity}">${esc(it.type || "")}</td>
+            <td style="${opacity}font-family:monospace;font-size:.82rem">${esc(it.invNo || "—")}</td>
+            <td style="${opacity}">${esc(it.description || "")}</td>
+            <td style="text-align:right;font-weight:600;${amtColor}${opacity}">RM ${amount.toFixed(2)}</td>`;
+          tr.innerHTML = cells;
+          if (itemPaid) tr.style.background = "#f0fdf4";
           frag.appendChild(tr);
         });
         tbody.appendChild(frag);
       }
 
-      const { total, amountPaid, balance, isPayable } = summaryData;
       document.getElementById("panelSummary").innerHTML = `
         <div style="text-align:right">
           <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Total Claim</div>
@@ -1359,6 +1397,7 @@ function openDetailPanel(refNo, summaryData) {
 
       if (isPayable) {
         document.getElementById("panelPaySection").classList.remove("hidden");
+        updatePanelSelectionFooter();
       }
     })
     .withFailureHandler(() => {
@@ -1366,6 +1405,30 @@ function openDetailPanel(refNo, summaryData) {
       toast("Failed to load claim details.", true);
     })
     .getDraftDetails(refNo, currentUser.userId);
+}
+
+function toggleAllPanelItems(src) {
+  document.querySelectorAll(".panel-item-chk").forEach(c => c.checked = src.checked);
+  updatePanelSelectionFooter();
+}
+
+function updatePanelSelectionFooter() {
+  const checked  = Array.from(document.querySelectorAll(".panel-item-chk:checked"));
+  const selTotal = checked.reduce((s, c) => s + parseFloat(c.closest("tr").dataset.amount || 0), 0);
+  const allChks  = document.querySelectorAll(".panel-item-chk");
+
+  document.getElementById("panelSelCount").textContent =
+    checked.length + " item" + (checked.length !== 1 ? "s" : "") + " selected";
+  document.getElementById("panelSelTotal").textContent = "RM " + selTotal.toFixed(2);
+
+  const btn = document.getElementById("panelPayBtn");
+  if (btn) btn.disabled = checked.length === 0;
+
+  const chkAll = document.getElementById("panelCheckAll");
+  if (chkAll) {
+    chkAll.checked       = allChks.length > 0 && checked.length === allChks.length;
+    chkAll.indeterminate = checked.length > 0 && checked.length < allChks.length;
+  }
 }
 
 function closeDetailPanel() {
@@ -1377,10 +1440,14 @@ function closeDetailPanel() {
 
 function payFromPanel() {
   if (!panelCurrentRef) return;
+  const rowNums = Array.from(document.querySelectorAll(".panel-item-chk:checked"))
+                       .map(c => parseInt(c.value, 10));
+  if (!rowNums.length) { toast("Please select at least one item to pay.", true); return; }
+
   setBtn("panelPayBtn", '<span class="spinner-sm"></span> Processing…', true);
   google.script.run
     .withSuccessHandler(res => {
-      setBtn("panelPayBtn", '<i class="bi bi-check2-circle me-1"></i>Mark as Paid', false);
+      setBtn("panelPayBtn", '<i class="bi bi-check2-circle me-1"></i>Pay Selected', false);
       toast(res.success ? "Payment recorded successfully." : "Update failed.", !res.success);
       if (res.success) {
         closeDetailPanel();
@@ -1389,10 +1456,10 @@ function payFromPanel() {
       }
     })
     .withFailureHandler(() => {
-      setBtn("panelPayBtn", '<i class="bi bi-check2-circle me-1"></i>Mark as Paid', false);
+      setBtn("panelPayBtn", '<i class="bi bi-check2-circle me-1"></i>Pay Selected', false);
       toast("Server error.", true);
     })
-    .processPayments([panelCurrentRef], currentUser.userId);
+    .processRowPayments(rowNums, currentUser.userId);
 }
 
 document.addEventListener("keydown", e => {
@@ -1423,9 +1490,9 @@ function loadPaymentList() {
     .withSuccessHandler(data => {
       loader.classList.add("hidden");
 
-      const pending      = data.filter(r => r.status === "Submitted" && r.payStatus === "Unpaid");
+      const pending      = data.filter(r => r.status === "Submitted" && r.payStatus !== "Paid");
       const paid         = data.filter(r => r.payStatus === "Paid");
-      const pendingTotal = pending.reduce((s, r) => s + r.total, 0);
+      const pendingTotal = pending.reduce((s, r) => s + (r.total - (r.amountPaid || 0)), 0);
       const paidTotal    = paid.reduce((s, r) => s + r.total, 0);
 
       stats.innerHTML = `
@@ -1470,7 +1537,7 @@ function loadPaymentList() {
           detBtn.className  = "btn btn-sm";
           detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
           detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
-          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: 0, balance: r.total, isPayable: true });
+          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: r.amountPaid || 0, balance: r.total - (r.amountPaid || 0), isPayable: true });
 
           tr.innerHTML = `
             <td><input type="checkbox" class="form-check-input pay-chk" value="${esc(r.refNo)}"></td>
