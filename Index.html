@@ -339,6 +339,15 @@
       color: var(--text);
       letter-spacing: .02em;
     }
+    .ref-pill-btn {
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .ref-pill-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
 
     /* ── Total display ─────────────────────────────────────────────────── */
     .total-display {
@@ -673,6 +682,8 @@
                 <th>Recipient</th>
                 <th>Date</th>
                 <th>Total (RM)</th>
+                <th>Paid (RM)</th>
+                <th>Balance (RM)</th>
                 <th>Status</th>
                 <th>Payment</th>
                 <th>Action</th>
