@@ -1339,7 +1339,7 @@ function openDetailPanel(refNo, summaryData) {
         th.className = "panel-chk-th";
         th.style.width = "36px";
         th.innerHTML = `<input type="checkbox" class="form-check-input" id="panelCheckAll"
-          onclick="toggleAllPanelItems(this)" aria-label="Select all items">`;
+          onchange="toggleAllPanelItems(this)" aria-label="Select all items">`;
         thead.insertBefore(th, thead.firstChild);
       } else if (!isPayable && existingChkTh) {
         existingChkTh.remove();
@@ -1362,7 +1362,7 @@ function openDetailPanel(refNo, summaryData) {
             if (itemPaid) {
               cells += `<td style="text-align:center"><i class="bi bi-check-circle-fill" style="color:var(--success);font-size:.95rem" title="Already paid"></i></td>`;
             } else {
-              cells += `<td><input type="checkbox" class="form-check-input panel-item-chk" value="${esc(it.rowNum)}" onchange="updatePanelSelectionFooter()" aria-label="Select item"></td>`;
+              cells += `<td><input type="checkbox" class="form-check-input panel-item-chk" value="${esc(it.rowNum)}" onchange="updatePanelSelectionFooter()" aria-label="Select ${esc(it.description || "item")}"></td>`;
             }
           }
 
