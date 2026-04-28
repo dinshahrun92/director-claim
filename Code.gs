@@ -88,10 +88,8 @@ function createInitialDraft(userId, recipient) {
     const refNo = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyMMdd")
                 + "-" + Math.floor(1000 + Math.random() * 9000);
 
-    getSheet("App_Claims").appendRow([
-      refNo, userId, recipient, "", "", "", "New Draft Created",
-      0, "", "Draft", "Unpaid", "", new Date()
-    ]);
+    // RefNo is generated here; the row is only written when saveBatchClaims is called.
+    // This prevents phantom 0-total draft entries from appearing in history.
     return { success: true, refNo };
   } catch (e) {
     return { success: false, message: e.toString() };
@@ -144,6 +142,7 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
       ]);
     });
 
+    SpreadsheetApp.flush(); // ensure rows are committed before any subsequent read
     return { success: true, message: (isDraft ? "Draft saved: " : "Claim submitted: ") + existingRef };
   } catch (e) {
     return { success: false, message: e.toString() };
