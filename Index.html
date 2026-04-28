@@ -1066,6 +1066,53 @@
       word-break: break-all;
     }
     .attachment-name:hover { text-decoration: underline; }
+
+    /* ── Search results ──────────────────────────────────────────────────── */
+    .search-clear-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-4); font-size: .9rem; line-height: 1;
+      padding: 0 .1rem;
+      flex-shrink: 0;
+    }
+    .search-clear-btn:hover { color: var(--rose); }
+    .search-hint {
+      font-size: .75rem; color: var(--ink-3);
+      padding: .3rem 1.25rem .25rem;
+    }
+    .search-results-wrap {
+      padding: .5rem 1.25rem 1rem;
+    }
+    .search-result-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .75rem 1rem;
+      margin-bottom: .55rem;
+      background: var(--surface);
+      display: flex; align-items: flex-start; gap: .75rem;
+      transition: box-shadow .15s;
+    }
+    .search-result-card:hover { box-shadow: var(--shadow-sm); }
+    .src-body { flex: 1; min-width: 0; }
+    .src-desc {
+      font-weight: 600; font-size: .88rem; color: var(--ink);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: .2rem;
+    }
+    .src-meta {
+      font-size: .76rem; color: var(--ink-3);
+      display: flex; flex-wrap: wrap; gap: .3rem .65rem;
+    }
+    .src-meta span { display: inline-flex; align-items: center; gap: .2rem; }
+    .src-right { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; flex-shrink: 0; }
+    .src-amt {
+      font-family: 'DM Mono', monospace;
+      font-weight: 700; font-size: .85rem; color: var(--ink);
+    }
+    .search-no-results {
+      text-align: center; padding: 2rem 1rem;
+      color: var(--ink-3); font-size: .88rem;
+    }
+    .search-no-results i { font-size: 2rem; display: block; margin-bottom: .5rem; }
   </style>
 </head>
 <body>
@@ -1340,17 +1387,32 @@
         </div>
 
         <div class="search-wrap">
-          <div class="search-inner">
-            <i class="bi bi-search"></i>
-            <input id="historySearch" type="text" placeholder="Search ref, recipient, status, description…" oninput="filterHistory()">
+          <div class="search-inner" style="display:flex;align-items:center;gap:.4rem">
+            <i class="bi bi-search" style="flex-shrink:0"></i>
+            <input id="historySearch" type="text"
+                   placeholder="Search descriptions, ref no, type, recipient…"
+                   oninput="onSearchInput()" autocomplete="off"
+                   style="flex:1">
+            <button id="searchClearBtn" class="search-clear-btn hidden"
+                    onclick="clearSearch()" title="Clear search">
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
           </div>
+        </div>
+        <div id="searchHint" class="search-hint hidden">
+          Searching all claim items… <span id="searchHintCount"></span>
+        </div>
+
+        <!-- Search results (shown instead of table when a query is active) -->
+        <div id="searchResultsSection" class="hidden">
+          <div id="searchResultsBody" class="search-results-wrap"></div>
         </div>
 
         <div id="historyLoader" class="hidden" style="padding:2rem;text-align:center;color:var(--ink-3)">
           <span class="spin" style="margin-right:.5rem"></span> Loading claims…
         </div>
 
-        <div class="table-wrap">
+        <div id="historyTableSection" class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
@@ -1473,6 +1535,16 @@
           <i class="bi bi-send"></i> Submit Selected Items
         </button>
       </div>
+      <!-- Mark as Paid — shown for submitted-unpaid items when user is owner -->
+      <div id="panelMarkPaidSection" class="hidden" style="margin-bottom:.6rem">
+        <div class="panel-sel-row" style="margin-bottom:.45rem">
+          <span id="panelPayCount" class="sel-label">0 submitted items selected</span>
+          <span id="panelPayTotal" class="sel-amount">RM 0.00</span>
+        </div>
+        <button id="panelMarkPaidBtn" class="btn btn-success-ghost btn-full" onclick="markPaidFromPanel()">
+          <i class="bi bi-cash-coin"></i> Mark Selected as Paid
+        </button>
+      </div>
       <button class="btn btn-success-ghost btn-sm btn-full" onclick="generateReport(panelCurrentRef)">
         <i class="bi bi-printer"></i> Print / Generate Report
       </button>
@@ -1486,7 +1558,8 @@
 <div id="reportView"></div>
 
 <script>
-const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB — max base64 payload for google.script.run
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB — max file size; base64 adds ~33% overhead
+const SEARCH_DEBOUNCE_MS   = 420;             // ms to wait after typing before firing search
 
 // ── state ─────────────────────────────────────────────────────────────────
 let currentUser     = null;
@@ -1504,6 +1577,9 @@ let settingsWorkingCopy = { claimTypes: [], payVias: [] };
 
 // Attachments for the currently-open draft
 let draftAttachments = [];
+
+// Search debounce
+let searchTimer = null;
 
 // ── recipient selection ───────────────────────────────────────────────────
 function selectRecipient(el, name) {
@@ -1534,8 +1610,13 @@ function switchTab(name) {
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('pane-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
-  if (name === 'history')  loadHistory();
-  else if (name === 'settings') loadSettings(true);
+  if (name === 'history') {
+    // Always clear search and reload fresh history when switching to this tab
+    clearSearch(false);
+    loadHistory();
+  } else if (name === 'settings') {
+    loadSettings(true);
+  }
 }
 
 // ── auth ──────────────────────────────────────────────────────────────────
@@ -1731,7 +1812,6 @@ function loadHistory() {
   const body   = document.getElementById('historyBody');
   loader.classList.remove('hidden');
   body.innerHTML = '';
-  document.getElementById('historySearch').value = '';
 
   google.script.run
     .withSuccessHandler(data => {
@@ -1753,18 +1833,93 @@ function loadHistory() {
     .getUserClaims(currentUser.userId);
 }
 
-function filterHistory() {
-  const q = document.getElementById('historySearch').value.trim().toLowerCase();
-  if (!q) { renderHistory(historyData); return; }
-  renderHistory(historyData.filter(r =>
-    r.refNo.toLowerCase().includes(q)              ||
-    (r.recipient  || '').toLowerCase().includes(q) ||
-    (r.ownerName  || '').toLowerCase().includes(q) ||
-    (r.ownerId    || '').toLowerCase().includes(q) ||
-    (r.status     || '').toLowerCase().includes(q) ||
-    (r.payStatus  || '').toLowerCase().includes(q) ||
-    (r.descText   || '').includes(q)
-  ));
+function onSearchInput() {
+  clearTimeout(searchTimer);
+  const q = document.getElementById('historySearch').value.trim();
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !q);
+
+  if (!q) { clearSearch(false); return; }
+
+  // Show hint immediately
+  document.getElementById('searchHint').classList.remove('hidden');
+  document.getElementById('searchHintCount').textContent = '';
+
+  searchTimer = setTimeout(() => runSearch(q), SEARCH_DEBOUNCE_MS);
+}
+
+function runSearch(q) {
+  if (!q) return;
+  document.getElementById('historyTableSection').classList.add('hidden');
+  document.getElementById('searchResultsSection').classList.remove('hidden');
+  document.getElementById('searchResultsBody').innerHTML =
+    `<div class="search-no-results"><span class="spin"></span> Searching…</div>`;
+
+  google.script.run
+    .withSuccessHandler(results => {
+      document.getElementById('searchHintCount').textContent =
+        results.length ? `${results.length} item${results.length !== 1 ? 's' : ''} found` : '';
+      renderSearchResults(results, q);
+    })
+    .withFailureHandler(() => {
+      document.getElementById('searchResultsBody').innerHTML =
+        `<div class="search-no-results"><i class="bi bi-exclamation-circle"></i>Search failed. Please try again.</div>`;
+    })
+    .searchClaimItems(q);
+}
+
+function renderSearchResults(results, query) {
+  const body = document.getElementById('searchResultsBody');
+  if (!results.length) {
+    body.innerHTML = `<div class="search-no-results">
+      <i class="bi bi-search"></i>
+      No items match <strong>${esc(query)}</strong>. Try a different keyword.</div>`;
+    return;
+  }
+
+  const q = (query || '').toLowerCase();
+  const highlight = str => {
+    if (!str || !q) return esc(str || '');
+    const idx = str.toLowerCase().indexOf(q);
+    if (idx === -1) return esc(str);
+    return esc(str.slice(0, idx))
+      + `<mark style="background:var(--amber-bg);color:var(--amber);border-radius:2px;padding:0 1px">`
+      + esc(str.slice(idx, idx + q.length))
+      + `</mark>`
+      + esc(str.slice(idx + q.length));
+  };
+
+  body.innerHTML = results.map(r => `
+    <div class="search-result-card">
+      <div class="src-body">
+        <div class="src-desc">${highlight(r.description || r.type || '(no description)')}</div>
+        <div class="src-meta">
+          <span><i class="bi bi-calendar3"></i>${esc(r.date || '—')}</span>
+          <span><i class="bi bi-tag"></i>${esc(r.type)}</span>
+          ${r.invNo ? `<span><i class="bi bi-receipt"></i>${esc(r.invNo)}</span>` : ''}
+          <span><i class="bi bi-person"></i>${esc(r.ownerName)}</span>
+          <span>→ ${esc(r.recipient)}</span>
+        </div>
+      </div>
+      <div class="src-right">
+        <span class="src-amt">RM ${fmtAmt(r.amount)}</span>
+        <button class="ref-chip" style="margin:0" onclick="openDetailPanel('${esc(r.refNo)}','${esc(r.claimStatus)}')">
+          <i class="bi bi-hash"></i>${esc(r.refNo)}
+        </button>
+        <span class="badge badge-${(r.claimStatus||'').toLowerCase()}">${esc(r.claimStatus)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function clearSearch(reloadHistory = true) {
+  clearTimeout(searchTimer);
+  document.getElementById('historySearch').value = '';
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  document.getElementById('searchHint').classList.add('hidden');
+  document.getElementById('searchResultsSection').classList.add('hidden');
+  document.getElementById('historyTableSection').classList.remove('hidden');
+  if (reloadHistory) loadHistory();
 }
 
 function renderHistory(data) {
@@ -1825,6 +1980,13 @@ function renderHistory(data) {
       editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
       editBtn.onclick   = () => editDraft(r.refNo, r.recipient);
       actionCell.appendChild(editBtn);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger-ghost btn-xs';
+      delBtn.innerHTML = '<i class="bi bi-trash3"></i>';
+      delBtn.title     = 'Delete draft';
+      delBtn.onclick   = () => promptDeleteDraft(r.refNo);
+      actionCell.appendChild(delBtn);
     }
 
     const viewBtn = document.createElement('button');
@@ -1887,7 +2049,14 @@ function openDetailPanel(refNo, claimStatus) {
       document.getElementById('panelFooter').classList.remove('hidden');
 
       const hasDraft = items.some(it => it.claimStatus === 'Draft');
+      const hasSubmittedUnpaid = isOwner && items.some(
+        it => it.claimStatus === 'Submitted' &&
+              (it.paymentStatus || '').toLowerCase() !== 'paid');
       document.getElementById('panelSubmitSection').classList.toggle('hidden', !hasDraft || !isOwner);
+      document.getElementById('panelMarkPaidSection').classList.toggle('hidden', !hasSubmittedUnpaid);
+      // Reset payment selection counters
+      document.getElementById('panelPayCount').textContent = '0 submitted items selected';
+      document.getElementById('panelPayTotal').textContent = 'RM 0.00';
 
       const tbody = document.getElementById('panelBody');
       if (!items.length) {
@@ -1928,15 +2097,28 @@ function openDetailPanel(refNo, claimStatus) {
               <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
               <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${fmtAmt(amount)} <span style="font-size:.75rem;font-weight:500">(Paid)</span></td>`;
           } else {
+            // Submitted but not yet paid
             tr.className = 'submitted-row';
-            tr.innerHTML = `
-              <td><i class="bi bi-check-circle-fill" style="color:var(--brand);font-size:.95rem" title="Submitted"></i></td>
-              <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
-              <td>${esc(it.type || '')}</td>
-              <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
-              <td>${esc(it.description || '')}</td>
-              <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
+            if (isOwner) {
+              // Owner can mark as paid — show checkbox
+              tr.innerHTML = `
+                <td><input type="checkbox" class="chk panel-pay-chk" value="${it.rowNum}" onchange="updatePanelPaymentInfo()"></td>
+                <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
+                <td>${esc(it.type || '')}</td>
+                <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
+                <td>${esc(it.description || '')}</td>
+                <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
+                <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
+            } else {
+              tr.innerHTML = `
+                <td><i class="bi bi-check-circle-fill" style="color:var(--brand);font-size:.95rem" title="Submitted"></i></td>
+                <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
+                <td>${esc(it.type || '')}</td>
+                <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
+                <td>${esc(it.description || '')}</td>
+                <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
+                <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
+            }
           }
           frag.appendChild(tr);
         });
@@ -2041,6 +2223,61 @@ function submitDraftFromPanel() {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('sidePanel').classList.contains('open')) closeDetailPanel();
 });
+
+// ── delete draft ──────────────────────────────────────────────────────────
+function promptDeleteDraft(refNo) {
+  if (!confirm('Delete draft ' + refNo + '?\n\nAll items and attachments will be permanently removed. This cannot be undone.'))
+    return;
+  deleteDraftAction(refNo);
+}
+
+function deleteDraftAction(refNo) {
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res.success) {
+        toast('Draft ' + refNo + ' deleted.');
+        loadHistory();
+      } else {
+        toast(res.message || 'Could not delete draft.', true);
+      }
+    })
+    .withFailureHandler(() => toast('Server error while deleting.', true))
+    .deleteDraft(refNo, currentUser.userId);
+}
+
+// ── mark paid ─────────────────────────────────────────────────────────────
+function updatePanelPaymentInfo() {
+  const checked  = Array.from(document.querySelectorAll('.panel-pay-chk:checked'));
+  const selTotal = checked.reduce((s, c) => s + parseFloat(c.closest('tr').dataset.amount || 0), 0);
+  document.getElementById('panelPayCount').textContent =
+    checked.length + ' submitted item' + (checked.length !== 1 ? 's' : '') + ' selected';
+  document.getElementById('panelPayTotal').textContent = 'RM ' + fmtAmt(selTotal);
+}
+
+function markPaidFromPanel() {
+  if (!panelCurrentRef) return;
+  const rowNums = Array.from(document.querySelectorAll('.panel-pay-chk:checked'))
+                       .map(c => parseInt(c.value, 10));
+  if (!rowNums.length) {
+    toast('Please select at least one submitted item to mark as paid.', true);
+    return;
+  }
+  setBtn('panelMarkPaidBtn', '<span class="spin"></span> Processing…', true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn('panelMarkPaidBtn', '<i class="bi bi-cash-coin"></i> Mark Selected as Paid', false);
+      toast(res.success
+        ? (res.updated + ' item' + (res.updated !== 1 ? 's' : '') + ' marked as paid.')
+        : (res.message || 'Update failed.'),
+        !res.success);
+      if (res.success) { closeDetailPanel(); loadHistory(); }
+    })
+    .withFailureHandler(() => {
+      setBtn('panelMarkPaidBtn', '<i class="bi bi-cash-coin"></i> Mark Selected as Paid', false);
+      toast('Server error.', true);
+    })
+    .markRowsAsPaid(rowNums, currentUser.userId);
+}
 
 // ── utils ─────────────────────────────────────────────────────────────────
 function esc(str) {
@@ -2310,7 +2547,7 @@ function uploadFileQueue(files, idx) {
   const file = files[idx];
   const MAX  = MAX_ATTACHMENT_BYTES;
   if (file.size > MAX) {
-    toast(`"${esc(file.name)}" exceeds 5 MB limit — skipped.`, true);
+    toast(`"${esc(file.name)}" exceeds ${MAX_ATTACHMENT_BYTES / (1024 * 1024)} MB limit — skipped.`, true);
     uploadFileQueue(files, idx + 1);
     return;
   }

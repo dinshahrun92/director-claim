@@ -406,6 +406,153 @@ function getClaimReport(refNo) {
   };
 }
 
+const MAX_SEARCH_RESULTS = 80; // cap on server-side search results
+
+// ── delete draft ──────────────────────────────────────────────────────────
+
+function deleteDraft(refNo, userId) {
+  try {
+    refNo  = sanitize(refNo);
+    userId = sanitize(userId);
+    if (!refNo || !userId) return { success: false, message: "Invalid parameters." };
+
+    const sheet = getSheet("App_Claims");
+    const data  = sheet.getDataRange().getValues();
+    const toDelete = [];
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0].toString() !== refNo) continue;
+      if (data[i][1].toString() !== userId)
+        return { success: false, message: "Unauthorized: you don't own this draft." };
+      const rowStatus = (data[i][9] || "").toString();
+      if (rowStatus === "Submitted" || rowStatus === "Approved")
+        return { success: false, message: "Cannot delete: claim has already been submitted." };
+      toDelete.push(i + 1);
+    }
+
+    if (!toDelete.length) return { success: false, message: "Draft not found." };
+
+    // Delete rows bottom-up to preserve row indices
+    for (let i = toDelete.length - 1; i >= 0; i--) sheet.deleteRow(toDelete[i]);
+
+    // Clean up attachments
+    const attSheet = getSheet("App_Attachments");
+    if (attSheet && attSheet.getLastRow() > 1) {
+      const attData = attSheet.getDataRange().getValues();
+      for (let i = attData.length - 1; i >= 1; i--) {
+        if (attData[i][0].toString() === refNo) {
+          attSheet.deleteRow(i + 1);
+          try { DriveApp.getFileById(attData[i][5].toString()).setTrashed(true); } catch (_) {}
+        }
+      }
+    }
+
+    return { success: true };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ── mark rows as paid ─────────────────────────────────────────────────────
+
+function markRowsAsPaid(rowNums, userId) {
+  userId = sanitize(userId);
+  if (!userId) return { success: false, message: "Unauthorised." };
+  if (!Array.isArray(rowNums) || !rowNums.length)
+    return { success: false, message: "No rows selected." };
+
+  const sheet = getSheet("App_Claims");
+  const data  = sheet.getDataRange().getValues();
+  const today = new Date();
+  let updated = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const sheetRow = i + 1;
+    if (!rowNums.includes(sheetRow)) continue;
+    if (data[i][1].toString() !== userId) continue; // ownership
+    if (data[i][9].toString() !== "Submitted") continue; // only submitted rows
+    sheet.getRange(sheetRow, 11).setValue("Paid");
+    sheet.getRange(sheetRow, 12).setValue(today);
+    updated++;
+  }
+
+  return updated > 0
+    ? { success: true, updated }
+    : { success: false, message: "No eligible submitted rows found. Only submitted items owned by you can be marked paid." };
+}
+
+// ── item-level search ──────────────────────────────────────────────────────
+
+function searchClaimItems(query) {
+  query = sanitize(query).toLowerCase().trim();
+  if (!query || query.length < 2) return [];
+
+  const claimsSheet = getSheet("App_Claims");
+  const usersSheet  = getSheet("App_Users");
+  if (!claimsSheet) return [];
+
+  const claimsData = claimsSheet.getLastRow() > 1 ? claimsSheet.getDataRange().getValues() : [];
+  const usersData  = usersSheet && usersSheet.getLastRow() > 1 ? usersSheet.getDataRange().getValues() : [];
+  const tz = Session.getScriptTimeZone();
+
+  const userMap = {};
+  for (let i = 1; i < usersData.length; i++) {
+    userMap[usersData[i][0].toString()] = usersData[i][2] || usersData[i][0].toString();
+  }
+
+  const results = [];
+  for (let i = 1; i < claimsData.length; i++) {
+    const row = claimsData[i];
+    if ((row[6] || "").toString() === "New Draft Created") continue;
+
+    const description = (row[6] || "").toString();
+    const type        = (row[4] || "").toString();
+    const invNo       = (row[5] || "").toString();
+    const refNo       = (row[0] || "").toString();
+    const recipient   = (row[2] || "").toString();
+    const ownerId     = (row[1] || "").toString();
+
+    if (description.toLowerCase().includes(query) ||
+        type.toLowerCase().includes(query)         ||
+        invNo.toLowerCase().includes(query)        ||
+        refNo.toLowerCase().includes(query)        ||
+        recipient.toLowerCase().includes(query)    ||
+        (userMap[ownerId] || "").toLowerCase().includes(query)) {
+
+      const rawDate = row[3];
+      let dateStr = "";
+      if (rawDate) {
+        try { dateStr = Utilities.formatDate(new Date(rawDate), tz, "dd MMM yyyy"); } catch (_) {}
+      }
+
+      results.push({
+        refNo:       refNo,
+        ownerId:     ownerId,
+        ownerName:   userMap[ownerId] || ownerId,
+        recipient:   recipient,
+        date:        dateStr,
+        type:        type,
+        invNo:       invNo,
+        description: description,
+        amount:      parseFloat(row[7]) || 0,
+        claimStatus: (row[9]  || "").toString(),
+        payStatus:   (row[10] || "").toString()
+      });
+    }
+  }
+
+  // Sort: drafts first, then by date desc; limit to 80 results
+  results.sort((a, b) => {
+    if (a.claimStatus === "Draft" && b.claimStatus !== "Draft") return -1;
+    if (a.claimStatus !== "Draft" && b.claimStatus === "Draft") return 1;
+    if (a.date < b.date) return 1;
+    if (a.date > b.date) return -1;
+    return 0;
+  });
+
+  return results.slice(0, MAX_SEARCH_RESULTS);
+}
+
 // ── settings ───────────────────────────────────────────────────────────────
 
 const SETTING_DEFAULTS = {
