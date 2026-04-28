@@ -1725,7 +1725,7 @@ function openDetailPanel(refNo, claimStatus) {
         items.forEach(it => {
           const tr      = document.createElement('tr');
           const amount  = parseFloat(it.amount || 0);
-          const isPaid  = (it.paymentStatus || '').toString() === 'Paid';
+          const isPaid  = (it.paymentStatus || '').toString().toLowerCase() === 'paid';
           const isDraft = it.claimStatus === 'Draft' && !isPaid;
 
           totalAll += amount;
@@ -1753,7 +1753,7 @@ function openDetailPanel(refNo, claimStatus) {
               <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
               <td>${esc(it.description || '')}</td>
               <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${amount.toFixed(2)} <span style="font-size:.68rem;font-weight:500">(Paid)</span></td>`;
+              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${amount.toFixed(2)} <span style="font-size:.75rem;font-weight:500">(Paid)</span></td>`;
           } else {
             tr.className = 'submitted-row';
             tr.innerHTML = `

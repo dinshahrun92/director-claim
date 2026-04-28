@@ -150,8 +150,8 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
   }
 }
 
-function getUserClaims(userId) {
-  // Returns all claims from all users (userId param retained for compatibility)
+function getUserClaims(userId) { // eslint-disable-line no-unused-vars
+  // Returns all claims from all users (userId param retained for backward compatibility)
   const claimsData = getSheet("App_Claims").getDataRange().getValues();
   const usersData  = getSheet("App_Users").getDataRange().getValues();
 
