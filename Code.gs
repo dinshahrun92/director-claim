@@ -25,10 +25,12 @@ function setupSheets() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
   const schemas = {
-    App_Users:  ["UserID","Password","FullName"],
-    App_Claims: ["RefNo","UserID","Recipient","InvoiceDate","Type","InvoiceNo",
-                 "Description","Amount","FileUrl","Status","PaymentStatus",
-                 "PaymentDate","Timestamp","PaymentVia"]
+    App_Users:       ["UserID","Password","FullName"],
+    App_Claims:      ["RefNo","UserID","Recipient","InvoiceDate","Type","InvoiceNo",
+                      "Description","Amount","FileUrl","Status","PaymentStatus",
+                      "PaymentDate","Timestamp","PaymentVia"],
+    App_Settings:    ["Category","Value"],
+    App_Attachments: ["RefNo","UserID","FileName","FileUrl","Timestamp","FileId"]
   };
 
   Object.entries(schemas).forEach(([name, headers]) => {
@@ -85,10 +87,26 @@ function createInitialDraft(userId, recipient) {
     recipient = sanitize(recipient);
     if (!userId) return { success: false, message: "Invalid user." };
 
-    const refNo = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyMMdd")
-                + "-" + Math.floor(1000 + Math.random() * 9000);
+    const tz   = Session.getScriptTimeZone();
+    const now  = new Date();
+    const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN',
+                    'JUL','AUG','SEP','OCT','NOV','DEC'];
+    const prefix = MONTHS[now.getMonth()] + Utilities.formatDate(now, tz, "yy"); // e.g. JAN26
 
-    getSheet("App_Claims").appendRow([
+    // Determine next sequential number for this month-year prefix
+    const sheet     = getSheet("App_Claims");
+    const allData   = sheet.getLastRow() > 1 ? sheet.getDataRange().getValues() : [];
+    let maxSeq = 0;
+    for (let i = 1; i < allData.length; i++) {
+      const ref = allData[i][0].toString();
+      if (ref.startsWith(prefix + "-")) {
+        const seq = parseInt(ref.slice(prefix.length + 1), 10);
+        if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+      }
+    }
+    const refNo = prefix + "-" + (maxSeq + 1).toString().padStart(3, "0");
+
+    sheet.appendRow([
       refNo, userId, recipient, "", "", "", "New Draft Created",
       0, "", "Draft", "Unpaid", "", new Date()
     ]);
@@ -213,6 +231,9 @@ function getUserClaims(userId) { // eslint-disable-line no-unused-vars
     if ((claimsData[i][10] || "").toString().toLowerCase() === "paid") {
       grouped[ref].paidItems += 1;
     }
+    // Accumulate description text for client-side full-text search
+    const desc = (claimsData[i][6] || "").toString().trim();
+    if (desc) grouped[ref].descText = (grouped[ref].descText || "") + " " + desc.toLowerCase();
   }
 
   // Compute payStatus per group and return plain serialisable objects
@@ -229,7 +250,8 @@ function getUserClaims(userId) { // eslint-disable-line no-unused-vars
       total:     g.total,
       status:    g.status,
       date:      g.date,
-      payStatus: payStatus
+      payStatus: payStatus,
+      descText:  (g.descText || "").trim()
     };
   });
 
@@ -382,4 +404,117 @@ function getClaimReport(refNo) {
     checkedBy:    "",
     approvedBy:   recipient
   };
+}
+
+// ── settings ───────────────────────────────────────────────────────────────
+
+const SETTING_DEFAULTS = {
+  claimTypes: ["Petrol","TnG","Refreshment","Medical","Others"],
+  payVias:    ["Cash","MBB 1","MBB 2","CIMB","SC","UOB"]
+};
+
+function getSettings() {
+  const sheet = getSheet("App_Settings");
+  if (!sheet || sheet.getLastRow() < 2) return SETTING_DEFAULTS;
+
+  const data = sheet.getDataRange().getValues();
+  const claimTypes = [], payVias = [];
+  for (let i = 1; i < data.length; i++) {
+    const cat = data[i][0].toString().trim();
+    const val = data[i][1].toString().trim();
+    if (!val) continue;
+    if (cat === "ClaimType") claimTypes.push(val);
+    else if (cat === "PayVia")    payVias.push(val);
+  }
+  return {
+    claimTypes: claimTypes.length ? claimTypes : SETTING_DEFAULTS.claimTypes,
+    payVias:    payVias.length    ? payVias    : SETTING_DEFAULTS.payVias
+  };
+}
+
+function saveSettings(claimTypes, payVias) {
+  try {
+    const sheet = getSheet("App_Settings");
+    if (!sheet) return { success: false, message: "Settings sheet not found." };
+
+    if (sheet.getLastRow() > 1) sheet.deleteRows(2, sheet.getLastRow() - 1);
+
+    const rows = [];
+    (claimTypes || []).forEach(t => rows.push(["ClaimType", sanitize(t)]));
+    (payVias    || []).forEach(v => rows.push(["PayVia",    sanitize(v)]));
+
+    if (rows.length) sheet.getRange(2, 1, rows.length, 2).setValues(rows);
+    return { success: true };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ── attachments ────────────────────────────────────────────────────────────
+
+function uploadAttachment(refNo, userId, fileName, base64Data, mimeType) {
+  try {
+    refNo    = sanitize(refNo);
+    userId   = sanitize(userId);
+    fileName = sanitize(fileName);
+    if (!refNo || !userId || !base64Data) return { success: false, message: "Invalid parameters." };
+
+    const mainFolder = DriveApp.getFolderById(MAIN_FOLDER_ID);
+    const iter = mainFolder.getFoldersByName(refNo);
+    const refFolder = iter.hasNext() ? iter.next() : mainFolder.createFolder(refNo);
+
+    const decoded = Utilities.base64Decode(base64Data);
+    const blob    = Utilities.newBlob(decoded, mimeType || "application/octet-stream", fileName);
+    const file    = refFolder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    const fileUrl = file.getUrl();
+    const fileId  = file.getId();
+
+    getSheet("App_Attachments").appendRow([refNo, userId, fileName, fileUrl, new Date(), fileId]);
+    return { success: true, fileName, fileUrl };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+function getAttachments(refNo) {
+  refNo = sanitize(refNo);
+  if (!refNo) return [];
+  const sheet = getSheet("App_Attachments");
+  if (!sheet || sheet.getLastRow() < 2) return [];
+
+  const data = sheet.getDataRange().getValues();
+  const results = [];
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0].toString() === refNo) {
+      results.push({ fileName: data[i][2], fileUrl: data[i][3] });
+    }
+  }
+  return results;
+}
+
+function deleteAttachment(refNo, userId, fileUrl) {
+  try {
+    refNo  = sanitize(refNo);
+    userId = sanitize(userId);
+    if (!refNo || !userId || !fileUrl) return { success: false, message: "Invalid parameters." };
+
+    const sheet = getSheet("App_Attachments");
+    if (!sheet || sheet.getLastRow() < 2) return { success: false, message: "Attachment not found." };
+
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (data[i][0].toString() === refNo &&
+          data[i][1].toString() === userId &&
+          data[i][3].toString() === fileUrl) {
+        sheet.deleteRow(i + 1);
+        try { DriveApp.getFileById(data[i][5].toString()).setTrashed(true); } catch (_) {}
+        return { success: true };
+      }
+    }
+    return { success: false, message: "Attachment not found." };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
 }
