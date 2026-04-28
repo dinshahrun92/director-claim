@@ -800,7 +800,18 @@ function handleReg() {
     .registerUser(id, pass, name);
 }
 
-function logout() { currentUser = null; location.reload(); }
+function logout() {
+  currentUser = null;
+  editingRef  = null;
+  // Reset to login screen without a page reload (location.reload is unreliable
+  // inside Google Apps Script's HtmlService iframe).
+  document.getElementById("mainView").classList.add("hidden");
+  document.getElementById("authView").classList.remove("hidden");
+  document.getElementById("loginBox").classList.remove("hidden");
+  document.getElementById("regBox").classList.add("hidden");
+  document.getElementById("lId").value   = "";
+  document.getElementById("lPass").value = "";
+}
 
 // ── init ───────────────────────────────────────────────────────────────────
 function getInitials(name) {
@@ -852,8 +863,8 @@ function addRow(data = {}) {
   tr.innerHTML = `
     <td><input type="date" class="table-input i-date" value="${esc(data.date || "")}"></td>
     <td><select class="table-input i-type">${opts}</select></td>
-    <td><input type="text" class="table-input i-inv" value="${esc(data.invNo || "")}" placeholder="INV-" maxlength="50"></td>
-    <td><input type="text" class="table-input i-desc" value="${esc(data.description || "")}" placeholder="Description" maxlength="200"></td>
+    <td><input type="text" class="table-input i-inv" value="${esc(data.invNo || "")}" placeholder="INV-" maxlength="50" style="text-transform:uppercase"></td>
+    <td><input type="text" class="table-input i-desc" value="${esc(data.description || "")}" placeholder="Description" maxlength="200" style="text-transform:uppercase"></td>
     <td>
       <div style="display:flex;align-items:center;gap:4px">
         <span style="font-size:12px;color:var(--text-secondary);font-weight:500">RM</span>
@@ -887,8 +898,8 @@ function submitBatch(isDraft) {
     items.push({
       date:        r.querySelector(".i-date").value,
       type:        r.querySelector(".i-type").value,
-      invNo:       r.querySelector(".i-inv").value,
-      description: r.querySelector(".i-desc").value,
+      invNo:       r.querySelector(".i-inv").value.toUpperCase(),
+      description: r.querySelector(".i-desc").value.toUpperCase(),
       amount:      isNaN(amount) ? 0 : amount
     });
   });
@@ -905,7 +916,7 @@ function submitBatch(isDraft) {
       setBtn("saveBtn", saveLbl, false);
       setBtn("subBtn",  subLbl,  false);
       toast(res.message, !res.success);
-      if (res.success) { cancelEntry(); }
+      if (res.success) { cancelEntry(); loadHistory(); }
     })
     .withFailureHandler(() => {
       setBtn("saveBtn", saveLbl, false);

@@ -1,7 +1,9 @@
 const SPREADSHEET_ID = "1s20UbtnHp4WTLT1fVV7n0THfIo-YEs6TXqXOxBxMA38";
 const MAIN_FOLDER_ID  = "1xOvGtcG9ypSppJPyZW_eWGEY7mRyIMlS";
 
-// ── helpers ────────────────────────────────────────────────────────────────
+// Placeholder text written by the old createInitialDraft — used only for
+// backward-compatible filtering of legacy rows.
+const LEGACY_PLACEHOLDER = "NEW DRAFT CREATED";
 
 function getSheet(name) {
   return SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(name);
@@ -32,8 +34,15 @@ function setupSheets() {
   };
 
   Object.entries(schemas).forEach(([name, headers]) => {
-    let sheet = ss.getSheetByName(name) || ss.insertSheet(name);
-    if (sheet.getLastRow() === 0) {
+    const sheet = ss.getSheetByName(name) || ss.insertSheet(name);
+
+    // Always verify and auto-correct headers (handles new sheet and any drift)
+    const needsHeader = sheet.getLastRow() === 0;
+    const headerMismatch = !needsHeader &&
+      sheet.getRange(1, 1, 1, headers.length).getValues()[0]
+           .some((v, i) => v.toString() !== headers[i]);
+
+    if (needsHeader || headerMismatch) {
       sheet.getRange(1, 1, 1, headers.length)
            .setValues([headers])
            .setFontWeight("bold")
@@ -88,8 +97,9 @@ function createInitialDraft(userId, recipient) {
     const refNo = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyMMdd")
                 + "-" + Math.floor(1000 + Math.random() * 9000);
 
-    // RefNo is generated here; the row is only written when saveBatchClaims is called.
-    // This prevents phantom 0-total draft entries from appearing in history.
+    // RefNo is generated here and returned to the client; no sheet row is written.
+    // The draft only persists once the user clicks Save/Submit (saveBatchClaims).
+    // An abandoned session simply leaves no trace in the sheet.
     return { success: true, refNo };
   } catch (e) {
     return { success: false, message: e.toString() };
@@ -125,16 +135,27 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
     // Append new rows
     items.forEach(item => {
       const amount = parseFloat(item.amount) || 0;
+
+      // Store InvoiceDate as a formatted string to avoid timezone ambiguity
+      let invoiceDate = "";
+      if (item.date) {
+        try {
+          invoiceDate = Utilities.formatDate(new Date(item.date), Session.getScriptTimeZone(), "yyyy-MM-dd");
+        } catch (_) {
+          invoiceDate = item.date;
+        }
+      }
+
       sheet.appendRow([
         existingRef,
         userId,
-        sanitize(recipient),
-        item.date    || "",
-        sanitize(item.type),
-        sanitize(item.invNo),
-        sanitize(item.description),
+        sanitize(recipient).toUpperCase(),
+        invoiceDate,
+        sanitize(item.type).toUpperCase(),
+        sanitize(item.invNo).toUpperCase(),
+        sanitize(item.description).toUpperCase(),
         amount,
-        "No Attachment",
+        "NO ATTACHMENT",
         status,
         "Unpaid",
         "",
@@ -153,7 +174,8 @@ function getUserClaims(userId) {
   userId = sanitize(userId);
   if (!userId) return [];
 
-  const data    = getSheet("App_Claims").getDataRange().getValues();
+  const tz   = Session.getScriptTimeZone();
+  const data = getSheet("App_Claims").getDataRange().getValues();
   const grouped = {};
 
   for (let i = 1; i < data.length; i++) {
@@ -161,19 +183,30 @@ function getUserClaims(userId) {
 
     const ref = data[i][0].toString();
     if (!grouped[ref]) {
+      // Format the Timestamp as a plain date string to avoid JSON serialization issues
+      let dateStr = "";
+      if (data[i][12]) {
+        try {
+          dateStr = Utilities.formatDate(new Date(data[i][12]), tz, "yyyy-MM-dd");
+        } catch (_) {}
+      }
       grouped[ref] = {
         refNo:     ref,
         recipient: data[i][2] || "",
         total:     0,
         status:    data[i][9]  || "",
         payStatus: data[i][10] || "",
-        date:      data[i][12]
+        date:      dateStr
       };
     }
     grouped[ref].total += parseFloat(data[i][7]) || 0;
   }
 
-  return Object.values(grouped).sort((a, b) => new Date(b.date) - new Date(a.date));
+  return Object.values(grouped).sort((a, b) => {
+    const da = a.date ? new Date(a.date) : new Date(0);
+    const db = b.date ? new Date(b.date) : new Date(0);
+    return db - da;
+  });
 }
 
 function getDraftDetails(refNo, userId) {
@@ -187,12 +220,14 @@ function getDraftDetails(refNo, userId) {
   for (let i = 1; i < data.length; i++) {
     if (data[i][0].toString() !== refNo)   continue;
     if (data[i][1].toString() !== userId)  continue; // ownership check
-    if (data[i][6] === "New Draft Created") continue; // skip placeholder
+    if (data[i][6].toString().toUpperCase() === LEGACY_PLACEHOLDER) continue; // skip old placeholders
 
     const rawDate = data[i][3];
     let dateStr = "";
     if (rawDate) {
-      try { dateStr = Utilities.formatDate(new Date(rawDate), "GMT+8", "yyyy-MM-dd"); } catch (_) {}
+      try {
+        dateStr = Utilities.formatDate(new Date(rawDate), Session.getScriptTimeZone(), "yyyy-MM-dd");
+      } catch (_) {}
     }
 
     rows.push({
