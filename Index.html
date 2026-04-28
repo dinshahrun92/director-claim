@@ -470,6 +470,63 @@
       .app-tabs .tab-btn span.tab-label { display: none; }
       .selection-hero { padding: 2rem 1rem; }
     }
+
+    /* ── Claim detail side panel ───────────────────────────────────────── */
+    #sidePanelOverlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,.45);
+      z-index: 1040;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    #sidePanelOverlay.panel-open { opacity: 1; pointer-events: auto; }
+
+    #sidePanel {
+      position: fixed; top: 0; right: 0;
+      width: 500px; max-width: 100vw; height: 100%;
+      background: var(--surface);
+      box-shadow: -6px 0 36px rgba(0,0,0,.16);
+      z-index: 1050;
+      display: flex; flex-direction: column;
+      transform: translateX(105%);
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
+    }
+    #sidePanel.panel-open { transform: translateX(0); }
+
+    .panel-hdr {
+      background: var(--primary);
+      padding: .9rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+      color: #fff; flex-shrink: 0;
+    }
+    .panel-hdr h6 { margin: 0; font-weight: 700; font-size: .9rem; }
+    .panel-hdr .panel-ref {
+      font-family: monospace; font-size: .78rem; opacity: .72; margin-top: .12rem;
+    }
+    .panel-hdr .panel-close-btn {
+      background: none; border: none;
+      color: rgba(255,255,255,.85); font-size: 1.25rem;
+      cursor: pointer; line-height: 1; padding: .15rem .3rem;
+      border-radius: 5px; transition: background .15s;
+    }
+    .panel-hdr .panel-close-btn:hover { background: rgba(255,255,255,.15); }
+
+    .panel-body {
+      flex: 1; overflow-y: auto;
+    }
+    .panel-footer {
+      border-top: 1.5px solid var(--border);
+      padding: 1rem 1.25rem;
+      background: #f8fafc;
+      flex-shrink: 0;
+    }
+    .panel-summary {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      justify-content: flex-end; margin-bottom: .85rem;
+    }
+    @media (max-width: 576px) {
+      #sidePanel { width: 100vw; }
+    }
   </style>
 </head>
 <body>
@@ -802,51 +859,61 @@
 
   </div><!-- /contentArea -->
 
-  <!-- ── CLAIM DETAIL MODAL ─────────────────────────────────────── -->
-  <div class="modal fade" id="claimDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content" style="border-radius:var(--radius);overflow:hidden;border:none">
-        <div class="modal-header" style="background:var(--primary);color:#fff;border:none;padding:.9rem 1.25rem">
-          <div>
-            <h6 class="modal-title mb-0" style="font-weight:700">Claim Details</h6>
-            <div id="detailRefLabel" style="font-family:monospace;font-size:.78rem;opacity:.75;margin-top:.15rem"></div>
-          </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-0">
-          <div id="detailLoader" style="padding:2.5rem;text-align:center;color:var(--text-muted)">
-            <span class="spinner-sm"></span> Loading claim details…
-          </div>
-          <div id="detailContent" class="hidden">
-            <div class="table-responsive">
-              <table class="app-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Invoice No</th>
-                    <th>Description</th>
-                    <th style="text-align:right">Amount (RM)</th>
-                  </tr>
-                </thead>
-                <tbody id="detailBody"></tbody>
-              </table>
-            </div>
-            <div id="detailSummary" style="padding:1rem 1.25rem;background:#f8fafc;border-top:1.5px solid var(--border);display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:flex-end"></div>
-          </div>
+  <!-- ── CLAIM DETAIL SIDE PANEL ──────────────────────────────────── -->
+  <div id="sidePanelOverlay" onclick="closeDetailPanel()"></div>
+  <aside id="sidePanel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+    <!-- Header -->
+    <div class="panel-hdr">
+      <div>
+        <h6 id="panelTitle">Claim Details</h6>
+        <div id="panelRefLabel" class="panel-ref"></div>
+      </div>
+      <button class="panel-close-btn" onclick="closeDetailPanel()" aria-label="Close detail panel">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <!-- Body -->
+    <div class="panel-body">
+      <div id="panelLoader" style="padding:2.5rem;text-align:center;color:var(--text-muted)">
+        <span class="spinner-sm"></span> Loading claim details…
+      </div>
+      <div id="panelContent" class="hidden">
+        <div class="table-responsive">
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Invoice No</th>
+                <th>Description</th>
+                <th style="text-align:right">Amount (RM)</th>
+              </tr>
+            </thead>
+            <tbody id="panelBody"></tbody>
+          </table>
         </div>
       </div>
     </div>
-  </div>
+    <!-- Footer: summary stats + optional Pay button -->
+    <div id="panelFooter" class="panel-footer hidden">
+      <div id="panelSummary" class="panel-summary"></div>
+      <div id="panelPaySection" class="hidden">
+        <button id="panelPayBtn" class="btn btn-success w-100" onclick="payFromPanel()">
+          <i class="bi bi-check2-circle me-1"></i>Mark as Paid
+        </button>
+      </div>
+    </div>
+  </aside>
 
 </div><!-- /mainView -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ── state ──────────────────────────────────────────────────────────────────
-let currentUser = null;
-let editingRef  = null;
-let historyData = [];   // cache for live-search filtering
+let currentUser    = null;
+let editingRef     = null;
+let historyData    = [];   // cache for live-search filtering
+let panelCurrentRef = null; // ref currently open in the side panel
 
 // ── toast ──────────────────────────────────────────────────────────────────
 function toast(msg, isError = false) {
@@ -921,6 +988,7 @@ function handleReg() {
 function logout() {
   currentUser = null;
   editingRef  = null;
+  closeDetailPanel(); // ensure the side panel is dismissed on logout
   // Reset to login screen without a page reload (location.reload is unreliable
   // inside Google Apps Script's HtmlService iframe).
   document.getElementById("mainView").classList.add("hidden");
@@ -1137,7 +1205,7 @@ function renderHistory(data) {
     refBtn.className   = "ref-pill ref-pill-btn";
     refBtn.textContent = r.refNo;
     refBtn.title       = "Click to view details";
-    refBtn.onclick     = () => openClaimDetail(r.refNo, { total: r.total, amountPaid, balance });
+    refBtn.onclick     = () => openDetailPanel(r.refNo, { total: r.total, amountPaid, balance, isPayable });
     refCell.appendChild(refBtn);
     tr.appendChild(refCell);
 
@@ -1235,22 +1303,28 @@ function editDraft(ref, rec) {
     .getDraftDetails(ref, currentUser.userId);
 }
 
-// ── claim detail modal ─────────────────────────────────────────────────────
-function openClaimDetail(refNo, summaryData) {
-  document.getElementById("detailRefLabel").textContent = refNo;
-  document.getElementById("detailBody").innerHTML = "";
-  document.getElementById("detailSummary").innerHTML = "";
-  document.getElementById("detailLoader").classList.remove("hidden");
-  document.getElementById("detailContent").classList.add("hidden");
+// ── claim detail side panel ────────────────────────────────────────────────
+function openDetailPanel(refNo, summaryData) {
+  panelCurrentRef = refNo;
+  document.getElementById("panelRefLabel").textContent = refNo;
+  document.getElementById("panelBody").innerHTML = "";
+  document.getElementById("panelSummary").innerHTML = "";
+  document.getElementById("panelLoader").classList.remove("hidden");
+  document.getElementById("panelContent").classList.add("hidden");
+  document.getElementById("panelFooter").classList.add("hidden");
+  document.getElementById("panelPaySection").classList.add("hidden");
 
-  bootstrap.Modal.getOrCreateInstance(document.getElementById("claimDetailModal")).show();
+  document.getElementById("sidePanelOverlay").classList.add("panel-open");
+  document.getElementById("sidePanel").classList.add("panel-open");
+  document.body.style.overflow = "hidden";
 
   google.script.run
     .withSuccessHandler(items => {
-      document.getElementById("detailLoader").classList.add("hidden");
-      document.getElementById("detailContent").classList.remove("hidden");
+      document.getElementById("panelLoader").classList.add("hidden");
+      document.getElementById("panelContent").classList.remove("hidden");
+      document.getElementById("panelFooter").classList.remove("hidden");
 
-      const tbody = document.getElementById("detailBody");
+      const tbody = document.getElementById("panelBody");
       if (!items.length) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted)">No items found.</td></tr>`;
       } else {
@@ -1268,8 +1342,8 @@ function openClaimDetail(refNo, summaryData) {
         tbody.appendChild(frag);
       }
 
-      const { total, amountPaid, balance } = summaryData;
-      document.getElementById("detailSummary").innerHTML = `
+      const { total, amountPaid, balance, isPayable } = summaryData;
+      document.getElementById("panelSummary").innerHTML = `
         <div style="text-align:right">
           <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Total Claim</div>
           <div style="font-size:1rem;font-weight:700;color:var(--text)">RM ${total.toFixed(2)}</div>
@@ -1279,16 +1353,53 @@ function openClaimDetail(refNo, summaryData) {
           <div style="font-size:1rem;font-weight:700;color:var(--success)">RM ${amountPaid.toFixed(2)}</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Balance to Pay</div>
+          <div style="font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Balance</div>
           <div style="font-size:1rem;font-weight:700;color:${balance > 0 ? "var(--danger)" : "var(--success)"}">RM ${balance.toFixed(2)}</div>
         </div>`;
+
+      if (isPayable) {
+        document.getElementById("panelPaySection").classList.remove("hidden");
+      }
     })
     .withFailureHandler(() => {
-      document.getElementById("detailLoader").classList.add("hidden");
+      document.getElementById("panelLoader").classList.add("hidden");
       toast("Failed to load claim details.", true);
     })
     .getDraftDetails(refNo, currentUser.userId);
 }
+
+function closeDetailPanel() {
+  document.getElementById("sidePanelOverlay").classList.remove("panel-open");
+  document.getElementById("sidePanel").classList.remove("panel-open");
+  document.body.style.overflow = "";
+  panelCurrentRef = null;
+}
+
+function payFromPanel() {
+  if (!panelCurrentRef) return;
+  setBtn("panelPayBtn", '<span class="spinner-sm"></span> Processing…', true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn("panelPayBtn", '<i class="bi bi-check2-circle me-1"></i>Mark as Paid', false);
+      toast(res.success ? "Payment recorded successfully." : "Update failed.", !res.success);
+      if (res.success) {
+        closeDetailPanel();
+        if (document.getElementById("pane-history").classList.contains("active"))  loadHistory();
+        if (document.getElementById("pane-payment").classList.contains("active"))  loadPaymentList();
+      }
+    })
+    .withFailureHandler(() => {
+      setBtn("panelPayBtn", '<i class="bi bi-check2-circle me-1"></i>Mark as Paid', false);
+      toast("Server error.", true);
+    })
+    .processPayments([panelCurrentRef], currentUser.userId);
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && document.getElementById("sidePanel").classList.contains("panel-open")) {
+    closeDetailPanel();
+  }
+});
 
 // ── payments ───────────────────────────────────────────────────────────────
 function switchPayTab(name) {
@@ -1359,7 +1470,7 @@ function loadPaymentList() {
           detBtn.className  = "btn btn-sm";
           detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
           detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
-          detBtn.onclick    = () => openClaimDetail(r.refNo, { total: r.total, amountPaid: 0, balance: r.total });
+          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: 0, balance: r.total, isPayable: true });
 
           tr.innerHTML = `
             <td><input type="checkbox" class="form-check-input pay-chk" value="${esc(r.refNo)}"></td>
@@ -1391,7 +1502,7 @@ function loadPaymentList() {
           detBtn.className  = "btn btn-sm";
           detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
           detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
-          detBtn.onclick    = () => openClaimDetail(r.refNo, { total: r.total, amountPaid: r.total, balance: 0 });
+          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: r.total, balance: 0, isPayable: false });
 
           tr.innerHTML = `
             <td><span class="ref-pill">${esc(r.refNo)}</span></td>
