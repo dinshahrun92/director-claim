@@ -202,7 +202,7 @@ function getUserClaims(userId) {
         amountPaid:   0,
         _paidCount:   0,
         _rowCount:    0,
-        status:       data[i][9]  || "",
+        status:       (data[i][9] || "").toString().trim(),
         payStatus:    "Unpaid",   // recomputed below
         date:         dateStr,
         paymentDate:  paymentDateStr
@@ -211,7 +211,7 @@ function getUserClaims(userId) {
     const amount = parseFloat(data[i][7]) || 0;
     grouped[ref].total      += amount;
     grouped[ref]._rowCount  += 1;
-    if ((data[i][10] || "").toString() === "Paid") {
+    if ((data[i][10] || "").toString().trim() === "Paid") {
       grouped[ref]._paidCount += 1;
       grouped[ref].amountPaid += amount;
     }
@@ -259,7 +259,7 @@ function getDraftDetails(refNo, userId) {
       description: data[i][6],
       amount:      data[i][7],
       rowNum:      i + 1,              // 1-based sheet row, used for per-item payment
-      payStatus:   (data[i][10] || "").toString()
+      payStatus:   (data[i][10] || "").toString().trim()
     });
   }
   return rows;
@@ -280,7 +280,7 @@ function processPayments(refNoList, userId) {
     const rowStatus = data[i][9].toString();
 
     if (!refNoList.includes(rowRef)) continue;
-    if (rowStatus !== "Submitted")   continue; // only submitted claims
+    if (rowStatus.trim() !== "Submitted")   continue; // only submitted claims
 
     sheet.getRange(i + 1, 11).setValue("Paid");
     sheet.getRange(i + 1, 12).setValue(today);
@@ -316,7 +316,7 @@ function getAllClaims() {
         amountPaid:  0,
         _paidCount:  0,
         _rowCount:   0,
-        status:      data[i][9]  || "",
+        status:      (data[i][9] || "").toString().trim(),
         payStatus:   "Unpaid",
         date:        dateStr,
         paymentDate: paymentDateStr
@@ -325,7 +325,7 @@ function getAllClaims() {
     const amount = parseFloat(data[i][7]) || 0;
     grouped[ref].total     += amount;
     grouped[ref]._rowCount += 1;
-    if ((data[i][10] || "").toString() === "Paid") {
+    if ((data[i][10] || "").toString().trim() === "Paid") {
       grouped[ref]._paidCount += 1;
       grouped[ref].amountPaid += amount;
     }
@@ -371,7 +371,7 @@ function getClaimDetails(refNo) {
       description: data[i][6],
       amount:      data[i][7],
       rowNum:      i + 1,
-      payStatus:   (data[i][10] || "").toString()
+      payStatus:   (data[i][10] || "").toString().trim()
     });
   }
   return rows;
@@ -393,8 +393,8 @@ function processRowPayments(rowNums, userId) {
     const idx = Number(rowNum);
     if (!Number.isInteger(idx) || idx < 2 || idx > data.length) return; // skip header + OOB
     const i = idx - 1; // 0-based index into data array
-    if (data[i][9].toString() !== "Submitted")  return; // only submitted claims
-    if ((data[i][10] || "").toString() === "Paid") return; // skip already-paid rows
+    if (data[i][9].toString().trim() !== "Submitted")  return; // only submitted claims
+    if ((data[i][10] || "").toString().trim() === "Paid") return; // skip already-paid rows
     sheet.getRange(idx, 11).setValue("Paid");
     sheet.getRange(idx, 12).setValue(today);
   });
