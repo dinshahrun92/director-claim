@@ -205,15 +205,20 @@ function getUserClaims(userId) {
         amountPaid:   0,
         _paidCount:   0,
         _rowCount:    0,
-        status:       (data[i][9] || "").toString().trim(),
-        payStatus:    "Unpaid",   // recomputed below
+        _draftCount:  0,
+        _subCount:    0,
+        status:       "",          // computed below
+        payStatus:    "Unpaid",    // recomputed below
         date:         dateStr,
         paymentDate:  paymentDateStr
       };
     }
-    const amount = parseFloat(data[i][7]) || 0;
-    grouped[ref].total      += amount;
-    grouped[ref]._rowCount  += 1;
+    const amount    = parseFloat(data[i][7]) || 0;
+    const rowStatus = (data[i][9] || "").toString().trim();
+    grouped[ref].total     += amount;
+    grouped[ref]._rowCount += 1;
+    if (rowStatus === "Draft")     grouped[ref]._draftCount += 1;
+    if (rowStatus === "Submitted") grouped[ref]._subCount   += 1;
     if ((data[i][10] || "").toString().trim() === "Paid") {
       grouped[ref]._paidCount += 1;
       grouped[ref].amountPaid += amount;
@@ -221,11 +226,22 @@ function getUserClaims(userId) {
   }
 
   return Object.values(grouped).map(g => {
+    // Composite submission status
+    if (g._draftCount > 0 && g._subCount === 0) {
+      g.status = "Draft";
+    } else if (g._draftCount === 0 && g._subCount > 0) {
+      g.status = "Submitted";
+    } else {
+      g.status = "Partial"; // mixed Draft + Submitted rows
+    }
+    // Payment status
     g.payStatus = g._paidCount === 0           ? "Unpaid"
                 : g._paidCount === g._rowCount ? "Paid"
                 :                                "Partial";
     delete g._paidCount;
     delete g._rowCount;
+    delete g._draftCount;
+    delete g._subCount;
     return g;
   }).sort((a, b) => {
     const da = a.date ? new Date(a.date) : new Date(0);
@@ -262,11 +278,39 @@ function getDraftDetails(refNo, userId) {
       description: data[i][6],
       amount:      data[i][7],
       paymentVia:  (data[i][15] || "").toString(),
-      rowNum:      i + 1,              // 1-based sheet row, used for per-item payment
+      rowNum:      i + 1,              // 1-based sheet row
+      claimStatus: (data[i][9]  || "").toString().trim(), // "Draft" | "Submitted"
       payStatus:   (data[i][10] || "").toString().trim()
     });
   }
   return rows;
+}
+
+// Submits only the rows identified by 1-based rowNums, changing them from Draft → Submitted.
+// Unselected Draft rows are left untouched (status stays "Draft").
+function submitSelectedRows(rowNums, userId) {
+  userId = sanitize(userId);
+  if (!userId) return { success: false, message: "Unauthorised." };
+  if (!Array.isArray(rowNums) || !rowNums.length)
+    return { success: false, message: "No rows selected." };
+
+  const sheet = getSheet("App_Claims");
+  const data  = sheet.getDataRange().getValues();
+  let updated = 0;
+
+  rowNums.forEach(rowNum => {
+    const idx = Number(rowNum);
+    if (!Number.isInteger(idx) || idx < 2 || idx > data.length) return;
+    const i = idx - 1; // 0-based
+    if (data[i][1].toString() !== userId)       return; // ownership check
+    if (data[i][9].toString().trim() !== "Draft") return; // only draft rows
+    sheet.getRange(idx, 10).setValue("Submitted");
+    updated++;
+  });
+
+  if (!updated) return { success: false, message: "No draft rows found for the selected items." };
+  SpreadsheetApp.flush();
+  return { success: true, message: "Selected items submitted." };
 }
 
 function processPayments(refNoList, userId) {

@@ -211,7 +211,7 @@
     .app-tabs .tab-btn i { font-size: 1rem; }
 
     /* ── Content area ──────────────────────────────────────────────────── */
-    #contentArea { padding: 1.75rem 1.5rem; max-width: 1100px; margin: 0 auto; }
+    #contentArea { padding: 1.25rem 1.5rem; }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
@@ -484,7 +484,7 @@
 
     #sidePanel {
       position: fixed; top: 0; right: 0;
-      width: 50vw; min-width: 480px; max-width: 100vw; height: 100%;
+      width: 65vw; min-width: 560px; max-width: 100vw; height: 100%;
       background: var(--surface);
       box-shadow: -6px 0 36px rgba(0,0,0,.16);
       z-index: 1050;
@@ -975,7 +975,7 @@
       </div>
       <div id="panelSubmitSection" class="hidden" style="margin-bottom:.5rem">
         <button id="panelSubmitBtn" class="btn btn-primary w-100" onclick="submitDraftFromPanel()">
-          <i class="bi bi-send me-1"></i>Submit Claim
+          <i class="bi bi-send me-1"></i>Submit Selected
         </button>
       </div>
       <div>
@@ -1296,7 +1296,7 @@ function renderHistory(data) {
       editBtn.onclick      = () => editDraft(r.refNo, r.recipient);
       actionCell.appendChild(editBtn);
     }
-    // View button for all claims
+    // View button for all claims (opens side panel; also lets user submit remaining Draft items for Partial claims)
     const viewBtn = document.createElement("button");
     viewBtn.className    = "btn btn-sm";
     viewBtn.style.cssText = "background:var(--bg);border:1px solid var(--border);color:var(--text-secondary);font-size:12px";
@@ -1347,9 +1347,7 @@ function openDetailPanel(refNo, claimStatus) {
   const chkAll = document.getElementById("panelCheckAll");
   if (chkAll) { chkAll.checked = false; chkAll.indeterminate = false; }
 
-  // Show / hide Submit button depending on claim status
-  document.getElementById("panelSubmitSection")
-    .classList.toggle("hidden", claimStatus !== "Draft");
+  // Submit section visibility will be set after items load (based on actual item statuses)
 
   document.getElementById("sidePanelOverlay").classList.add("panel-open");
   document.getElementById("sidePanel").classList.add("panel-open");
@@ -1361,6 +1359,10 @@ function openDetailPanel(refNo, claimStatus) {
       document.getElementById("panelContent").classList.remove("hidden");
       document.getElementById("panelFooter").classList.remove("hidden");
 
+      // Determine whether any item is still Draft → show Submit section
+      const hasDraft = items.some(it => it.claimStatus === "Draft");
+      document.getElementById("panelSubmitSection").classList.toggle("hidden", !hasDraft);
+
       const tbody = document.getElementById("panelBody");
       if (!items.length) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">No items found.</td></tr>`;
@@ -1368,24 +1370,42 @@ function openDetailPanel(refNo, claimStatus) {
         let total = 0;
         const frag = document.createDocumentFragment();
         items.forEach(it => {
-          const tr     = document.createElement("tr");
-          const amount = parseFloat(it.amount || 0);
+          const tr      = document.createElement("tr");
+          const amount  = parseFloat(it.amount || 0);
+          const isDraft = it.claimStatus !== "Submitted";
           total += amount;
-          tr.dataset.amount = amount;
-          tr.dataset.rowNum = it.rowNum;
-          tr.innerHTML = `
-            <td style="text-align:center;padding-left:4px">
-              <input type="checkbox" class="form-check-input panel-item-chk"
-                value="${it.rowNum}"
-                onchange="updatePanelSelectionInfo()"
-                aria-label="Select ${esc(it.description || "item")}">
-            </td>
-            <td style="color:var(--text-secondary);font-size:.82rem">${esc(formatDate(it.date))}</td>
-            <td>${esc(it.type || "")}</td>
-            <td style="font-family:monospace;font-size:.82rem">${esc(it.invNo || "—")}</td>
-            <td>${esc(it.description || "")}</td>
-            <td style="font-size:.8rem;color:var(--text-secondary)">${esc(it.paymentVia || "")}</td>
-            <td style="text-align:right;font-weight:600">RM ${amount.toFixed(2)}</td>`;
+          tr.dataset.amount   = amount;
+          tr.dataset.rowNum   = it.rowNum;
+          tr.dataset.isDraft  = isDraft ? "1" : "0";
+
+          if (isDraft) {
+            tr.innerHTML = `
+              <td style="text-align:center;padding-left:4px">
+                <input type="checkbox" class="form-check-input panel-item-chk"
+                  value="${it.rowNum}"
+                  onchange="updatePanelSelectionInfo()"
+                  aria-label="Select ${esc(it.description || "item")}">
+              </td>
+              <td style="color:var(--text-secondary);font-size:.82rem">${esc(formatDate(it.date))}</td>
+              <td>${esc(it.type || "")}</td>
+              <td style="font-family:monospace;font-size:.82rem">${esc(it.invNo || "—")}</td>
+              <td>${esc(it.description || "")}</td>
+              <td style="font-size:.8rem;color:var(--text-secondary)">${esc(it.paymentVia || "")}</td>
+              <td style="text-align:right;font-weight:600">RM ${amount.toFixed(2)}</td>`;
+          } else {
+            // Already submitted — show a lock icon, no checkbox, row is visually distinct
+            tr.style.background = "#f0fdf4";
+            tr.innerHTML = `
+              <td style="text-align:center;padding-left:4px">
+                <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:1rem" title="Already submitted"></i>
+              </td>
+              <td style="color:var(--text-secondary);font-size:.82rem;opacity:.7">${esc(formatDate(it.date))}</td>
+              <td style="opacity:.7">${esc(it.type || "")}</td>
+              <td style="font-family:monospace;font-size:.82rem;opacity:.7">${esc(it.invNo || "—")}</td>
+              <td style="opacity:.7">${esc(it.description || "")}</td>
+              <td style="font-size:.8rem;color:var(--text-secondary);opacity:.7">${esc(it.paymentVia || "")}</td>
+              <td style="text-align:right;font-weight:600;color:var(--success)">RM ${amount.toFixed(2)}</td>`;
+          }
           frag.appendChild(tr);
         });
         tbody.appendChild(frag);
@@ -1407,6 +1427,7 @@ function openDetailPanel(refNo, claimStatus) {
 }
 
 function toggleAllPanelItems(src) {
+  // Only toggle checkboxes on Draft rows (Submitted rows have no checkbox)
   document.querySelectorAll(".panel-item-chk").forEach(c => c.checked = src.checked);
   updatePanelSelectionInfo();
 }
@@ -1436,22 +1457,29 @@ function closeDetailPanel() {
 
 function submitDraftFromPanel() {
   if (!panelCurrentRef) return;
+
+  const rowNums = Array.from(document.querySelectorAll(".panel-item-chk:checked"))
+                       .map(c => parseInt(c.value, 10));
+  if (!rowNums.length) {
+    toast("Please select at least one item to submit.", true);
+    return;
+  }
+
   setBtn("panelSubmitBtn", '<span class="spinner-sm"></span> Submitting…', true);
   google.script.run
     .withSuccessHandler(res => {
-      setBtn("panelSubmitBtn", '<i class="bi bi-send me-1"></i>Submit Claim', false);
-      toast(res.success ? "Claim submitted successfully." : (res.message || "Update failed."), !res.success);
+      setBtn("panelSubmitBtn", '<i class="bi bi-send me-1"></i>Submit Selected', false);
+      toast(res.success ? "Selected items submitted." : (res.message || "Update failed."), !res.success);
       if (res.success) {
-        document.getElementById("panelSubmitSection").classList.add("hidden");
         closeDetailPanel();
         loadHistory();
       }
     })
     .withFailureHandler(() => {
-      setBtn("panelSubmitBtn", '<i class="bi bi-send me-1"></i>Submit Claim', false);
+      setBtn("panelSubmitBtn", '<i class="bi bi-send me-1"></i>Submit Selected', false);
       toast("Server error.", true);
     })
-    .submitDraft(panelCurrentRef, currentUser.userId);
+    .submitSelectedRows(rowNums, currentUser.userId);
 }
 
 document.addEventListener("keydown", e => {
