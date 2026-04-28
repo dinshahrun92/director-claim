@@ -277,17 +277,104 @@ function processPayments(refNoList, userId) {
 
   for (let i = 1; i < data.length; i++) {
     const rowRef    = data[i][0].toString();
-    const rowOwner  = data[i][1].toString();
     const rowStatus = data[i][9].toString();
 
     if (!refNoList.includes(rowRef)) continue;
-    if (rowOwner  !== userId)        continue; // only own claims
     if (rowStatus !== "Submitted")   continue; // only submitted claims
 
     sheet.getRange(i + 1, 11).setValue("Paid");
     sheet.getRange(i + 1, 12).setValue(today);
   }
   return { success: true };
+}
+
+// Returns all claims grouped by reference number, without filtering by owner.
+// Used by the Payment Tracking tab so a director can see everyone's submitted claims.
+function getAllClaims() {
+  const tz   = Session.getScriptTimeZone();
+  const data = getSheet("App_Claims").getDataRange().getValues();
+  const grouped = {};
+
+  for (let i = 1; i < data.length; i++) {
+    const ref = data[i][0].toString();
+    if (!ref) continue;
+
+    if (!grouped[ref]) {
+      let dateStr = "";
+      if (data[i][12]) {
+        try { dateStr = Utilities.formatDate(new Date(data[i][12]), tz, "yyyy-MM-dd"); } catch (_) {}
+      }
+      let paymentDateStr = "";
+      if (data[i][11]) {
+        try { paymentDateStr = Utilities.formatDate(new Date(data[i][11]), tz, "yyyy-MM-dd"); } catch (_) {}
+      }
+      grouped[ref] = {
+        refNo:       ref,
+        recipient:   data[i][2] || "",
+        submittedBy: data[i][1] || "",
+        total:       0,
+        amountPaid:  0,
+        _paidCount:  0,
+        _rowCount:   0,
+        status:      data[i][9]  || "",
+        payStatus:   "Unpaid",
+        date:        dateStr,
+        paymentDate: paymentDateStr
+      };
+    }
+    const amount = parseFloat(data[i][7]) || 0;
+    grouped[ref].total     += amount;
+    grouped[ref]._rowCount += 1;
+    if ((data[i][10] || "").toString() === "Paid") {
+      grouped[ref]._paidCount += 1;
+      grouped[ref].amountPaid += amount;
+    }
+  }
+
+  return Object.values(grouped).map(g => {
+    g.payStatus = g._paidCount === 0           ? "Unpaid"
+                : g._paidCount === g._rowCount ? "Paid"
+                :                                "Partial";
+    delete g._paidCount;
+    delete g._rowCount;
+    return g;
+  }).sort((a, b) => {
+    const da = a.date ? new Date(a.date) : new Date(0);
+    const db = b.date ? new Date(b.date) : new Date(0);
+    return db - da;
+  });
+}
+
+// Returns item rows for any claim regardless of ownership.
+// Used by the payment panel so a director can view and pay any submitted claim's items.
+function getClaimDetails(refNo) {
+  refNo = sanitize(refNo);
+  if (!refNo) return [];
+
+  const data = getSheet("App_Claims").getDataRange().getValues();
+  const rows = [];
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0].toString() !== refNo) continue;
+    if (data[i][6].toString().toUpperCase() === LEGACY_PLACEHOLDER) continue;
+
+    const rawDate = data[i][3];
+    let dateStr = "";
+    if (rawDate) {
+      try { dateStr = Utilities.formatDate(new Date(rawDate), Session.getScriptTimeZone(), "yyyy-MM-dd"); } catch (_) {}
+    }
+
+    rows.push({
+      date:        dateStr,
+      type:        data[i][4],
+      invNo:       data[i][5],
+      description: data[i][6],
+      amount:      data[i][7],
+      rowNum:      i + 1,
+      payStatus:   (data[i][10] || "").toString()
+    });
+  }
+  return rows;
 }
 
 // Marks individual sheet rows (by 1-based row number) as Paid.
@@ -306,7 +393,6 @@ function processRowPayments(rowNums, userId) {
     const idx = Number(rowNum);
     if (!Number.isInteger(idx) || idx < 2 || idx > data.length) return; // skip header + OOB
     const i = idx - 1; // 0-based index into data array
-    if (data[i][1].toString() !== userId)       return; // ownership check
     if (data[i][9].toString() !== "Submitted")  return; // only submitted claims
     if ((data[i][10] || "").toString() === "Paid") return; // skip already-paid rows
     sheet.getRange(idx, 11).setValue("Paid");

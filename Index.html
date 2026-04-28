@@ -1307,7 +1307,9 @@ function editDraft(ref, rec) {
 }
 
 // ── claim detail side panel ────────────────────────────────────────────────
-function openDetailPanel(refNo, summaryData) {
+// isDirectorView = true → fetch via getClaimDetails (no ownership filter, for payment tab)
+// isDirectorView = false/omitted → fetch via getDraftDetails (own claims only, for history tab)
+function openDetailPanel(refNo, summaryData, isDirectorView) {
   panelCurrentRef = refNo;
   document.getElementById("panelRefLabel").textContent = refNo;
   document.getElementById("panelBody").innerHTML = "";
@@ -1411,7 +1413,9 @@ function openDetailPanel(refNo, summaryData) {
       document.getElementById("panelLoader").classList.add("hidden");
       toast("Failed to load claim details.", true);
     })
-    .getDraftDetails(refNo, currentUser.userId);
+    [isDirectorView ? "getClaimDetails" : "getDraftDetails"](
+      ...(isDirectorView ? [refNo] : [refNo, currentUser.userId])
+    );
 }
 
 function toggleAllPanelItems(src) {
@@ -1544,7 +1548,7 @@ function loadPaymentList() {
           detBtn.className  = "btn btn-sm";
           detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
           detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
-          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: r.amountPaid || 0, balance: r.total - (r.amountPaid || 0), isPayable: true });
+          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: r.amountPaid || 0, balance: r.total - (r.amountPaid || 0), isPayable: true }, true);
 
           tr.innerHTML = `
             <td><input type="checkbox" class="form-check-input pay-chk" value="${esc(r.refNo)}"></td>
@@ -1576,7 +1580,7 @@ function loadPaymentList() {
           detBtn.className  = "btn btn-sm";
           detBtn.style.cssText = "background:var(--info-bg);color:var(--info);border:none;font-size:12px";
           detBtn.innerHTML  = '<i class="bi bi-eye me-1"></i>View';
-          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: r.total, balance: 0, isPayable: false });
+          detBtn.onclick    = () => openDetailPanel(r.refNo, { total: r.total, amountPaid: r.total, balance: 0, isPayable: false }, true);
 
           tr.innerHTML = `
             <td><span class="ref-pill">${esc(r.refNo)}</span></td>
@@ -1595,7 +1599,7 @@ function loadPaymentList() {
       loader.classList.add("hidden");
       toast("Failed to load payment data.", true);
     })
-    .getUserClaims(currentUser.userId);
+    .getAllClaims();
 }
 
 function processPayment() {
