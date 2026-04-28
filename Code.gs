@@ -28,7 +28,7 @@ function setupSheets() {
     App_Users:  ["UserID","Password","FullName"],
     App_Claims: ["RefNo","UserID","Recipient","InvoiceDate","Type","InvoiceNo",
                  "Description","Amount","FileUrl","Status","PaymentStatus",
-                 "PaymentDate","Timestamp"]
+                 "PaymentDate","Timestamp","PaymentVia"]
   };
 
   Object.entries(schemas).forEach(([name, headers]) => {
@@ -140,7 +140,8 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
         status,
         "Unpaid",
         "",
-        ts
+        ts,
+        sanitize(item.paymentVia || "")
       ]);
     });
 
@@ -151,77 +152,93 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
 }
 
 function getUserClaims(userId) { // eslint-disable-line no-unused-vars
-  try {
-    // Returns all claims from all users (userId param retained for backward compatibility)
-    const claimsSheet = getSheet("App_Claims");
-    const usersSheet  = getSheet("App_Users");
-    if (!claimsSheet || !usersSheet) return [];
+  // Returns all claims from all users (userId param retained for backward compatibility)
+  const claimsSheet = getSheet("App_Claims");
+  const usersSheet  = getSheet("App_Users");
+  if (!claimsSheet || !usersSheet) return [];
 
-    const claimsData = claimsSheet.getLastRow() > 0 ? claimsSheet.getDataRange().getValues() : [];
-    const usersData  = usersSheet.getLastRow()  > 0 ? usersSheet.getDataRange().getValues()  : [];
+  const claimsData = claimsSheet.getLastRow() > 1 ? claimsSheet.getDataRange().getValues() : [];
+  const usersData  = usersSheet.getLastRow()  > 1 ? usersSheet.getDataRange().getValues()  : [];
 
-    // Build userId → fullName map
-    const userMap = {};
-    for (let i = 1; i < usersData.length; i++) {
-      userMap[usersData[i][0].toString()] = usersData[i][2] || usersData[i][0].toString();
-    }
+  const tz = Session.getScriptTimeZone();
 
-    const grouped = {};
-    for (let i = 1; i < claimsData.length; i++) {
-      const ref = claimsData[i][0].toString();
-      if (!ref) continue;
-
-      const isPlaceholder = claimsData[i][6] === "New Draft Created";
-      const ownerId = claimsData[i][1].toString();
-
-      // Always create the group entry so even fresh drafts appear in the listing
-      if (!grouped[ref]) {
-        grouped[ref] = {
-          refNo:      ref,
-          ownerId:    ownerId,
-          ownerName:  userMap[ownerId] || ownerId,
-          recipient:  claimsData[i][2] || "",
-          total:      0,
-          status:     claimsData[i][9]  || "",
-          paidItems:  0,
-          totalItems: 0,
-          date:       claimsData[i][12]
-        };
-      }
-
-      // Placeholder rows (initial draft marker) don't count toward totals
-      if (isPlaceholder) continue;
-
-      grouped[ref].total      += parseFloat(claimsData[i][7]) || 0;
-      grouped[ref].totalItems += 1;
-      if ((claimsData[i][10] || "").toString().toLowerCase() === "paid") {
-        grouped[ref].paidItems += 1;
-      }
-    }
-
-    // Compute payStatus per group
-    const result = Object.values(grouped).map(g => {
-      let payStatus;
-      if (g.paidItems === 0)               payStatus = "Unpaid";
-      else if (g.paidItems >= g.totalItems) payStatus = "Paid";
-      else                                 payStatus = "Partial";
-      return {
-        refNo:     g.refNo,
-        ownerId:   g.ownerId,
-        ownerName: g.ownerName,
-        recipient: g.recipient,
-        total:     g.total,
-        status:    g.status,
-        date:      g.date,
-        payStatus: payStatus
-      };
-    });
-
-    return result.sort((a, b) => new Date(b.date) - new Date(a.date));
-  } catch (e) {
-    Logger.log("getUserClaims error: " + e.toString());
-    return [];
+  // Build userId → fullName map
+  const userMap = {};
+  for (let i = 1; i < usersData.length; i++) {
+    userMap[usersData[i][0].toString()] = usersData[i][2] || usersData[i][0].toString();
   }
+
+  const grouped = {};
+  for (let i = 1; i < claimsData.length; i++) {
+    const ref = claimsData[i][0].toString();
+    if (!ref) continue;
+
+    const isPlaceholder = claimsData[i][6] === "New Draft Created";
+    const ownerId  = claimsData[i][1].toString();
+    const rowStatus = (claimsData[i][9] || "").toString();
+
+    if (!grouped[ref]) {
+      // Convert the Timestamp (Date object) to a plain ISO string to avoid GAS
+      // serialisation failures when returning to the client via google.script.run.
+      let dateStr = "";
+      const rawTs = claimsData[i][12];
+      if (rawTs) {
+        try { dateStr = Utilities.formatDate(new Date(rawTs), tz, "yyyy-MM-dd'T'HH:mm:ss"); } catch (_) {}
+      }
+
+      grouped[ref] = {
+        refNo:      ref,
+        ownerId:    ownerId,
+        ownerName:  userMap[ownerId] || ownerId,
+        recipient:  (claimsData[i][2] || "").toString(),
+        total:      0,
+        status:     rowStatus,
+        paidItems:  0,
+        totalItems: 0,
+        date:       dateStr
+      };
+    } else {
+      // If any row of this ref is still Draft the whole claim is shown as Draft;
+      // otherwise keep the first-seen status (Submitted / Approved etc.).
+      if (rowStatus === "Draft") {
+        grouped[ref].status = "Draft";
+      }
+    }
+
+    // Placeholder rows (initial draft marker) don't count toward totals
+    if (isPlaceholder) continue;
+
+    grouped[ref].total      += parseFloat(claimsData[i][7]) || 0;
+    grouped[ref].totalItems += 1;
+    if ((claimsData[i][10] || "").toString().toLowerCase() === "paid") {
+      grouped[ref].paidItems += 1;
+    }
+  }
+
+  // Compute payStatus per group and return plain serialisable objects
+  const result = Object.values(grouped).map(g => {
+    let payStatus;
+    if (g.paidItems === 0)               payStatus = "Unpaid";
+    else if (g.paidItems >= g.totalItems) payStatus = "Paid";
+    else                                 payStatus = "Partial";
+    return {
+      refNo:     g.refNo,
+      ownerId:   g.ownerId,
+      ownerName: g.ownerName,
+      recipient: g.recipient,
+      total:     g.total,
+      status:    g.status,
+      date:      g.date,
+      payStatus: payStatus
+    };
+  });
+
+  return result.sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return b.date < a.date ? -1 : b.date > a.date ? 1 : 0;
+  });
 }
 
 function getDraftDetails(refNo, userId) {
@@ -249,7 +266,8 @@ function getDraftDetails(refNo, userId) {
       description:   data[i][6],
       amount:        data[i][7],
       claimStatus:   data[i][9]  || "",
-      paymentStatus: data[i][10] || ""
+      paymentStatus: data[i][10] || "",
+      paymentVia:    data[i][13] || ""
     });
   }
   return rows;

@@ -1582,12 +1582,19 @@ function loadHistory() {
   google.script.run
     .withSuccessHandler(data => {
       loader.classList.add('hidden');
-      historyData = Array.isArray(data) ? data : [];
+      if (!Array.isArray(data)) {
+        // getUserClaims returned something unexpected (GAS serialisation failure)
+        renderHistory(null);
+        toast('Could not load claims from server. Please refresh.', true);
+        return;
+      }
+      historyData = data;
       renderHistory(historyData);
     })
     .withFailureHandler(() => {
       loader.classList.add('hidden');
-      toast('Failed to load claims.', true);
+      renderHistory(null);
+      toast('Failed to load claims. Please try again.', true);
     })
     .getUserClaims(currentUser.userId);
 }
@@ -1609,7 +1616,17 @@ function renderHistory(data) {
   const body = document.getElementById('historyBody');
   body.innerHTML = '';
 
-  if (!data || !data.length) {
+  if (!data) {
+    body.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="es-icon"><i class="bi bi-exclamation-triangle"></i></div>
+        <h4>Could not load claims</h4>
+        <p>There was a problem fetching your claim records. Click <strong>Refresh</strong> to try again.</p>
+      </div></td></tr>`;
+    return;
+  }
+
+  if (!data.length) {
     body.innerHTML = `<tr><td colspan="8">
       <div class="empty-state">
         <div class="es-icon"><i class="bi bi-inbox"></i></div>
