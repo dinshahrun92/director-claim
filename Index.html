@@ -1582,8 +1582,8 @@ function loadHistory() {
   google.script.run
     .withSuccessHandler(data => {
       loader.classList.add('hidden');
-      historyData = data;
-      renderHistory(data);
+      historyData = Array.isArray(data) ? data : [];
+      renderHistory(historyData);
     })
     .withFailureHandler(() => {
       loader.classList.add('hidden');
@@ -1609,7 +1609,7 @@ function renderHistory(data) {
   const body = document.getElementById('historyBody');
   body.innerHTML = '';
 
-  if (!data.length) {
+  if (!data || !data.length) {
     body.innerHTML = `<tr><td colspan="8">
       <div class="empty-state">
         <div class="es-icon"><i class="bi bi-inbox"></i></div>
