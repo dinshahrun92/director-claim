@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup 3 — Government Clean | ClaimFlow Director Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    /* ── Design 3: "Government Clean" ─────────────────────────────── */
+    :root {
+      --navy:         #1e3a5f;
+      --navy-dark:    #152c49;
+      --navy-light:   #264a75;
+      --gold:         #e6a817;
+      --gold-dim:     rgba(230,168,23,.12);
+      --gold-border:  rgba(230,168,23,.3);
+      --bg:           #f4f6f9;
+      --surface:      #ffffff;
+      --surface-2:    #f8f9fb;
+      --border:       #dde2ea;
+      --border-2:     #c8d0db;
+      --ink:          #1a2332;
+      --ink-2:        #374151;
+      --ink-3:        #6b7280;
+      --ink-4:        #9ca3af;
+      --green:        #15803d;
+      --green-dim:    #f0fdf4;
+      --green-border: #bbf7d0;
+      --amber:        #b45309;
+      --amber-dim:    #fffbeb;
+      --amber-border: #fde68a;
+      --red:          #dc2626;
+      --red-dim:      #fef2f2;
+      --red-border:   #fecaca;
+      --blue:         #1d4ed8;
+      --blue-dim:     #eff6ff;
+      --blue-border:  #bfdbfe;
+      --nav-h:        62px;
+      --summary-h:    52px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Top navigation (navy) ──────────────────────────────────── */
+    .topnav {
+      height: var(--nav-h);
+      background: var(--navy);
+      display: flex; align-items: center;
+      padding: 0 2rem;
+      gap: 1rem;
+      position: sticky; top: 0; z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: .75rem;
+      flex-shrink: 0;
+    }
+    .nav-brand-mark {
+      width: 36px; height: 36px;
+      background: var(--gold);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--navy-dark); font-size: .95rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(230,168,23,.4);
+    }
+    .nav-brand-text {
+      font-size: 1rem; font-weight: 700;
+      color: #fff;
+      letter-spacing: -.01em;
+    }
+    .nav-brand-text span { color: var(--gold); }
+    .nav-brand-sub { font-size: .68rem; color: rgba(255,255,255,.45); margin-top: .05rem; text-transform: uppercase; letter-spacing: .06em; }
+
+    .nav-divider { width: 1px; height: 24px; background: rgba(255,255,255,.15); flex-shrink: 0; }
+
+    .nav-tabs { display: flex; align-items: center; gap: .15rem; }
+    .nav-tab {
+      display: flex; align-items: center; gap: .45rem;
+      padding: .5rem .95rem;
+      border-radius: 6px;
+      font-size: .82rem; font-weight: 500;
+      color: rgba(255,255,255,.6);
+      background: transparent; border: none;
+      transition: all .15s; cursor: pointer;
+      font-family: 'IBM Plex Sans', sans-serif;
+      white-space: nowrap;
+    }
+    .nav-tab i { font-size: .9rem; }
+    .nav-tab:hover { color: #fff; background: rgba(255,255,255,.08); }
+    .nav-tab.active {
+      color: var(--navy-dark);
+      background: var(--gold);
+      font-weight: 600;
+    }
+    .nav-tab .tab-badge {
+      font-size: .65rem; font-weight: 700;
+      background: rgba(255,255,255,.2);
+      border-radius: 99px;
+      padding: 1px 6px;
+    }
+    .nav-tab.active .tab-badge { background: rgba(30,58,95,.2); }
+
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
+    .nav-icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 7px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.7);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: .88rem; position: relative;
+      transition: all .15s;
+    }
+    .nav-icon-btn:hover { background: rgba(255,255,255,.15); color: #fff; }
+    .nav-icon-btn .dot {
+      position: absolute; top: 5px; right: 5px;
+      width: 7px; height: 7px;
+      background: var(--gold);
+      border: 2px solid var(--navy);
+      border-radius: 50%;
+    }
+    .user-pill {
+      display: flex; align-items: center; gap: .55rem;
+      padding: .3rem .75rem .3rem .4rem;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .user-pill:hover { background: rgba(255,255,255,.15); }
+    .user-av-nav {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: var(--navy-dark); font-size: .65rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .user-pill-name { font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.9); }
+
+    /* ── Summary bar ────────────────────────────────────────────── */
+    .summary-bar {
+      height: var(--summary-h);
+      background: var(--navy-dark);
+      border-bottom: 3px solid var(--gold);
+      display: flex; align-items: center;
+      padding: 0 2rem;
+      gap: 0;
+      position: sticky; top: var(--nav-h); z-index: 190;
+    }
+    .sum-stat {
+      display: flex; align-items: center; gap: .65rem;
+      padding: 0 1.5rem;
+      border-right: 1px solid rgba(255,255,255,.1);
+    }
+    .sum-stat:first-child { padding-left: 0; }
+    .sum-stat:last-child { border-right: none; }
+    .sum-icon {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem;
+    }
+    .sum-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.45); font-weight: 600; }
+    .sum-value { font-family: 'IBM Plex Mono', monospace; font-size: .95rem; font-weight: 600; color: #fff; }
+    .sum-spacer { flex: 1; }
+    .sum-date { font-size: .75rem; color: rgba(255,255,255,.4); display: flex; align-items: center; gap: .4rem; }
+
+    /* ── Page content wrapper ────────────────────────────────────── */
+    .page { height: calc(100vh - var(--nav-h) - var(--summary-h)); overflow-y: auto; }
+    .page-inner { padding: 1.75rem 2rem; max-width: 1320px; margin: 0 auto; }
+
+    /* ── Section header ─────────────────────────────────────────── */
+    .section-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: .85rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .section-header h2 {
+      font-size: 1.1rem; font-weight: 700; color: var(--ink);
+      letter-spacing: -.015em;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .section-header h2 .sh-icon {
+      width: 28px; height: 28px;
+      background: var(--navy);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold); font-size: .8rem;
+    }
+    .section-header p { font-size: .8rem; color: var(--ink-3); margin-top: .15rem; }
+    .section-actions { display: flex; align-items: center; gap: .65rem; }
+
+    /* ── Buttons ─────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .5rem 1rem;
+      border-radius: 6px;
+      font-size: .82rem; font-weight: 600;
+      font-family: 'IBM Plex Sans', sans-serif;
+      border: 1.5px solid transparent;
+      cursor: pointer; transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn-navy {
+      background: var(--navy); color: #fff;
+      box-shadow: 0 2px 6px rgba(30,58,95,.25);
+    }
+    .btn-navy:hover { background: var(--navy-dark); transform: translateY(-1px); }
+    .btn-gold {
+      background: var(--gold); color: var(--navy-dark);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(230,168,23,.35);
+    }
+    .btn-gold:hover { background: #d9a015; transform: translateY(-1px); }
+    .btn-ghost {
+      background: var(--surface); color: var(--ink-2);
+      border-color: var(--border-2);
+    }
+    .btn-ghost:hover { background: var(--surface-2); }
+    .btn-sm { padding: .35rem .75rem; font-size: .78rem; }
+    .btn-xs { padding: .22rem .6rem; font-size: .72rem; border-radius: 5px; }
+
+    /* ── Cards ───────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .card-top {
+      background: var(--navy);
+      padding: .7rem 1rem;
+      display: flex; align-items: center; gap: .65rem;
+    }
+    .card-top h3 { font-size: .85rem; font-weight: 600; color: #fff; }
+    .card-icon-gov {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,.1);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold); font-size: .82rem;
+    }
+    .card-top-right { margin-left: auto; display: flex; gap: .5rem; }
+
+    /* ── KPI strip ───────────────────────────────────────────────── */
+    .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 1.5rem; }
+    .kpi-gov {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-top: 3px solid var(--navy);
+      border-radius: 6px;
+      padding: 1rem 1.15rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .kpi-gov.kpi-gold  { border-top-color: var(--gold); }
+    .kpi-gov.kpi-green { border-top-color: var(--green); }
+    .kpi-gov.kpi-blue  { border-top-color: var(--blue); }
+    .kpi-gov-label {
+      font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--ink-3); margin-bottom: .4rem;
+    }
+    .kpi-gov-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.75rem; font-weight: 600;
+      color: var(--ink); line-height: 1;
+      letter-spacing: -.02em;
+    }
+    .kpi-gov-value .kv-unit { font-size: .88rem; font-weight: 500; color: var(--ink-3); margin-right: .12rem; }
+    .kpi-gov-change {
+      display: flex; align-items: center; gap: .3rem;
+      font-size: .72rem; font-weight: 600; margin-top: .45rem;
+    }
+    .kgc-up   { color: var(--green); }
+    .kgc-down { color: var(--red); }
+
+    /* ── Data table ──────────────────────────────────────────────── */
+    .gov-table { width: 100%; border-collapse: collapse; }
+    .gov-table thead tr { background: var(--navy); }
+    .gov-table thead th {
+      padding: .65rem 1rem;
+      font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: rgba(255,255,255,.75); text-align: left; white-space: nowrap;
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+    .gov-table thead th:last-child { border-right: none; }
+    .gov-table tbody tr:nth-child(even) { background: var(--surface-2); }
+    .gov-table tbody tr {
+      border-bottom: 1.5px solid var(--border);
+      transition: background .1s;
+    }
+    .gov-table tbody tr:last-child { border-bottom: none; }
+    .gov-table tbody tr:hover { background: var(--blue-dim); }
+    .gov-table td {
+      padding: .78rem 1rem;
+      vertical-align: middle;
+      border-right: 1px solid var(--border);
+      font-size: .83rem;
+    }
+    .gov-table td:last-child { border-right: none; }
+    .col-chk { width: 42px; text-align: center; }
+    .chk-gov {
+      width: 16px; height: 16px;
+      border-radius: 3px;
+      accent-color: var(--navy);
+      cursor: pointer;
+    }
+
+    /* ── Badges ──────────────────────────────────────────────────── */
+    .badge-gov {
+      display: inline-flex; align-items: center; gap: .28rem;
+      padding: .2rem .65rem;
+      border-radius: 4px;
+      font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em;
+      border: 1.5px solid;
+    }
+    .bg-draft     { background: var(--amber-dim);  color: var(--amber);  border-color: var(--amber-border); }
+    .bg-submitted { background: var(--blue-dim);   color: var(--blue);   border-color: var(--blue-border); }
+    .bg-paid      { background: var(--green-dim);  color: var(--green);  border-color: var(--green-border); }
+    .bg-partial   { background: #fff7ed;             color: #c2410c;       border-color: #fed7aa; }
+    .bg-unpaid    { background: var(--red-dim);    color: var(--red);    border-color: var(--red-border); }
+
+    .ref-gov {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .78rem; font-weight: 500; color: var(--navy);
+      text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+    }
+    .ref-gov:hover { color: var(--blue); }
+    .amt-gov { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: .85rem; color: var(--ink); }
+
+    /* ── Bulk toolbar ────────────────────────────────────────────── */
+    .bulk-bar {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .65rem 1rem;
+      background: var(--navy-dark);
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .bulk-count { font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.8); }
+    .bulk-bar .spacer { flex: 1; }
+    .btn-bulk {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .32rem .85rem;
+      border-radius: 5px;
+      font-size: .75rem; font-weight: 600;
+      cursor: pointer; border: none; font-family: 'IBM Plex Sans', sans-serif;
+      transition: all .15s;
+    }
+    .bb-gold { background: var(--gold); color: var(--navy-dark); }
+    .bb-green { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+    .bb-ghost { background: rgba(255,255,255,.1); color: rgba(255,255,255,.8); border: 1px solid rgba(255,255,255,.2); }
+
+    /* ── Search + filter row ────────────────────────────────────── */
+    .filter-row {
+      padding: .85rem 1rem;
+      background: var(--surface-2);
+      border-bottom: 1.5px solid var(--border);
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .search-gov {
+      display: flex; align-items: center; gap: .55rem;
+      background: var(--surface);
+      border: 1.5px solid var(--border-2);
+      border-radius: 6px;
+      padding: .42rem .85rem;
+      flex: 1; max-width: 320px;
+      transition: border-color .15s;
+    }
+    .search-gov:focus-within { border-color: var(--navy); }
+    .search-gov i { color: var(--ink-4); font-size: .82rem; }
+    .search-gov input {
+      border: none; outline: none;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: .82rem; color: var(--ink); background: transparent;
+      width: 100%;
+    }
+    .search-gov input::placeholder { color: var(--ink-4); }
+    .filter-select {
+      border: 1.5px solid var(--border-2);
+      border-radius: 6px;
+      padding: .42rem .75rem;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: .8rem; color: var(--ink-2);
+      background: var(--surface);
+      cursor: pointer; outline: none;
+    }
+    .filter-select:focus { border-color: var(--navy); }
+    .filter-row .spacer { flex: 1; }
+
+    /* ── Audit log ───────────────────────────────────────────────── */
+    .audit-list { max-height: 300px; overflow-y: auto; }
+    .audit-row {
+      display: flex; align-items: flex-start; gap: .85rem;
+      padding: .72rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: .8rem;
+    }
+    .audit-row:last-child { border-bottom: none; }
+    .audit-time { font-family: 'IBM Plex Mono', monospace; font-size: .7rem; color: var(--ink-4); min-width: 130px; }
+    .audit-user { font-weight: 600; color: var(--navy); min-width: 90px; }
+    .audit-action { color: var(--ink-2); flex: 1; }
+    .audit-action strong { color: var(--ink); }
+    .audit-badge {
+      font-size: .68rem; font-weight: 700; padding: .15rem .5rem; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: .04em;
+      flex-shrink: 0;
+    }
+    .ab-paid    { background: var(--green-dim); color: var(--green); }
+    .ab-submit  { background: var(--blue-dim);  color: var(--blue); }
+    .ab-draft   { background: var(--amber-dim); color: var(--amber); }
+    .ab-system  { background: #f1f5f9;           color: #475569; }
+
+    /* ── Two col layout ─────────────────────────────────────────── */
+    .two-col { display: grid; grid-template-columns: 7fr 4fr; gap: 1.25rem; }
+
+    /* ── Bottom label ─────────────────────────────────────────────── */
+    .mockup-label {
+      position: fixed;
+      bottom: 1rem; left: 50%;
+      transform: translateX(-50%);
+      background: var(--navy);
+      border: 2px solid var(--gold);
+      color: var(--gold);
+      padding: .35rem 1.1rem;
+      border-radius: 5px;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      z-index: 9999;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+
+    .rec-chip {
+      display: inline-flex; align-items: center; gap: .45rem; font-size: .8rem;
+    }
+    .rc-av-sm {
+      width: 24px; height: 24px; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .6rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top navigation ── -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <div class="nav-brand-mark"><i class="bi bi-clipboard2-check-fill"></i></div>
+    <div>
+      <div class="nav-brand-text">Claim<span>Flow</span></div>
+      <div class="nav-brand-sub">Director Portal</div>
+    </div>
+  </div>
+  <div class="nav-divider"></div>
+  <div class="nav-tabs">
+    <button class="nav-tab"><i class="bi bi-grid-1x2"></i> Dashboard</button>
+    <button class="nav-tab"><i class="bi bi-pencil-square"></i> Claim Form</button>
+    <button class="nav-tab active"><i class="bi bi-journal-text"></i> Claim Record <span class="tab-badge">4</span></button>
+    <button class="nav-tab"><i class="bi bi-cash-coin"></i> Payments <span class="tab-badge">2</span></button>
+    <button class="nav-tab"><i class="bi bi-clock-history"></i> Audit Log</button>
+    <button class="nav-tab"><i class="bi bi-bar-chart-line"></i> Analytics</button>
+    <button class="nav-tab"><i class="bi bi-gear"></i> Settings</button>
+  </div>
+  <div class="nav-right">
+    <div class="nav-icon-btn"><i class="bi bi-bell"></i><div class="dot"></div></div>
+    <div class="nav-icon-btn"><i class="bi bi-printer"></i></div>
+    <div class="user-pill">
+      <div class="user-av-nav">SA</div>
+      <span class="user-pill-name">Syamsul Azly</span>
+      <i class="bi bi-chevron-down" style="font-size:.65rem;color:rgba(255,255,255,.4)"></i>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="color:rgba(255,255,255,.7);background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)">
+      <i class="bi bi-box-arrow-right"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- ── Summary bar ── -->
+<div class="summary-bar">
+  <div class="sum-stat">
+    <div class="sum-icon" style="background:rgba(230,168,23,.15);color:var(--gold)"><i class="bi bi-receipt"></i></div>
+    <div>
+      <div class="sum-label">Total Claims</div>
+      <div class="sum-value">48</div>
+    </div>
+  </div>
+  <div class="sum-stat">
+    <div class="sum-icon" style="background:rgba(21,128,61,.15);color:#4ade80"><i class="bi bi-cash-stack"></i></div>
+    <div>
+      <div class="sum-label">Total Paid</div>
+      <div class="sum-value">RM 12,450</div>
+    </div>
+  </div>
+  <div class="sum-stat">
+    <div class="sum-icon" style="background:rgba(220,38,38,.15);color:#f87171"><i class="bi bi-hourglass-split"></i></div>
+    <div>
+      <div class="sum-label">Pending</div>
+      <div class="sum-value">RM 6,240</div>
+    </div>
+  </div>
+  <div class="sum-stat">
+    <div class="sum-icon" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5)"><i class="bi bi-layers"></i></div>
+    <div>
+      <div class="sum-label">Draft</div>
+      <div class="sum-value">7</div>
+    </div>
+  </div>
+  <div class="sum-spacer"></div>
+  <div class="sum-date">
+    <i class="bi bi-calendar3"></i>
+    Reporting period: January – April 2025
+  </div>
+</div>
+
+<!-- ── Page ── -->
+<div class="page">
+  <div class="page-inner">
+
+    <!-- KPI strip -->
+    <div class="kpi-strip">
+      <div class="kpi-gov">
+        <div class="kpi-gov-label">This Month — Claims</div>
+        <div class="kpi-gov-value">12</div>
+        <div class="kpi-gov-change kgc-up"><i class="bi bi-arrow-up"></i> +3 vs last month</div>
+      </div>
+      <div class="kpi-gov kpi-gold">
+        <div class="kpi-gov-label">This Month — Total</div>
+        <div class="kpi-gov-value"><span class="kv-unit">RM</span>6,820</div>
+        <div class="kpi-gov-change kgc-up"><i class="bi bi-arrow-up"></i> +12.4%</div>
+      </div>
+      <div class="kpi-gov kpi-green">
+        <div class="kpi-gov-label">Paid to Date</div>
+        <div class="kpi-gov-value"><span class="kv-unit">RM</span>12,450</div>
+        <div class="kpi-gov-change kgc-up"><i class="bi bi-check2-circle"></i> 26 claims settled</div>
+      </div>
+      <div class="kpi-gov kpi-blue">
+        <div class="kpi-gov-label">Outstanding</div>
+        <div class="kpi-gov-value"><span class="kv-unit">RM</span>6,240</div>
+        <div class="kpi-gov-change kgc-down"><i class="bi bi-exclamation-circle"></i> 4 claims unpaid</div>
+      </div>
+    </div>
+
+    <!-- Main two column -->
+    <div class="two-col">
+
+      <!-- Claims table -->
+      <div>
+        <div class="section-header">
+          <div>
+            <h2><span class="sh-icon"><i class="bi bi-journal-text"></i></span> Claim Record</h2>
+            <p>All claim batches — current financial year</p>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-ghost btn-sm"><i class="bi bi-download"></i> Export Excel</button>
+            <button class="btn btn-navy btn-sm"><i class="bi bi-printer"></i> Print Report</button>
+            <button class="btn btn-gold btn-sm"><i class="bi bi-plus-lg"></i> New Claim</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <!-- Bulk toolbar (visible when rows selected) -->
+          <div class="bulk-bar">
+            <span class="bulk-count"><i class="bi bi-check2-square" style="margin-right:.3rem"></i>3 rows selected</span>
+            <div class="spacer"></div>
+            <button class="btn-bulk bb-green"><i class="bi bi-cash-coin"></i> Mark as Paid</button>
+            <button class="btn-bulk bb-ghost"><i class="bi bi-send"></i> Submit Selected</button>
+            <button class="btn-bulk bb-ghost"><i class="bi bi-download"></i> Export CSV</button>
+            <button class="btn-bulk bb-ghost" style="color:#f87171"><i class="bi bi-x-lg"></i> Deselect</button>
+          </div>
+
+          <!-- Filter row -->
+          <div class="filter-row">
+            <div class="search-gov">
+              <i class="bi bi-search"></i>
+              <input type="text" placeholder="Search ref, description, recipient…">
+            </div>
+            <select class="filter-select">
+              <option>All Recipients</option>
+              <option>Datuk Wira Syamsul</option>
+              <option>Datin Wira Ardiana</option>
+              <option>Datin Kalsom</option>
+            </select>
+            <select class="filter-select">
+              <option>All Status</option>
+              <option>Draft</option>
+              <option>Submitted</option>
+              <option>Paid</option>
+            </select>
+            <select class="filter-select">
+              <option>All Months</option>
+              <option selected>April 2025</option>
+              <option>March 2025</option>
+            </select>
+            <div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+          </div>
+
+          <!-- Table -->
+          <div style="overflow-x:auto">
+            <table class="gov-table">
+              <thead>
+                <tr>
+                  <th class="col-chk"><input type="checkbox" class="chk-gov"></th>
+                  <th>Ref No</th>
+                  <th>Submitted By</th>
+                  <th>Recipient</th>
+                  <th>Date</th>
+                  <th style="text-align:right">Total (RM)</th>
+                  <th>Claim Status</th>
+                  <th>Payment</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-chk"><input type="checkbox" class="chk-gov" checked></td>
+                  <td><span class="ref-gov">CF-0042</span></td>
+                  <td style="font-size:.8rem;color:var(--ink-2)">Ahmad Firdaus</td>
+                  <td><div class="rec-chip"><div class="rc-av-sm" style="background:linear-gradient(135deg,#1e3a5f,#264a75)">DSA</div>Datuk Syamsul</div></td>
+                  <td style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-3)">24 Apr 2025</td>
+                  <td style="text-align:right"><span class="amt-gov">2,350.00</span></td>
+                  <td><span class="badge-gov bg-submitted">Submitted</span></td>
+                  <td><span class="badge-gov bg-unpaid">Unpaid</span></td>
+                  <td style="white-space:nowrap">
+                    <button class="btn btn-ghost btn-xs"><i class="bi bi-eye"></i> View</button>
+                    <button class="btn btn-xs" style="background:var(--green-dim);color:var(--green);border:1.5px solid var(--green-border);margin-left:.3rem"><i class="bi bi-cash-coin"></i> Pay</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="col-chk"><input type="checkbox" class="chk-gov" checked></td>
+                  <td><span class="ref-gov">CF-0041</span></td>
+                  <td style="font-size:.8rem;color:var(--ink-2)">Nurul Aina</td>
+                  <td><div class="rec-chip"><div class="rc-av-sm" style="background:linear-gradient(135deg,#0f766e,#0891b2)">DWA</div>Datin Ardiana</div></td>
+                  <td style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-3)">20 Apr 2025</td>
+                  <td style="text-align:right"><span class="amt-gov">1,800.00</span></td>
+                  <td><span class="badge-gov bg-paid">Paid</span></td>
+                  <td><span class="badge-gov bg-paid">Paid</span></td>
+                  <td>
+                    <button class="btn btn-ghost btn-xs"><i class="bi bi-eye"></i> View</button>
+                    <button class="btn btn-ghost btn-xs" style="margin-left:.3rem"><i class="bi bi-printer"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="col-chk"><input type="checkbox" class="chk-gov" checked></td>
+                  <td><span class="ref-gov">CF-0040</span></td>
+                  <td style="font-size:.8rem;color:var(--ink-2)">Haslinda Mohd</td>
+                  <td><div class="rec-chip"><div class="rc-av-sm" style="background:linear-gradient(135deg,#b45309,#c2410c)">DKA</div>Datin Kalsom</div></td>
+                  <td style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-3)">18 Apr 2025</td>
+                  <td style="text-align:right"><span class="amt-gov">980.50</span></td>
+                  <td><span class="badge-gov bg-submitted">Submitted</span></td>
+                  <td><span class="badge-gov bg-partial">Partial</span></td>
+                  <td style="white-space:nowrap">
+                    <button class="btn btn-ghost btn-xs"><i class="bi bi-eye"></i> View</button>
+                    <button class="btn btn-xs" style="background:var(--green-dim);color:var(--green);border:1.5px solid var(--green-border);margin-left:.3rem"><i class="bi bi-cash-coin"></i> Pay</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="col-chk"><input type="checkbox" class="chk-gov"></td>
+                  <td><span class="ref-gov">CF-0039</span></td>
+                  <td style="font-size:.8rem;color:var(--ink-2)">Ahmad Firdaus</td>
+                  <td><div class="rec-chip"><div class="rc-av-sm" style="background:linear-gradient(135deg,#1e3a5f,#264a75)">DSA</div>Datuk Syamsul</div></td>
+                  <td style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-3)">12 Apr 2025</td>
+                  <td style="text-align:right"><span class="amt-gov">4,200.00</span></td>
+                  <td><span class="badge-gov bg-paid">Paid</span></td>
+                  <td><span class="badge-gov bg-paid">Paid</span></td>
+                  <td>
+                    <button class="btn btn-ghost btn-xs"><i class="bi bi-eye"></i> View</button>
+                    <button class="btn btn-ghost btn-xs" style="margin-left:.3rem"><i class="bi bi-printer"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="col-chk"><input type="checkbox" class="chk-gov"></td>
+                  <td><span class="ref-gov">CF-0038</span></td>
+                  <td style="font-size:.8rem;color:var(--ink-2)">Nurul Aina</td>
+                  <td><div class="rec-chip"><div class="rc-av-sm" style="background:linear-gradient(135deg,#0f766e,#0891b2)">DWA</div>Datin Ardiana</div></td>
+                  <td style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-3)">08 Apr 2025</td>
+                  <td style="text-align:right"><span class="amt-gov">3,120.00</span></td>
+                  <td><span class="badge-gov bg-draft">Draft</span></td>
+                  <td style="color:var(--ink-4);font-size:.78rem">—</td>
+                  <td style="white-space:nowrap">
+                    <button class="btn btn-ghost btn-xs" style="background:var(--amber-dim);color:var(--amber);border-color:var(--amber-border)"><i class="bi bi-pencil"></i> Edit</button>
+                    <button class="btn btn-ghost btn-xs" style="margin-left:.3rem"><i class="bi bi-eye"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div style="padding:.7rem 1rem;background:var(--surface-2);border-top:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:.78rem;color:var(--ink-3)">Showing 1–5 of 48 records</span>
+            <div style="display:flex;gap:.35rem">
+              <button class="btn btn-ghost btn-xs">« Prev</button>
+              <button class="btn btn-xs" style="background:var(--navy);color:#fff">1</button>
+              <button class="btn btn-ghost btn-xs">2</button>
+              <button class="btn btn-ghost btn-xs">3</button>
+              <button class="btn btn-ghost btn-xs">Next »</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit log -->
+      <div>
+        <div class="section-header">
+          <div>
+            <h2><span class="sh-icon"><i class="bi bi-clock-history"></i></span> Audit Log</h2>
+            <p>All system events</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-top">
+            <div class="card-icon-gov"><i class="bi bi-shield-check"></i></div>
+            <h3>System Activity Trail</h3>
+            <div class="card-top-right">
+              <button class="btn btn-xs" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.15)"><i class="bi bi-funnel"></i></button>
+            </div>
+          </div>
+          <div class="audit-list">
+            <div class="audit-row">
+              <div class="audit-time">29 Apr, 09:12</div>
+              <div class="audit-user">Admin</div>
+              <div class="audit-action"><strong>CF-0041</strong> marked as Paid — RM 1,800</div>
+              <div class="audit-badge ab-paid">Paid</div>
+            </div>
+            <div class="audit-row">
+              <div class="audit-time">29 Apr, 08:45</div>
+              <div class="audit-user">Ahmad</div>
+              <div class="audit-action"><strong>CF-0042</strong> submitted for payment</div>
+              <div class="audit-badge ab-submit">Submit</div>
+            </div>
+            <div class="audit-row">
+              <div class="audit-time">28 Apr, 17:30</div>
+              <div class="audit-user">Farah</div>
+              <div class="audit-action"><strong>CF-0038</strong> draft saved — 5 items</div>
+              <div class="audit-badge ab-draft">Draft</div>
+            </div>
+            <div class="audit-row">
+              <div class="audit-time">28 Apr, 14:20</div>
+              <div class="audit-user">Admin</div>
+              <div class="audit-action"><strong>CF-0040</strong> partial payment — RM 480.25</div>
+              <div class="audit-badge ab-paid">Partial</div>
+            </div>
+            <div class="audit-row">
+              <div class="audit-time">27 Apr, 11:05</div>
+              <div class="audit-user">System</div>
+              <div class="audit-action">Report exported — CF-0039 (PDF, 2 pages)</div>
+              <div class="audit-badge ab-system">Export</div>
+            </div>
+            <div class="audit-row">
+              <div class="audit-time">26 Apr, 09:00</div>
+              <div class="audit-user">Admin</div>
+              <div class="audit-action">New user <strong>Nurul Aina</strong> approved</div>
+              <div class="audit-badge ab-system">User</div>
+            </div>
+            <div class="audit-row">
+              <div class="audit-time">25 Apr, 16:40</div>
+              <div class="audit-user">Ahmad</div>
+              <div class="audit-action"><strong>CF-0039</strong> submitted — RM 4,200.00</div>
+              <div class="audit-badge ab-submit">Submit</div>
+            </div>
+          </div>
+          <div style="padding:.65rem 1rem;border-top:1.5px solid var(--border);text-align:center">
+            <button class="btn btn-ghost btn-xs"><i class="bi bi-list-ul"></i> View Full Audit Log</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /two-col -->
+
+  </div><!-- /page-inner -->
+</div><!-- /page -->
+
+<div class="mockup-label">✦ Design 3 — Government Clean</div>
+
+</body>
+</html>
