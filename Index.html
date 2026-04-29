@@ -1009,6 +1009,110 @@
       #sidePanel { width: 100vw; min-width: unset; }
       .hero-panel { padding: 2rem 1rem; }
     }
+
+    /* ── Settings ────────────────────────────────────────────────────────── */
+    .card-icon-slate { background: #f1f5f9; color: #475569; }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 640px) { .settings-grid { grid-template-columns: 1fr; } }
+    .settings-section > h4 {
+      font-size: .88rem; font-weight: 700; color: var(--ink);
+      margin-bottom: .65rem;
+    }
+    .settings-list {
+      min-height: 72px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .45rem;
+      margin-bottom: .65rem;
+      background: var(--surface-2);
+    }
+    .settings-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .32rem .55rem;
+      border-radius: 6px;
+      font-size: .82rem; color: var(--ink-2);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      margin-bottom: .35rem;
+    }
+    .settings-item:last-child { margin-bottom: 0; }
+    .settings-add-row {
+      display: flex; gap: .5rem; align-items: center;
+    }
+    .settings-add-row .t-input { flex: 1; }
+
+    /* ── Attachments ─────────────────────────────────────────────────────── */
+    .attachment-list-empty {
+      color: var(--ink-3); font-size: .82rem;
+      text-align: center; padding: 1rem 0;
+    }
+    .attachment-item {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .48rem .75rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: .45rem;
+      font-size: .82rem;
+    }
+    .attachment-item:last-child { margin-bottom: 0; }
+    .attachment-item i { color: var(--sky); font-size: 1.05rem; flex-shrink: 0; }
+    .attachment-name {
+      flex: 1; color: var(--brand); font-weight: 500;
+      word-break: break-all;
+    }
+    .attachment-name:hover { text-decoration: underline; }
+
+    /* ── Search results ──────────────────────────────────────────────────── */
+    .search-clear-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-4); font-size: .9rem; line-height: 1;
+      padding: 0 .1rem;
+      flex-shrink: 0;
+    }
+    .search-clear-btn:hover { color: var(--rose); }
+    .search-hint {
+      font-size: .75rem; color: var(--ink-3);
+      padding: .3rem 1.25rem .25rem;
+    }
+    .search-results-wrap {
+      padding: .5rem 1.25rem 1rem;
+    }
+    .search-result-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .75rem 1rem;
+      margin-bottom: .55rem;
+      background: var(--surface);
+      display: flex; align-items: flex-start; gap: .75rem;
+      transition: box-shadow .15s;
+    }
+    .search-result-card:hover { box-shadow: var(--shadow-sm); }
+    .src-body { flex: 1; min-width: 0; }
+    .src-desc {
+      font-weight: 600; font-size: .88rem; color: var(--ink);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: .2rem;
+    }
+    .src-meta {
+      font-size: .76rem; color: var(--ink-3);
+      display: flex; flex-wrap: wrap; gap: .3rem .65rem;
+    }
+    .src-meta span { display: inline-flex; align-items: center; gap: .2rem; }
+    .src-right { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; flex-shrink: 0; }
+    .src-amt {
+      font-family: 'DM Mono', monospace;
+      font-weight: 700; font-size: .85rem; color: var(--ink);
+    }
+    .search-no-results {
+      text-align: center; padding: 2rem 1rem;
+      color: var(--ink-3); font-size: .88rem;
+    }
+    .search-no-results i { font-size: 2rem; display: block; margin-bottom: .5rem; }
   </style>
 </head>
 <body>
@@ -1121,6 +1225,10 @@
         <i class="bi bi-journal-text"></i>
         <span>Claim Record</span>
       </button>
+      <button class="nav-tab" id="tab-settings" onclick="switchTab('settings')">
+        <i class="bi bi-gear"></i>
+        <span>Settings</span>
+      </button>
     </nav>
     <div class="nav-right">
       <div class="user-chip">
@@ -1166,10 +1274,10 @@
               </div>
               <div class="r-check"><i class="bi bi-check2"></i></div>
             </div>
-            <div class="recipient-option" onclick="selectRecipient(this, 'Datik Kalsom Aziz')">
+            <div class="recipient-option" onclick="selectRecipient(this, 'Datin Kalsom Aziz')">
               <div class="r-avatar" style="background:linear-gradient(135deg,#d97706,#e11d48)">DKA</div>
               <div>
-                <div class="r-name">Datik Kalsom Aziz</div>
+                <div class="r-name">Datin Kalsom Aziz</div>
                 <div class="r-title">Director</div>
               </div>
               <div class="r-check"><i class="bi bi-check2"></i></div>
@@ -1180,7 +1288,7 @@
           <select id="recipientSelect">
             <option>Datuk Wira Syamsul Azly Akbar</option>
             <option>Datin Wira Ardiana Zanaria Abu Zubir</option>
-            <option>Datik Kalsom Aziz</option>
+            <option>Datin Kalsom Aziz</option>
           </select>
 
           <button id="startBtn" class="btn btn-primary" style="min-width:220px;padding:.75rem 1.5rem" onclick="startNewBatch()">
@@ -1245,6 +1353,25 @@
             </div>
           </div>
         </div>
+
+        <!-- Attachment card -->
+        <div class="card" style="margin-top:1rem">
+          <div class="card-header">
+            <div class="card-icon card-icon-sky"><i class="bi bi-paperclip"></i></div>
+            <h3>Supporting Documents</h3>
+            <button id="uploadBtn" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="triggerFileUpload()">
+              <i class="bi bi-upload"></i> Attach File
+            </button>
+            <input type="file" id="fileInput" style="display:none"
+                   accept="image/*,.pdf" multiple
+                   onchange="handleFileSelect(this)">
+          </div>
+          <div class="card-body" style="padding:.85rem 1.25rem">
+            <div id="attachmentListInner">
+              <p class="attachment-list-empty">No documents attached yet.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1260,21 +1387,37 @@
         </div>
 
         <div class="search-wrap">
-          <div class="search-inner">
-            <i class="bi bi-search"></i>
-            <input id="historySearch" type="text" placeholder="Search ref, recipient, status…" oninput="filterHistory()">
+          <div class="search-inner" style="display:flex;align-items:center;gap:.4rem">
+            <i class="bi bi-search" style="flex-shrink:0"></i>
+            <input id="historySearch" type="text"
+                   placeholder="Search descriptions, ref no, type, recipient…"
+                   oninput="onSearchInput()" autocomplete="off"
+                   style="flex:1">
+            <button id="searchClearBtn" class="search-clear-btn hidden"
+                    onclick="clearSearch()" title="Clear search">
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
           </div>
+        </div>
+        <div id="searchHint" class="search-hint hidden">
+          Searching all claim items… <span id="searchHintCount"></span>
+        </div>
+
+        <!-- Search results (shown instead of table when a query is active) -->
+        <div id="searchResultsSection" class="hidden">
+          <div id="searchResultsBody" class="search-results-wrap"></div>
         </div>
 
         <div id="historyLoader" class="hidden" style="padding:2rem;text-align:center;color:var(--ink-3)">
           <span class="spin" style="margin-right:.5rem"></span> Loading claims…
         </div>
 
-        <div class="table-wrap">
+        <div id="historyTableSection" class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
                 <th>Ref No</th>
+                <th>Submitted By</th>
                 <th>Recipient</th>
                 <th>Date</th>
                 <th>Total (RM)</th>
@@ -1285,6 +1428,56 @@
             </thead>
             <tbody id="historyBody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS TAB ──────────────────────────────────────────── -->
+    <div id="pane-settings" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon card-icon-slate"><i class="bi bi-gear-fill"></i></div>
+          <h3>Settings</h3>
+        </div>
+        <div class="card-body">
+          <div class="settings-grid">
+
+            <!-- Claim Types -->
+            <div class="settings-section">
+              <h4><i class="bi bi-tags" style="color:var(--brand);margin-right:.35rem"></i>Claim Types</h4>
+              <div id="claimTypesList" class="settings-list">
+                <p class="attachment-list-empty">Loading…</p>
+              </div>
+              <div class="settings-add-row">
+                <input type="text" id="newClaimType" class="t-input" placeholder="New type…" maxlength="60"
+                       onkeydown="if(event.key==='Enter') addSettingsItem('claimType')">
+                <button class="btn btn-primary btn-sm" onclick="addSettingsItem('claimType')">
+                  <i class="bi bi-plus-lg"></i> Add
+                </button>
+              </div>
+            </div>
+
+            <!-- Pay Via -->
+            <div class="settings-section">
+              <h4><i class="bi bi-credit-card" style="color:var(--emerald);margin-right:.35rem"></i>Pay Via Options</h4>
+              <div id="payViaList" class="settings-list">
+                <p class="attachment-list-empty">Loading…</p>
+              </div>
+              <div class="settings-add-row">
+                <input type="text" id="newPayVia" class="t-input" placeholder="New option…" maxlength="40"
+                       onkeydown="if(event.key==='Enter') addSettingsItem('payVia')">
+                <button class="btn btn-primary btn-sm" onclick="addSettingsItem('payVia')">
+                  <i class="bi bi-plus-lg"></i> Add
+                </button>
+              </div>
+            </div>
+
+          </div>
+          <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)">
+            <button id="saveSettingsBtn" class="btn btn-primary" onclick="persistSettings()">
+              <i class="bi bi-floppy"></i> Save Settings
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1342,9 +1535,20 @@
           <i class="bi bi-send"></i> Submit Selected Items
         </button>
       </div>
+      <!-- Mark as Paid — shown for submitted-unpaid items when user is owner -->
+      <div id="panelMarkPaidSection" class="hidden" style="margin-bottom:.6rem">
+        <div class="panel-sel-row" style="margin-bottom:.45rem">
+          <span id="panelPayCount" class="sel-label">0 submitted items selected</span>
+          <span id="panelPayTotal" class="sel-amount">RM 0.00</span>
+        </div>
+        <button id="panelMarkPaidBtn" class="btn btn-success-ghost btn-full" onclick="markPaidFromPanel()">
+          <i class="bi bi-cash-coin"></i> Mark Selected as Paid
+        </button>
+      </div>
       <button class="btn btn-success-ghost btn-sm btn-full" onclick="generateReport(panelCurrentRef)">
         <i class="bi bi-printer"></i> Print / Generate Report
       </button>
+      <div id="panelAttachments"></div>
     </div>
   </aside>
 
@@ -1354,12 +1558,28 @@
 <div id="reportView"></div>
 
 <script>
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB — max file size; base64 adds ~33% overhead
+const SEARCH_DEBOUNCE_MS   = 420;             // ms to wait after typing before firing search
+
 // ── state ─────────────────────────────────────────────────────────────────
 let currentUser     = null;
 let editingRef      = null;
 let historyData     = [];
 let panelCurrentRef = null;
 let selectedRecipient = 'Datuk Wira Syamsul Azly Akbar';
+
+// Settings (populated from server on init)
+let appSettings = {
+  claimTypes: ['Petrol','TnG','Refreshment','Medical','Others'],
+  payVias:    ['Cash','MBB 1','MBB 2','CIMB','SC','UOB']
+};
+let settingsWorkingCopy = { claimTypes: [], payVias: [] };
+
+// Attachments for the currently-open draft
+let draftAttachments = [];
+
+// Search debounce
+let searchTimer = null;
 
 // ── recipient selection ───────────────────────────────────────────────────
 function selectRecipient(el, name) {
@@ -1390,7 +1610,13 @@ function switchTab(name) {
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('pane-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
-  if (name === 'history') loadHistory();
+  if (name === 'history') {
+    // Always clear search and reload fresh history when switching to this tab
+    clearSearch(false);
+    loadHistory();
+  } else if (name === 'settings') {
+    loadSettings(true);
+  }
 }
 
 // ── auth ──────────────────────────────────────────────────────────────────
@@ -1457,6 +1683,11 @@ function initApp() {
   document.getElementById('mainView').classList.remove('hidden');
   document.getElementById('userAvatar').textContent = getInitials(currentUser.name);
   document.getElementById('userGreet').textContent  = currentUser.name;
+  // Load settings in background so addRow() picks up correct options
+  google.script.run
+    .withSuccessHandler(s => { if (s) appSettings = s; })
+    .getSettings();
+  switchTab('history');
 }
 
 // ── claim form ────────────────────────────────────────────────────────────
@@ -1483,19 +1714,24 @@ function openEntryStep(refNo, recipient) {
   document.getElementById('itemTableBody').innerHTML = '';
   document.getElementById('selectionStep').classList.add('hidden');
   document.getElementById('entryStep').classList.remove('hidden');
+  draftAttachments = [];
+  renderAttachments();
+  loadAttachments(refNo);
 }
 
 function addRow(data = {}) {
   const tr = document.createElement('tr');
   tr.className = 'item-row';
 
-  const types   = ['Petrol','TnG','Refreshment','Medical','Others'];
+  const types    = appSettings.claimTypes.length ? appSettings.claimTypes
+                     : ['Petrol','TnG','Refreshment','Medical','Others'];
   const typeOpts = types.map(t =>
     `<option${t === data.type ? ' selected' : ''}>${esc(t)}</option>`
   ).join('');
 
-  const payVias = ['Cash','MBB 1','MBB 2','CIMB','SC','UOB'];
-  const viaOpts = payVias.map(v =>
+  const payVias  = appSettings.payVias.length ? appSettings.payVias
+                     : ['Cash','MBB 1','MBB 2','CIMB','SC','UOB'];
+  const viaOpts  = payVias.map(v =>
     `<option${v === data.paymentVia ? ' selected' : ''}>${esc(v)}</option>`
   ).join('');
 
@@ -1525,7 +1761,7 @@ function addRow(data = {}) {
 function calc() {
   let total = 0;
   document.querySelectorAll('.i-amt').forEach(i => total += parseFloat(i.value) || 0);
-  document.getElementById('grandTotal').textContent = total.toFixed(2);
+  document.getElementById('grandTotal').textContent = fmtAmt(total);
 }
 
 function submitBatch() {
@@ -1552,7 +1788,7 @@ function submitBatch() {
     .withSuccessHandler(res => {
       setBtn('saveBtn', '<i class="bi bi-floppy"></i> Save as Draft', false);
       toast(res.message, !res.success);
-      if (res.success) cancelEntry();
+      if (res.success) { cancelEntry(); switchTab('history'); }
     })
     .withFailureHandler(() => {
       setBtn('saveBtn', '<i class="bi bi-floppy"></i> Save as Draft', false);
@@ -1566,6 +1802,7 @@ function cancelEntry() {
   document.getElementById('entryStep').classList.add('hidden');
   document.getElementById('itemTableBody').innerHTML = '';
   editingRef = null;
+  draftAttachments = [];
   calc();
 }
 
@@ -1575,38 +1812,132 @@ function loadHistory() {
   const body   = document.getElementById('historyBody');
   loader.classList.remove('hidden');
   body.innerHTML = '';
-  document.getElementById('historySearch').value = '';
 
   google.script.run
     .withSuccessHandler(data => {
       loader.classList.add('hidden');
+      if (!Array.isArray(data)) {
+        // getUserClaims returned something unexpected (GAS serialisation failure)
+        renderHistory(null);
+        toast('Could not load claims from server. Please refresh.', true);
+        return;
+      }
       historyData = data;
-      renderHistory(data);
+      renderHistory(historyData);
     })
     .withFailureHandler(() => {
       loader.classList.add('hidden');
-      toast('Failed to load claims.', true);
+      renderHistory(null);
+      toast('Failed to load claims. Please try again.', true);
     })
     .getUserClaims(currentUser.userId);
 }
 
-function filterHistory() {
-  const q = document.getElementById('historySearch').value.trim().toLowerCase();
-  if (!q) { renderHistory(historyData); return; }
-  renderHistory(historyData.filter(r =>
-    r.refNo.toLowerCase().includes(q)       ||
-    (r.recipient || '').toLowerCase().includes(q) ||
-    (r.status    || '').toLowerCase().includes(q) ||
-    (r.payStatus || '').toLowerCase().includes(q)
-  ));
+function onSearchInput() {
+  clearTimeout(searchTimer);
+  const q = document.getElementById('historySearch').value.trim();
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !q);
+
+  if (!q) { clearSearch(false); return; }
+
+  // Show hint immediately
+  document.getElementById('searchHint').classList.remove('hidden');
+  document.getElementById('searchHintCount').textContent = '';
+
+  searchTimer = setTimeout(() => runSearch(q), SEARCH_DEBOUNCE_MS);
+}
+
+function runSearch(q) {
+  if (!q) return;
+  document.getElementById('historyTableSection').classList.add('hidden');
+  document.getElementById('searchResultsSection').classList.remove('hidden');
+  document.getElementById('searchResultsBody').innerHTML =
+    `<div class="search-no-results"><span class="spin"></span> Searching…</div>`;
+
+  google.script.run
+    .withSuccessHandler(results => {
+      document.getElementById('searchHintCount').textContent =
+        results.length ? `${results.length} item${results.length !== 1 ? 's' : ''} found` : '';
+      renderSearchResults(results, q);
+    })
+    .withFailureHandler(() => {
+      document.getElementById('searchResultsBody').innerHTML =
+        `<div class="search-no-results"><i class="bi bi-exclamation-circle"></i>Search failed. Please try again.</div>`;
+    })
+    .searchClaimItems(q);
+}
+
+function renderSearchResults(results, query) {
+  const body = document.getElementById('searchResultsBody');
+  if (!results.length) {
+    body.innerHTML = `<div class="search-no-results">
+      <i class="bi bi-search"></i>
+      No items match <strong>${esc(query)}</strong>. Try a different keyword.</div>`;
+    return;
+  }
+
+  const q = (query || '').toLowerCase();
+  const highlight = str => {
+    if (!str || !q) return esc(str || '');
+    const idx = str.toLowerCase().indexOf(q);
+    if (idx === -1) return esc(str);
+    return esc(str.slice(0, idx))
+      + `<mark style="background:var(--amber-bg);color:var(--amber);border-radius:2px;padding:0 1px">`
+      + esc(str.slice(idx, idx + q.length))
+      + `</mark>`
+      + esc(str.slice(idx + q.length));
+  };
+
+  body.innerHTML = results.map(r => `
+    <div class="search-result-card">
+      <div class="src-body">
+        <div class="src-desc">${highlight(r.description || r.type || '(no description)')}</div>
+        <div class="src-meta">
+          <span><i class="bi bi-calendar3"></i>${esc(r.date || '—')}</span>
+          <span><i class="bi bi-tag"></i>${esc(r.type)}</span>
+          ${r.invNo ? `<span><i class="bi bi-receipt"></i>${esc(r.invNo)}</span>` : ''}
+          <span><i class="bi bi-person"></i>${esc(r.ownerName)}</span>
+          <span>→ ${esc(r.recipient)}</span>
+        </div>
+      </div>
+      <div class="src-right">
+        <span class="src-amt">RM ${fmtAmt(r.amount)}</span>
+        <button class="ref-chip" style="margin:0" onclick="openDetailPanel('${esc(r.refNo)}','${esc(r.claimStatus)}')">
+          <i class="bi bi-hash"></i>${esc(r.refNo)}
+        </button>
+        <span class="badge badge-${(r.claimStatus||'').toLowerCase()}">${esc(r.claimStatus)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function clearSearch(reloadHistory = true) {
+  clearTimeout(searchTimer);
+  document.getElementById('historySearch').value = '';
+  const clearBtn = document.getElementById('searchClearBtn');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  document.getElementById('searchHint').classList.add('hidden');
+  document.getElementById('searchResultsSection').classList.add('hidden');
+  document.getElementById('historyTableSection').classList.remove('hidden');
+  if (reloadHistory) loadHistory();
 }
 
 function renderHistory(data) {
   const body = document.getElementById('historyBody');
   body.innerHTML = '';
 
+  if (!data) {
+    body.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="es-icon"><i class="bi bi-exclamation-triangle"></i></div>
+        <h4>Could not load claims</h4>
+        <p>There was a problem fetching your claim records. Click <strong>Refresh</strong> to try again.</p>
+      </div></td></tr>`;
+    return;
+  }
+
   if (!data.length) {
-    body.innerHTML = `<tr><td colspan="7">
+    body.innerHTML = `<tr><td colspan="8">
       <div class="empty-state">
         <div class="es-icon"><i class="bi bi-inbox"></i></div>
         <h4>No claims yet</h4>
@@ -1627,6 +1958,7 @@ function renderHistory(data) {
           <i class="bi bi-hash"></i>${esc(r.refNo)}
         </button>
       </td>
+      <td style="font-size:.82rem;color:var(--ink-2)">${esc(r.ownerName || r.ownerId || '')}</td>
       <td>
         <div class="rec-tag">
           <div class="rec-avatar">${initials}</div>
@@ -1634,7 +1966,7 @@ function renderHistory(data) {
         </div>
       </td>
       <td style="color:var(--ink-3);font-size:.82rem">${formatDate(r.date)}</td>
-      <td style="font-weight:700;font-family:'DM Mono',monospace;font-size:.85rem">RM ${r.total.toFixed(2)}</td>
+      <td style="font-weight:700;font-family:'DM Mono',monospace;font-size:.85rem">RM ${fmtAmt(r.total)}</td>
       <td><span class="badge badge-${(r.status||'').toLowerCase()}">${esc(r.status)}</span></td>
       <td><span class="badge badge-${(r.payStatus||'').toLowerCase()}">${esc(r.payStatus)}</span></td>
       <td></td>`;
@@ -1642,12 +1974,19 @@ function renderHistory(data) {
     const actionCell = tr.lastElementChild;
     actionCell.style.cssText = 'display:flex;align-items:center;gap:.4rem;padding:.8rem 1rem';
 
-    if (r.status === 'Draft') {
+    if (r.status === 'Draft' && r.ownerId === currentUser.userId) {
       const editBtn = document.createElement('button');
       editBtn.className = 'btn btn-amber-ghost btn-xs';
       editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
       editBtn.onclick   = () => editDraft(r.refNo, r.recipient);
       actionCell.appendChild(editBtn);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger-ghost btn-xs';
+      delBtn.innerHTML = '<i class="bi bi-trash3"></i>';
+      delBtn.title     = 'Delete draft';
+      delBtn.onclick   = () => promptDeleteDraft(r.refNo);
+      actionCell.appendChild(delBtn);
     }
 
     const viewBtn = document.createElement('button');
@@ -1699,6 +2038,10 @@ function openDetailPanel(refNo, claimStatus) {
   document.getElementById('sidePanel').classList.add('open');
   document.body.style.overflow = 'hidden';
 
+  // Determine if current user owns this claim (to control submit button visibility)
+  const claimInfo = historyData.find(r => r.refNo === refNo);
+  const isOwner   = !claimInfo || claimInfo.ownerId === currentUser.userId;
+
   google.script.run
     .withSuccessHandler(items => {
       document.getElementById('panelLoader').classList.add('hidden');
@@ -1706,19 +2049,30 @@ function openDetailPanel(refNo, claimStatus) {
       document.getElementById('panelFooter').classList.remove('hidden');
 
       const hasDraft = items.some(it => it.claimStatus === 'Draft');
-      document.getElementById('panelSubmitSection').classList.toggle('hidden', !hasDraft);
+      const hasSubmittedUnpaid = isOwner && items.some(
+        it => it.claimStatus === 'Submitted' &&
+              (it.paymentStatus || '').toLowerCase() !== 'paid');
+      document.getElementById('panelSubmitSection').classList.toggle('hidden', !hasDraft || !isOwner);
+      document.getElementById('panelMarkPaidSection').classList.toggle('hidden', !hasSubmittedUnpaid);
+      // Reset payment selection counters
+      document.getElementById('panelPayCount').textContent = '0 submitted items selected';
+      document.getElementById('panelPayTotal').textContent = 'RM 0.00';
 
       const tbody = document.getElementById('panelBody');
       if (!items.length) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--ink-3)">No items found.</td></tr>`;
       } else {
-        let total = 0;
+        let totalAll = 0, paidTotal = 0;
         const frag = document.createDocumentFragment();
         items.forEach(it => {
-          const tr     = document.createElement('tr');
-          const amount = parseFloat(it.amount || 0);
-          const isDraft = it.claimStatus !== 'Submitted';
-          total += amount;
+          const tr      = document.createElement('tr');
+          const amount  = parseFloat(it.amount || 0);
+          const isPaid  = (it.paymentStatus || '').toString().toLowerCase() === 'paid';
+          const isDraft = it.claimStatus === 'Draft' && !isPaid;
+
+          totalAll += amount;
+          if (isPaid) paidTotal += amount;
+
           tr.dataset.amount  = amount;
           tr.dataset.rowNum  = it.rowNum;
           tr.dataset.isDraft = isDraft ? '1' : '0';
@@ -1731,27 +2085,63 @@ function openDetailPanel(refNo, claimStatus) {
               <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
               <td>${esc(it.description || '')}</td>
               <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace">RM ${amount.toFixed(2)}</td>`;
-          } else {
+              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace">RM ${fmtAmt(amount)}</td>`;
+          } else if (isPaid) {
             tr.className = 'submitted-row';
             tr.innerHTML = `
-              <td><i class="bi bi-check-circle-fill" style="color:var(--emerald);font-size:.95rem" title="Submitted"></i></td>
+              <td><i class="bi bi-cash-coin" style="color:var(--emerald);font-size:.95rem" title="Paid"></i></td>
               <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
               <td>${esc(it.type || '')}</td>
               <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
               <td>${esc(it.description || '')}</td>
               <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${amount.toFixed(2)}</td>`;
+              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${fmtAmt(amount)} <span style="font-size:.75rem;font-weight:500">(Paid)</span></td>`;
+          } else {
+            // Submitted but not yet paid
+            tr.className = 'submitted-row';
+            if (isOwner) {
+              // Owner can mark as paid — show checkbox
+              tr.innerHTML = `
+                <td><input type="checkbox" class="chk panel-pay-chk" value="${it.rowNum}" onchange="updatePanelPaymentInfo()"></td>
+                <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
+                <td>${esc(it.type || '')}</td>
+                <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
+                <td>${esc(it.description || '')}</td>
+                <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
+                <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
+            } else {
+              tr.innerHTML = `
+                <td><i class="bi bi-check-circle-fill" style="color:var(--brand);font-size:.95rem" title="Submitted"></i></td>
+                <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
+                <td>${esc(it.type || '')}</td>
+                <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
+                <td>${esc(it.description || '')}</td>
+                <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
+                <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
+            }
           }
           frag.appendChild(tr);
         });
         tbody.appendChild(frag);
 
-        document.getElementById('panelSummary').innerHTML = `
+        const remaining = totalAll - paidTotal;
+        let summaryHtml = `
           <div class="panel-total-item">
             <div class="pt-label">Total Claim</div>
-            <div class="pt-val">RM ${total.toFixed(2)}</div>
+            <div class="pt-val">RM ${fmtAmt(totalAll)}</div>
           </div>`;
+        if (paidTotal > 0) {
+          summaryHtml += `
+          <div class="panel-total-item">
+            <div class="pt-label">Already Paid</div>
+            <div class="pt-val" style="color:var(--emerald)">RM ${fmtAmt(paidTotal)}</div>
+          </div>
+          <div class="panel-total-item">
+            <div class="pt-label">Remaining</div>
+            <div class="pt-val" style="color:var(--rose)">RM ${fmtAmt(remaining)}</div>
+          </div>`;
+        }
+        document.getElementById('panelSummary').innerHTML = summaryHtml;
 
         updatePanelSelectionInfo();
       }
@@ -1761,6 +2151,27 @@ function openDetailPanel(refNo, claimStatus) {
       toast('Failed to load claim details.', true);
     })
     .getDraftDetails(refNo, currentUser.userId);
+
+  // Load attachments for the panel
+  document.getElementById('panelAttachments').innerHTML = '';
+  google.script.run
+    .withSuccessHandler(atts => {
+      const el = document.getElementById('panelAttachments');
+      if (!el) return;
+      if (!Array.isArray(atts) || !atts.length) { el.innerHTML = ''; return; }
+      el.innerHTML = `
+        <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:.5rem">
+            <i class="bi bi-paperclip" style="margin-right:.3rem"></i>Attachments
+          </div>
+          ${atts.map(a => `
+            <div class="attachment-item">
+              <i class="bi bi-file-earmark-text"></i>
+              <a href="${esc(a.fileUrl)}" target="_blank" class="attachment-name">${esc(a.fileName)}</a>
+            </div>`).join('')}
+        </div>`;
+    })
+    .getAttachments(refNo);
 }
 
 function toggleAllPanelItems(src) {
@@ -1774,7 +2185,7 @@ function updatePanelSelectionInfo() {
   const allChks  = document.querySelectorAll('.panel-item-chk');
   document.getElementById('panelSelCount').textContent =
     checked.length + ' item' + (checked.length !== 1 ? 's' : '') + ' selected';
-  document.getElementById('panelSelTotal').textContent = 'RM ' + selTotal.toFixed(2);
+  document.getElementById('panelSelTotal').textContent = 'RM ' + fmtAmt(selTotal);
   const chkAll = document.getElementById('panelCheckAll');
   if (chkAll) {
     chkAll.checked       = allChks.length > 0 && checked.length === allChks.length;
@@ -1813,10 +2224,68 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('sidePanel').classList.contains('open')) closeDetailPanel();
 });
 
+// ── delete draft ──────────────────────────────────────────────────────────
+function promptDeleteDraft(refNo) {
+  if (!confirm('Delete draft ' + refNo + '?\n\nAll items and attachments will be permanently removed. This cannot be undone.'))
+    return;
+  deleteDraftAction(refNo);
+}
+
+function deleteDraftAction(refNo) {
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res.success) {
+        toast('Draft ' + refNo + ' deleted.');
+        loadHistory();
+      } else {
+        toast(res.message || 'Could not delete draft.', true);
+      }
+    })
+    .withFailureHandler(() => toast('Server error while deleting.', true))
+    .deleteDraft(refNo, currentUser.userId);
+}
+
+// ── mark paid ─────────────────────────────────────────────────────────────
+function updatePanelPaymentInfo() {
+  const checked  = Array.from(document.querySelectorAll('.panel-pay-chk:checked'));
+  const selTotal = checked.reduce((s, c) => s + parseFloat(c.closest('tr').dataset.amount || 0), 0);
+  document.getElementById('panelPayCount').textContent =
+    checked.length + ' submitted item' + (checked.length !== 1 ? 's' : '') + ' selected';
+  document.getElementById('panelPayTotal').textContent = 'RM ' + fmtAmt(selTotal);
+}
+
+function markPaidFromPanel() {
+  if (!panelCurrentRef) return;
+  const rowNums = Array.from(document.querySelectorAll('.panel-pay-chk:checked'))
+                       .map(c => parseInt(c.value, 10));
+  if (!rowNums.length) {
+    toast('Please select at least one submitted item to mark as paid.', true);
+    return;
+  }
+  setBtn('panelMarkPaidBtn', '<span class="spin"></span> Processing…', true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn('panelMarkPaidBtn', '<i class="bi bi-cash-coin"></i> Mark Selected as Paid', false);
+      toast(res.success
+        ? (res.updated + ' item' + (res.updated !== 1 ? 's' : '') + ' marked as paid.')
+        : (res.message || 'Update failed.'),
+        !res.success);
+      if (res.success) { closeDetailPanel(); loadHistory(); }
+    })
+    .withFailureHandler(() => {
+      setBtn('panelMarkPaidBtn', '<i class="bi bi-cash-coin"></i> Mark Selected as Paid', false);
+      toast('Server error.', true);
+    })
+    .markRowsAsPaid(rowNums, currentUser.userId);
+}
+
 // ── utils ─────────────────────────────────────────────────────────────────
 function esc(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function fmtAmt(n) {
+  return parseFloat(n || 0).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function setBtn(id, html, disabled) {
   const el = document.getElementById(id);
@@ -1853,7 +2322,7 @@ function generateReport(refNo) {
 }
 
 function renderAndPrintReport(d) {
-  const fmt = n => parseFloat(n || 0).toFixed(2);
+  const fmt = n => fmtAmt(n);
   const now = new Date().toLocaleDateString('en-MY', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 
   const itemRows = d.items.map((it, i) => `
@@ -1942,6 +2411,186 @@ function renderAndPrintReport(d) {
   document.getElementById('reportView').style.display = 'block';
   window.print();
   document.getElementById('reportView').style.display = 'none';
+}
+
+// ── settings ──────────────────────────────────────────────────────────────
+function loadSettings(forTab) {
+  google.script.run
+    .withSuccessHandler(s => {
+      if (!s) return;
+      appSettings           = s;
+      settingsWorkingCopy   = { claimTypes: [...s.claimTypes], payVias: [...s.payVias] };
+      if (forTab) renderSettingsUI();
+    })
+    .withFailureHandler(() => {
+      if (forTab) toast('Failed to load settings.', true);
+    })
+    .getSettings();
+}
+
+function renderSettingsUI() {
+  renderSettingsList('claimTypesList', settingsWorkingCopy.claimTypes, 'claimType');
+  renderSettingsList('payViaList',     settingsWorkingCopy.payVias,    'payVia');
+}
+
+function renderSettingsList(containerId, items, kind) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!items.length) {
+    container.innerHTML = `<p class="attachment-list-empty">No items defined yet.</p>`;
+    return;
+  }
+  container.innerHTML = items.map((item, i) => `
+    <div class="settings-item">
+      <span>${esc(item)}</span>
+      <button class="btn btn-danger-ghost btn-xs btn-icon-sq"
+              title="Remove" onclick="removeSettingsItem('${kind}',${i})">
+        <i class="bi bi-trash3"></i>
+      </button>
+    </div>`).join('');
+}
+
+function addSettingsItem(kind) {
+  const inputId = kind === 'claimType' ? 'newClaimType' : 'newPayVia';
+  const val     = document.getElementById(inputId).value.trim();
+  if (!val) return;
+  if (kind === 'claimType') {
+    if (settingsWorkingCopy.claimTypes.includes(val)) { toast('Already exists.', true); return; }
+    settingsWorkingCopy.claimTypes.push(val);
+    renderSettingsList('claimTypesList', settingsWorkingCopy.claimTypes, 'claimType');
+  } else {
+    if (settingsWorkingCopy.payVias.includes(val)) { toast('Already exists.', true); return; }
+    settingsWorkingCopy.payVias.push(val);
+    renderSettingsList('payViaList', settingsWorkingCopy.payVias, 'payVia');
+  }
+  document.getElementById(inputId).value = '';
+}
+
+function removeSettingsItem(kind, index) {
+  if (kind === 'claimType') {
+    settingsWorkingCopy.claimTypes.splice(index, 1);
+    renderSettingsList('claimTypesList', settingsWorkingCopy.claimTypes, 'claimType');
+  } else {
+    settingsWorkingCopy.payVias.splice(index, 1);
+    renderSettingsList('payViaList', settingsWorkingCopy.payVias, 'payVia');
+  }
+}
+
+function persistSettings() {
+  setBtn('saveSettingsBtn', '<span class="spin"></span> Saving…', true);
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn('saveSettingsBtn', '<i class="bi bi-floppy"></i> Save Settings', false);
+      if (res.success) {
+        appSettings = { claimTypes: [...settingsWorkingCopy.claimTypes],
+                        payVias:    [...settingsWorkingCopy.payVias] };
+        toast('Settings saved.');
+      } else {
+        toast(res.message || 'Save failed.', true);
+      }
+    })
+    .withFailureHandler(() => {
+      setBtn('saveSettingsBtn', '<i class="bi bi-floppy"></i> Save Settings', false);
+      toast('Server error.', true);
+    })
+    .saveSettings(settingsWorkingCopy.claimTypes, settingsWorkingCopy.payVias);
+}
+
+// ── attachments ───────────────────────────────────────────────────────────
+function loadAttachments(refNo) {
+  if (!refNo) return;
+  google.script.run
+    .withSuccessHandler(items => {
+      draftAttachments = Array.isArray(items) ? items : [];
+      renderAttachments();
+    })
+    .withFailureHandler(() => { draftAttachments = []; renderAttachments(); })
+    .getAttachments(refNo);
+}
+
+function renderAttachments() {
+  const container = document.getElementById('attachmentListInner');
+  if (!container) return;
+  if (!draftAttachments.length) {
+    container.innerHTML = '<p class="attachment-list-empty">No documents attached yet.</p>';
+    return;
+  }
+  container.innerHTML = draftAttachments.map((a, i) => `
+    <div class="attachment-item">
+      <i class="bi bi-file-earmark-text"></i>
+      <a href="${esc(a.fileUrl)}" target="_blank" class="attachment-name">${esc(a.fileName)}</a>
+      <button class="btn btn-danger-ghost btn-xs btn-icon-sq" title="Remove"
+              onclick="removeAttachment(${i})">
+        <i class="bi bi-trash3"></i>
+      </button>
+    </div>`).join('');
+}
+
+function triggerFileUpload() {
+  if (!editingRef) { toast('Please start a draft first.', true); return; }
+  document.getElementById('fileInput').click();
+}
+
+function handleFileSelect(input) {
+  if (!editingRef) { toast('Please start a draft first.', true); return; }
+  const files = Array.from(input.files);
+  input.value = '';
+  if (!files.length) return;
+  uploadFileQueue(files, 0);
+}
+
+function uploadFileQueue(files, idx) {
+  if (idx >= files.length) {
+    setBtn('uploadBtn', '<i class="bi bi-upload"></i> Attach File', false);
+    return;
+  }
+  const file = files[idx];
+  const MAX  = MAX_ATTACHMENT_BYTES;
+  if (file.size > MAX) {
+    toast(`"${esc(file.name)}" exceeds ${MAX_ATTACHMENT_BYTES / (1024 * 1024)} MB limit — skipped.`, true);
+    uploadFileQueue(files, idx + 1);
+    return;
+  }
+  setBtn('uploadBtn',
+    `<span class="spin"></span> Uploading${files.length > 1 ? ' ' + (idx+1) + '/' + files.length : ''}…`,
+    true);
+  const reader = new FileReader();
+  reader.onload = e => {
+    const base64 = e.target.result.split(',')[1];
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.success) {
+          draftAttachments.push({ fileName: res.fileName, fileUrl: res.fileUrl });
+          renderAttachments();
+        } else {
+          toast(res.message || `Failed to upload "${esc(file.name)}".`, true);
+        }
+        uploadFileQueue(files, idx + 1);
+      })
+      .withFailureHandler(() => {
+        toast(`Server error uploading "${esc(file.name)}".`, true);
+        uploadFileQueue(files, idx + 1);
+      })
+      .uploadAttachment(editingRef, currentUser.userId, file.name, base64, file.type);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeAttachment(index) {
+  const att = draftAttachments[index];
+  if (!att) return;
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res.success) {
+        draftAttachments.splice(index, 1);
+        renderAttachments();
+        toast('Attachment removed.');
+      } else {
+        toast(res.message || 'Could not remove attachment.', true);
+      }
+    })
+    .withFailureHandler(() => toast('Server error.', true))
+    .deleteAttachment(editingRef, currentUser.userId, att.fileUrl);
 }
 </script>
 </body>
