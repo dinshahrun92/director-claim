@@ -381,7 +381,7 @@ function getClaimReport(refNo) {
       type:        claimsData[i][4],
       invNo:       claimsData[i][5],
       description: claimsData[i][6],
-      paymentVia:  "",
+      paymentVia:  claimsData[i][13] || "",
       amount:      amount
     });
   }
