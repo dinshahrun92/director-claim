@@ -28,7 +28,7 @@ function setupSheets() {
     App_Users:  ["UserID","Password","FullName"],
     App_Claims: ["RefNo","UserID","Recipient","InvoiceDate","Type","InvoiceNo",
                  "Description","Amount","FileUrl","Status","PaymentStatus",
-                 "PaymentDate","Timestamp"]
+                 "PaymentDate","Timestamp","PayVia"]
   };
 
   Object.entries(schemas).forEach(([name, headers]) => {
@@ -140,7 +140,8 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
         status,
         "Unpaid",
         "",
-        ts
+        ts,
+        sanitize(item.paymentVia || "")
       ]);
     });
 
@@ -197,14 +198,92 @@ function getDraftDetails(refNo, userId) {
     }
 
     rows.push({
-      date:        dateStr,
-      type:        data[i][4],
-      invNo:       data[i][5],
-      description: data[i][6],
-      amount:      data[i][7]
+      rowNum:        i + 1,
+      date:          dateStr,
+      type:          data[i][4],
+      invNo:         data[i][5],
+      description:   data[i][6],
+      amount:        data[i][7],
+      paymentVia:    data[i][13] || "",
+      claimStatus:   data[i][9]  || "",
+      paymentStatus: data[i][10] || ""
     });
   }
   return rows;
+}
+
+function getClaimReport(refNo) {
+  refNo = sanitize(refNo);
+  if (!refNo) return null;
+
+  const claimsData = getSheet("App_Claims").getDataRange().getValues();
+  const usersData  = getSheet("App_Users").getDataRange().getValues();
+
+  function getUserName(userId) {
+    for (let i = 1; i < usersData.length; i++) {
+      if (usersData[i][0].toString() === userId) return usersData[i][2] || userId;
+    }
+    return userId;
+  }
+
+  let refOwner    = "";
+  let refRecipient = "";
+  let refDate     = "";
+  let total       = 0;
+  const items     = [];
+
+  for (let i = 1; i < claimsData.length; i++) {
+    if (claimsData[i][0].toString() !== refNo)     continue;
+    if (claimsData[i][6] === "New Draft Created")  continue;
+
+    if (!refOwner)     refOwner     = claimsData[i][1].toString();
+    if (!refRecipient) refRecipient = claimsData[i][2].toString();
+
+    const rawDate = claimsData[i][3];
+    let dateStr = "";
+    if (rawDate) {
+      try { dateStr = Utilities.formatDate(new Date(rawDate), "GMT+8", "dd MMM yyyy"); } catch (_) {}
+    }
+    if (!refDate) {
+      if (dateStr) {
+        refDate = dateStr;
+      } else {
+        const rawTs = claimsData[i][12];
+        if (rawTs) {
+          try { refDate = Utilities.formatDate(new Date(rawTs), "GMT+8", "dd MMM yyyy"); } catch (_) {}
+        }
+      }
+    }
+
+    const amount = parseFloat(claimsData[i][7]) || 0;
+    total += amount;
+
+    items.push({
+      rowNum:        i + 1,
+      date:          dateStr,
+      type:          claimsData[i][4]  || "",
+      invNo:         claimsData[i][5]  || "",
+      description:   claimsData[i][6]  || "",
+      amount:        amount,
+      paymentVia:    claimsData[i][13] || "",
+      claimStatus:   claimsData[i][9]  || "",
+      paymentStatus: claimsData[i][10] || ""
+    });
+  }
+
+  if (!items.length) return null;
+
+  return {
+    refNo,
+    submittedDate: refDate,
+    recipient:     refRecipient,
+    preparedBy:    getUserName(refOwner),
+    preparedById:  refOwner,
+    checkedBy:     "",
+    approvedBy:    refRecipient,
+    total,
+    items
+  };
 }
 
 function processPayments(refNoList, userId) {
