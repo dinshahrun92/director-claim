@@ -376,13 +376,14 @@ function getClaimReport(refNo) {
     const amount = parseFloat(claimsData[i][7]) || 0;
     total += amount;
     items.push({
-      rowNum:      i + 1,
-      date:        dateStr,
-      type:        claimsData[i][4],
-      invNo:       claimsData[i][5],
-      description: claimsData[i][6],
-      paymentVia:  claimsData[i][13] || "",
-      amount:      amount
+      rowNum:        i + 1,
+      date:          dateStr,
+      type:          claimsData[i][4],
+      invNo:         claimsData[i][5],
+      description:   claimsData[i][6],
+      paymentVia:    claimsData[i][13] || "",
+      paymentStatus: claimsData[i][10] || "",
+      amount:        amount
     });
   }
 
