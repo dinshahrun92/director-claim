@@ -11,6 +11,46 @@ function sanitize(v) {
   return v == null ? "" : v.toString().trim().replace(/[<>"'`]/g, "");
 }
 
+// ── cache ──────────────────────────────────────────────────────────────────
+// Two cache keys:
+//   allClaims_gz  – full sorted & aggregated claims list (for pagination)
+//   claimsRaw_gz  – raw App_Claims sheet values (for getDraftDetails, search, report)
+// All write functions call invalidateClaimsCache() so readers always get
+// consistent data after any mutation.
+
+const CLAIMS_CACHE_KEY     = "allClaims_gz";
+const CLAIMS_RAW_CACHE_KEY = "claimsRaw_gz";
+const CLAIMS_CACHE_TTL     = 300; // 5 minutes
+const CLAIMS_RAW_CACHE_TTL = 60;  // 1 minute
+
+function invalidateClaimsCache() {
+  CacheService.getScriptCache().removeAll([CLAIMS_CACHE_KEY, CLAIMS_RAW_CACHE_KEY]);
+}
+
+// Returns the raw 2D values array for App_Claims (with header row at index 0).
+// Reads from a short-lived gzip cache to avoid repeated full-sheet reads within
+// the same burst of panel opens / searches.
+function getCachedClaimsValues() {
+  const cache  = CacheService.getScriptCache();
+  const cached = cache.get(CLAIMS_RAW_CACHE_KEY);
+  if (cached) {
+    try {
+      const bytes = Utilities.base64Decode(cached);
+      const blob  = Utilities.newBlob(bytes).setContentType("application/x-gzip");
+      return JSON.parse(Utilities.ungzip(blob).getDataAsString());
+    } catch (_) {}
+  }
+  const sheet  = getSheet("App_Claims");
+  const values = sheet && sheet.getLastRow() > 1 ? sheet.getDataRange().getValues() : [];
+  try {
+    const json = JSON.stringify(values);
+    const gz   = Utilities.gzip(Utilities.newBlob(json, "application/json"));
+    const b64  = Utilities.base64Encode(gz.getBytes());
+    if (b64.length < 95 * 1024) cache.put(CLAIMS_RAW_CACHE_KEY, b64, CLAIMS_RAW_CACHE_TTL);
+  } catch (_) {}
+  return values;
+}
+
 // ── setup ──────────────────────────────────────────────────────────────────
 
 function doGet() {
@@ -110,6 +150,7 @@ function createInitialDraft(userId, recipient) {
       refNo, userId, recipient, "", "", "", "New Draft Created",
       0, "", "Draft", "Unpaid", "", new Date()
     ]);
+    invalidateClaimsCache();
     return { success: true, refNo };
   } catch (e) {
     return { success: false, message: e.toString() };
@@ -163,21 +204,42 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
       ]);
     });
 
+    invalidateClaimsCache();
     return { success: true, message: (isDraft ? "Draft saved: " : "Claim submitted: ") + existingRef };
   } catch (e) {
     return { success: false, message: e.toString() };
   }
 }
 
-function getUserClaims(userId) { // eslint-disable-line no-unused-vars
-  // Returns all claims from all users (userId param retained for backward compatibility)
-  const claimsSheet = getSheet("App_Claims");
-  const usersSheet  = getSheet("App_Users");
-  if (!claimsSheet || !usersSheet) return [];
+function getUserClaims(userId, page, pageSize) { // eslint-disable-line no-unused-vars
+  // page and pageSize support server-side pagination.
+  // Returns { claims: [...], totalCount: N } so the client can show a "Load more" button.
+  page     = Math.max(1, parseInt(page,     10) || 1);
+  pageSize = Math.max(1, parseInt(pageSize, 10) || 50);
 
-  const claimsData = claimsSheet.getLastRow() > 1 ? claimsSheet.getDataRange().getValues() : [];
-  const usersData  = usersSheet.getLastRow()  > 1 ? usersSheet.getDataRange().getValues()  : [];
+  const cache = CacheService.getScriptCache();
 
+  // ── Try the pre-built aggregated cache first ──────────────────────────────
+  // The aggregated cache stores the full sorted list; we just slice it here,
+  // so repeated page loads cost nothing after the first call.
+  const cachedAll = cache.get(CLAIMS_CACHE_KEY);
+  if (cachedAll) {
+    try {
+      const bytes     = Utilities.base64Decode(cachedAll);
+      const blob      = Utilities.newBlob(bytes).setContentType("application/x-gzip");
+      const allClaims = JSON.parse(Utilities.ungzip(blob).getDataAsString());
+      const start     = (page - 1) * pageSize;
+      return { claims: allClaims.slice(start, start + pageSize), totalCount: allClaims.length };
+    } catch (_) {}
+  }
+
+  // ── Cache miss: build the aggregated list from raw sheet data ─────────────
+  const claimsData = getCachedClaimsValues();
+  const usersSheet = getSheet("App_Users");
+  if (!claimsData.length) return { claims: [], totalCount: 0 };
+
+  const usersData = usersSheet && usersSheet.getLastRow() > 1
+    ? usersSheet.getDataRange().getValues() : [];
   const tz = Session.getScriptTimeZone();
 
   // Build userId → fullName map
@@ -192,12 +254,11 @@ function getUserClaims(userId) { // eslint-disable-line no-unused-vars
     if (!ref) continue;
 
     const isPlaceholder = claimsData[i][6] === "New Draft Created";
-    const ownerId  = claimsData[i][1].toString();
-    const rowStatus = (claimsData[i][9] || "").toString();
+    const ownerId       = claimsData[i][1].toString();
+    const rowStatus     = (claimsData[i][9] || "").toString();
 
     if (!grouped[ref]) {
-      // Convert the Timestamp (Date object) to a plain ISO string to avoid GAS
-      // serialisation failures when returning to the client via google.script.run.
+      // Convert Timestamp to a plain ISO string to avoid GAS serialisation failures.
       let dateStr = "";
       const rawTs = claimsData[i][12];
       if (rawTs) {
@@ -231,13 +292,10 @@ function getUserClaims(userId) { // eslint-disable-line no-unused-vars
     if ((claimsData[i][10] || "").toString().toLowerCase() === "paid") {
       grouped[ref].paidItems += 1;
     }
-    // Accumulate description text for client-side full-text search
-    const desc = (claimsData[i][6] || "").toString().trim();
-    if (desc) grouped[ref].descText = (grouped[ref].descText || "") + " " + desc.toLowerCase();
   }
 
   // Compute payStatus per group and return plain serialisable objects
-  const result = Object.values(grouped).map(g => {
+  const allClaims = Object.values(grouped).map(g => {
     let payStatus;
     if (g.paidItems === 0)               payStatus = "Unpaid";
     else if (g.paidItems >= g.totalItems) payStatus = "Paid";
@@ -250,24 +308,34 @@ function getUserClaims(userId) { // eslint-disable-line no-unused-vars
       total:     g.total,
       status:    g.status,
       date:      g.date,
-      payStatus: payStatus,
-      descText:  (g.descText || "").trim()
+      payStatus: payStatus
     };
   });
 
-  return result.sort((a, b) => {
+  allClaims.sort((a, b) => {
     if (!a.date && !b.date) return 0;
     if (!a.date) return 1;
     if (!b.date) return -1;
     return b.date < a.date ? -1 : b.date > a.date ? 1 : 0;
   });
+
+  // Store aggregated cache so subsequent requests are served instantly
+  try {
+    const json = JSON.stringify(allClaims);
+    const gz   = Utilities.gzip(Utilities.newBlob(json, "application/json"));
+    const b64  = Utilities.base64Encode(gz.getBytes());
+    if (b64.length < 95 * 1024) cache.put(CLAIMS_CACHE_KEY, b64, CLAIMS_CACHE_TTL);
+  } catch (_) {}
+
+  const start = (page - 1) * pageSize;
+  return { claims: allClaims.slice(start, start + pageSize), totalCount: allClaims.length };
 }
 
 function getDraftDetails(refNo, userId) {
   refNo = sanitize(refNo);
   if (!refNo) return [];
 
-  const data = getSheet("App_Claims").getDataRange().getValues();
+  const data = getCachedClaimsValues();
   const rows = [];
 
   for (let i = 1; i < data.length; i++) {
@@ -283,13 +351,13 @@ function getDraftDetails(refNo, userId) {
     rows.push({
       rowNum:        i + 1,
       date:          dateStr,
-      type:          data[i][4],
-      invNo:         data[i][5],
-      description:   data[i][6],
-      amount:        data[i][7],
-      claimStatus:   data[i][9]  || "",
-      paymentStatus: data[i][10] || "",
-      paymentVia:    data[i][13] || ""
+      type:          (data[i][4]  || "").toString(),
+      invNo:         (data[i][5]  || "").toString(),
+      description:   (data[i][6]  || "").toString(),
+      amount:        parseFloat(data[i][7]) || 0,
+      claimStatus:   (data[i][9]  || "").toString(),
+      paymentStatus: (data[i][10] || "").toString(),
+      paymentVia:    (data[i][13] || "").toString()
     });
   }
   return rows;
@@ -317,6 +385,7 @@ function processPayments(refNoList, userId) {
     sheet.getRange(i + 1, 11).setValue("Paid");
     sheet.getRange(i + 1, 12).setValue(today);
   }
+  invalidateClaimsCache();
   return { success: true };
 }
 
@@ -339,6 +408,7 @@ function submitSelectedRows(rowNums, userId) {
 
     sheet.getRange(sheetRow, 10).setValue("Submitted");
   }
+  invalidateClaimsCache();
   return { success: true };
 }
 
@@ -348,7 +418,7 @@ function getClaimReport(refNo) {
   refNo = sanitize(refNo);
   if (!refNo) return null;
 
-  const claimsData = getSheet("App_Claims").getDataRange().getValues();
+  const claimsData = getCachedClaimsValues();
   const usersData  = getSheet("App_Users").getDataRange().getValues();
 
   let recipient = "", ownerId = "", submittedDate = "", total = 0;
@@ -447,6 +517,7 @@ function deleteDraft(refNo, userId) {
       }
     }
 
+    invalidateClaimsCache();
     return { success: true };
   } catch (e) {
     return { success: false, message: e.toString() };
@@ -476,6 +547,7 @@ function markRowsAsPaid(rowNums, userId) {
     updated++;
   }
 
+  invalidateClaimsCache();
   return updated > 0
     ? { success: true, updated }
     : { success: false, message: "No eligible submitted rows found. Only submitted items owned by you can be marked paid." };
@@ -487,12 +559,11 @@ function searchClaimItems(query) {
   query = sanitize(query).toLowerCase().trim();
   if (!query || query.length < 2) return [];
 
-  const claimsSheet = getSheet("App_Claims");
-  const usersSheet  = getSheet("App_Users");
-  if (!claimsSheet) return [];
+  const claimsData = getCachedClaimsValues();
+  const usersSheet = getSheet("App_Users");
+  if (!claimsData.length) return [];
 
-  const claimsData = claimsSheet.getLastRow() > 1 ? claimsSheet.getDataRange().getValues() : [];
-  const usersData  = usersSheet && usersSheet.getLastRow() > 1 ? usersSheet.getDataRange().getValues() : [];
+  const usersData = usersSheet && usersSheet.getLastRow() > 1 ? usersSheet.getDataRange().getValues() : [];
   const tz = Session.getScriptTimeZone();
 
   const userMap = {};

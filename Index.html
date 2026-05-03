@@ -1429,6 +1429,8 @@
             <tbody id="historyBody"></tbody>
           </table>
         </div>
+        <!-- Pagination: "Load more" button and claim count are injected here -->
+        <div id="loadMoreContainer"></div>
       </div>
     </div>
 
@@ -1560,13 +1562,21 @@
 <script>
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB — max file size; base64 adds ~33% overhead
 const SEARCH_DEBOUNCE_MS   = 420;             // ms to wait after typing before firing search
+const HISTORY_PAGE_SIZE    = 50;              // claims per page (server-side pagination)
 
 // ── state ─────────────────────────────────────────────────────────────────
-let currentUser     = null;
-let editingRef      = null;
-let historyData     = [];
-let panelCurrentRef = null;
+let currentUser       = null;
+let editingRef        = null;
+let historyData       = [];
+let panelCurrentRef   = null;
 let selectedRecipient = 'Datuk Wira Syamsul Azly Akbar';
+
+// Pagination state for the history tab
+let historyCurrentPage  = 0;
+let historyTotalCount   = 0;
+// Dirty flag: true means the history tab must reload from server on next switch.
+// Set to true after any write; cleared after a successful loadHistory().
+let historyNeedsRefresh = true;
 
 // Settings (populated from server on init)
 let appSettings = {
@@ -1611,9 +1621,10 @@ function switchTab(name) {
   document.getElementById('pane-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
   if (name === 'history') {
-    // Always clear search and reload fresh history when switching to this tab
     clearSearch(false);
-    loadHistory();
+    // Only reload from server when data may have changed (dirty flag).
+    // This avoids a redundant round-trip when the user merely switches tabs.
+    if (historyNeedsRefresh) loadHistory();
   } else if (name === 'settings') {
     loadSettings(true);
   }
@@ -1788,7 +1799,7 @@ function submitBatch() {
     .withSuccessHandler(res => {
       setBtn('saveBtn', '<i class="bi bi-floppy"></i> Save as Draft', false);
       toast(res.message, !res.success);
-      if (res.success) { cancelEntry(); switchTab('history'); }
+      if (res.success) { historyNeedsRefresh = true; cancelEntry(); switchTab('history'); }
     })
     .withFailureHandler(() => {
       setBtn('saveBtn', '<i class="bi bi-floppy"></i> Save as Draft', false);
@@ -1808,29 +1819,86 @@ function cancelEntry() {
 
 // ── history ───────────────────────────────────────────────────────────────
 function loadHistory() {
+  // Always performs a fresh load from page 1, resetting any prior pagination state.
+  historyCurrentPage = 1;
+  historyData        = [];
+  historyTotalCount  = 0;
+
   const loader = document.getElementById('historyLoader');
   const body   = document.getElementById('historyBody');
   loader.classList.remove('hidden');
   body.innerHTML = '';
+  updateLoadMoreUI(false);
 
   google.script.run
-    .withSuccessHandler(data => {
+    .withSuccessHandler(res => {
       loader.classList.add('hidden');
-      if (!Array.isArray(data)) {
-        // getUserClaims returned something unexpected (GAS serialisation failure)
+      if (!res || !Array.isArray(res.claims)) {
         renderHistory(null);
         toast('Could not load claims from server. Please refresh.', true);
         return;
       }
-      historyData = data;
+      historyData       = res.claims;
+      historyTotalCount = res.totalCount || 0;
       renderHistory(historyData);
+      historyNeedsRefresh = false;
+      updateLoadMoreUI(true);
     })
     .withFailureHandler(() => {
       loader.classList.add('hidden');
       renderHistory(null);
       toast('Failed to load claims. Please try again.', true);
     })
-    .getUserClaims(currentUser.userId);
+    .getUserClaims(currentUser.userId, 1, HISTORY_PAGE_SIZE);
+}
+
+function loadMoreHistory() {
+  historyCurrentPage++;
+  const btn = document.getElementById('loadMoreBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Loading…'; }
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (!res || !Array.isArray(res.claims)) {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-down-circle"></i> Load more'; }
+        toast('Failed to load more claims.', true);
+        historyCurrentPage--;
+        return;
+      }
+      historyData       = historyData.concat(res.claims);
+      historyTotalCount = res.totalCount || historyTotalCount;
+      appendHistoryRows(res.claims);
+      updateLoadMoreUI(true);
+    })
+    .withFailureHandler(() => {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-down-circle"></i> Load more'; }
+      toast('Failed to load more claims.', true);
+      historyCurrentPage--;
+    })
+    .getUserClaims(currentUser.userId, historyCurrentPage, HISTORY_PAGE_SIZE);
+}
+
+function updateLoadMoreUI(show) {
+  const container = document.getElementById('loadMoreContainer');
+  if (!container) return;
+  if (!show || historyData.length === 0) { container.innerHTML = ''; return; }
+  const remaining = historyTotalCount - historyData.length;
+  if (remaining <= 0) {
+    container.innerHTML =
+      `<p style="text-align:center;color:var(--ink-3);font-size:.82rem;padding:.75rem 0">
+         All ${historyTotalCount} claim${historyTotalCount !== 1 ? 's' : ''} loaded.
+       </p>`;
+  } else {
+    container.innerHTML =
+      `<div style="text-align:center;padding:.85rem 0">
+         <p style="color:var(--ink-3);font-size:.82rem;margin-bottom:.5rem">
+           Showing ${historyData.length} of ${historyTotalCount} claims
+         </p>
+         <button id="loadMoreBtn" class="btn btn-ghost btn-sm" onclick="loadMoreHistory()">
+           <i class="bi bi-arrow-down-circle"></i> Load ${Math.min(remaining, HISTORY_PAGE_SIZE)} more
+         </button>
+       </div>`;
+  }
 }
 
 function onSearchInput() {
@@ -1922,6 +1990,64 @@ function clearSearch(reloadHistory = true) {
   if (reloadHistory) loadHistory();
 }
 
+function buildHistoryRow(r) {
+  const tr        = document.createElement('tr');
+  const initials  = getInitials(r.recipient);
+  const shortName = esc((r.recipient || '').split(' ').filter(Boolean).pop() || r.recipient);
+
+  tr.innerHTML = `
+    <td>
+      <button class="ref-chip" onclick="openDetailPanel('${esc(r.refNo)}','${esc(r.status)}')">
+        <i class="bi bi-hash"></i>${esc(r.refNo)}
+      </button>
+    </td>
+    <td style="font-size:.82rem;color:var(--ink-2)">${esc(r.ownerName || r.ownerId || '')}</td>
+    <td>
+      <div class="rec-tag">
+        <div class="rec-avatar">${initials}</div>
+        <span title="${esc(r.recipient || '')}">${shortName}</span>
+      </div>
+    </td>
+    <td style="color:var(--ink-3);font-size:.82rem">${formatDate(r.date)}</td>
+    <td style="font-weight:700;font-family:'DM Mono',monospace;font-size:.85rem">RM ${fmtAmt(r.total)}</td>
+    <td><span class="badge badge-${(r.status||'').toLowerCase()}">${esc(r.status)}</span></td>
+    <td><span class="badge badge-${(r.payStatus||'').toLowerCase()}">${esc(r.payStatus)}</span></td>
+    <td></td>`;
+
+  const actionCell = tr.lastElementChild;
+  actionCell.style.cssText = 'display:flex;align-items:center;gap:.4rem;padding:.8rem 1rem';
+
+  if (r.status === 'Draft' && r.ownerId === currentUser.userId) {
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-amber-ghost btn-xs';
+    editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
+    editBtn.onclick   = () => editDraft(r.refNo, r.recipient);
+    actionCell.appendChild(editBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger-ghost btn-xs';
+    delBtn.innerHTML = '<i class="bi bi-trash3"></i>';
+    delBtn.title     = 'Delete draft';
+    delBtn.onclick   = () => promptDeleteDraft(r.refNo);
+    actionCell.appendChild(delBtn);
+  }
+
+  const viewBtn = document.createElement('button');
+  viewBtn.className = 'btn btn-ghost btn-xs';
+  viewBtn.innerHTML = '<i class="bi bi-eye"></i> View';
+  viewBtn.onclick   = () => openDetailPanel(r.refNo, r.status);
+  actionCell.appendChild(viewBtn);
+
+  return tr;
+}
+
+function appendHistoryRows(claims) {
+  const body = document.getElementById('historyBody');
+  const frag = document.createDocumentFragment();
+  claims.forEach(r => frag.appendChild(buildHistoryRow(r)));
+  body.appendChild(frag);
+}
+
 function renderHistory(data) {
   const body = document.getElementById('historyBody');
   body.innerHTML = '';
@@ -1946,58 +2072,7 @@ function renderHistory(data) {
     return;
   }
 
-  const frag = document.createDocumentFragment();
-  data.forEach(r => {
-    const tr = document.createElement('tr');
-    const initials  = getInitials(r.recipient);
-    const shortName = esc((r.recipient || '').split(' ').filter(Boolean).pop() || r.recipient);
-
-    tr.innerHTML = `
-      <td>
-        <button class="ref-chip" onclick="openDetailPanel('${esc(r.refNo)}','${esc(r.status)}')">
-          <i class="bi bi-hash"></i>${esc(r.refNo)}
-        </button>
-      </td>
-      <td style="font-size:.82rem;color:var(--ink-2)">${esc(r.ownerName || r.ownerId || '')}</td>
-      <td>
-        <div class="rec-tag">
-          <div class="rec-avatar">${initials}</div>
-          <span title="${esc(r.recipient || '')}">${shortName}</span>
-        </div>
-      </td>
-      <td style="color:var(--ink-3);font-size:.82rem">${formatDate(r.date)}</td>
-      <td style="font-weight:700;font-family:'DM Mono',monospace;font-size:.85rem">RM ${fmtAmt(r.total)}</td>
-      <td><span class="badge badge-${(r.status||'').toLowerCase()}">${esc(r.status)}</span></td>
-      <td><span class="badge badge-${(r.payStatus||'').toLowerCase()}">${esc(r.payStatus)}</span></td>
-      <td></td>`;
-
-    const actionCell = tr.lastElementChild;
-    actionCell.style.cssText = 'display:flex;align-items:center;gap:.4rem;padding:.8rem 1rem';
-
-    if (r.status === 'Draft' && r.ownerId === currentUser.userId) {
-      const editBtn = document.createElement('button');
-      editBtn.className = 'btn btn-amber-ghost btn-xs';
-      editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
-      editBtn.onclick   = () => editDraft(r.refNo, r.recipient);
-      actionCell.appendChild(editBtn);
-
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn btn-danger-ghost btn-xs';
-      delBtn.innerHTML = '<i class="bi bi-trash3"></i>';
-      delBtn.title     = 'Delete draft';
-      delBtn.onclick   = () => promptDeleteDraft(r.refNo);
-      actionCell.appendChild(delBtn);
-    }
-
-    const viewBtn = document.createElement('button');
-    viewBtn.className = 'btn btn-ghost btn-xs';
-    viewBtn.innerHTML = '<i class="bi bi-eye"></i> View';
-    viewBtn.onclick   = () => openDetailPanel(r.refNo, r.status);
-    actionCell.appendChild(viewBtn);
-
-    frag.appendChild(tr);
-  });
-  body.appendChild(frag);
+  appendHistoryRows(data);
 }
 
 function editDraft(ref, rec) {
@@ -2013,6 +2088,10 @@ function editDraft(ref, rec) {
   google.script.run
     .withSuccessHandler(items => {
       document.getElementById('itemTableBody').innerHTML = '';
+      if (!Array.isArray(items)) {
+        toast('Failed to load draft details. Please try again.', true);
+        return;
+      }
       items.forEach(it => addRow(it));
       if (!document.getElementById('itemTableBody').hasChildNodes()) addRow();
       calc();
@@ -2047,6 +2126,14 @@ function openDetailPanel(refNo, claimStatus) {
       document.getElementById('panelLoader').classList.add('hidden');
       document.getElementById('panelContent').classList.remove('hidden');
       document.getElementById('panelFooter').classList.remove('hidden');
+
+      // Guard: getDraftDetails can return null if GAS fails to serialise the
+      // response (e.g. a cell contains a Date object or formula error value).
+      if (!Array.isArray(items)) {
+        toast('Failed to load claim details. Please try again.', true);
+        closeDetailPanel();
+        return;
+      }
 
       const hasDraft = items.some(it => it.claimStatus === 'Draft');
       const hasSubmittedUnpaid = isOwner && items.some(
@@ -2211,7 +2298,7 @@ function submitDraftFromPanel() {
     .withSuccessHandler(res => {
       setBtn('panelSubmitBtn', '<i class="bi bi-send"></i> Submit Selected Items', false);
       toast(res.success ? 'Selected items submitted.' : (res.message || 'Update failed.'), !res.success);
-      if (res.success) { closeDetailPanel(); loadHistory(); }
+      if (res.success) { historyNeedsRefresh = true; closeDetailPanel(); loadHistory(); }
     })
     .withFailureHandler(() => {
       setBtn('panelSubmitBtn', '<i class="bi bi-send"></i> Submit Selected Items', false);
@@ -2236,6 +2323,7 @@ function deleteDraftAction(refNo) {
     .withSuccessHandler(res => {
       if (res.success) {
         toast('Draft ' + refNo + ' deleted.');
+        historyNeedsRefresh = true;
         loadHistory();
       } else {
         toast(res.message || 'Could not delete draft.', true);
@@ -2270,7 +2358,7 @@ function markPaidFromPanel() {
         ? (res.updated + ' item' + (res.updated !== 1 ? 's' : '') + ' marked as paid.')
         : (res.message || 'Update failed.'),
         !res.success);
-      if (res.success) { closeDetailPanel(); loadHistory(); }
+      if (res.success) { historyNeedsRefresh = true; closeDetailPanel(); loadHistory(); }
     })
     .withFailureHandler(() => {
       setBtn('panelMarkPaidBtn', '<i class="bi bi-cash-coin"></i> Mark Selected as Paid', false);
