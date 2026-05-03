@@ -29,6 +29,32 @@ function invalidateClaimsCache() {
   CacheService.getScriptCache().removeAll([CLAIMS_CACHE_KEY, CLAIMS_RAW_CACHE_KEY]);
 }
 
+// ── batch mutation helpers ─────────────────────────────────────────────────
+
+/**
+ * Deletes the given 1-based row numbers from sheet using the minimum number
+ * of API calls. Rows are grouped into consecutive ranges and deleted
+ * bottom-up so earlier indices remain valid after each deletion.
+ */
+function deleteRowRanges(sheet, rowNums) {
+  if (!rowNums || !rowNums.length) return;
+  // Deduplicate then sort descending so we process from the bottom of the sheet upward.
+  const sorted = [...new Set(rowNums)].sort((a, b) => b - a);
+  let i = 0;
+  while (i < sorted.length) {
+    // Expand the consecutive group starting at sorted[i].
+    let groupEnd = i;
+    while (groupEnd + 1 < sorted.length &&
+           sorted[groupEnd + 1] === sorted[groupEnd] - 1) {
+      groupEnd++;
+    }
+    const count    = groupEnd - i + 1;
+    const startRow = sorted[groupEnd]; // lowest row number in the group
+    sheet.deleteRows(startRow, count);
+    i = groupEnd + 1;
+  }
+}
+
 // Returns the raw 2D values array for App_Claims (with header row at index 0).
 // Reads from a short-lived gzip cache to avoid repeated full-sheet reads within
 // the same burst of panel opens / searches.
@@ -174,21 +200,19 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
     const status = isDraft ? "Draft" : "Submitted";
     const ts     = new Date();
 
-    // Collect rows belonging to this ref (bottom-up to keep row indices valid)
+    // Collect rows belonging to this ref, then delete in batched ranges
     const toDelete = [];
     for (let i = 1; i < data.length; i++) {
       if (data[i][0].toString() === existingRef && data[i][1].toString() === userId) {
         toDelete.push(i + 1); // 1-based sheet row
       }
     }
-    for (let i = toDelete.length - 1; i >= 0; i--) {
-      sheet.deleteRow(toDelete[i]);
-    }
+    deleteRowRanges(sheet, toDelete);
 
-    // Append new rows
-    items.forEach(item => {
+    // Append all new rows in a single setValues call instead of N appendRow calls
+    const newRows = items.map(item => {
       const amount = parseFloat(item.amount) || 0;
-      sheet.appendRow([
+      return [
         existingRef,
         userId,
         sanitize(recipient),
@@ -203,8 +227,10 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
         "",
         ts,
         sanitize(item.paymentVia || "")
-      ]);
+      ];
     });
+    const firstNewRow = sheet.getLastRow() + 1;
+    sheet.getRange(firstNewRow, 1, newRows.length, newRows[0].length).setValues(newRows);
 
     invalidateClaimsCache();
     return { success: true, message: (isDraft ? "Draft saved: " : "Claim submitted: ") + existingRef };
@@ -213,10 +239,12 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
   }
 }
 
-function getUserClaims(userId, page, pageSize) { // eslint-disable-line no-unused-vars
+function getUserClaims(userId, page, pageSize, year) { // eslint-disable-line no-unused-vars
   // page and pageSize support server-side pagination.
   // The default pageSize of 50 matches the HISTORY_PAGE_SIZE constant in Index.html;
   // keep both values in sync if the page size ever needs to change.
+  // year (optional) — when supplied as a 4-digit number string, only claims whose
+  //   Timestamp falls in that year are returned. Pass "all" or omit to return all years.
   // Returns { claims: [...], totalCount: N } so the client can show a "Load more" button.
   page     = Math.max(1, parseInt(page,     10) || 1);
   pageSize = Math.max(1, parseInt(pageSize, 10) || 50);
@@ -230,8 +258,9 @@ function getUserClaims(userId, page, pageSize) { // eslint-disable-line no-unuse
       const bytes     = Utilities.base64Decode(cachedAll);
       const blob      = Utilities.newBlob(bytes).setContentType("application/x-gzip");
       const allClaims = JSON.parse(Utilities.ungzip(blob).getDataAsString());
+      const claimsForYear = filterByYear(allClaims, year);
       const start     = (page - 1) * pageSize;
-      return { claims: allClaims.slice(start, start + pageSize), totalCount: allClaims.length };
+      return { claims: claimsForYear.slice(start, start + pageSize), totalCount: claimsForYear.length };
     } catch (_) {}
   }
 
@@ -329,8 +358,20 @@ function getUserClaims(userId, page, pageSize) { // eslint-disable-line no-unuse
     if (b64.length < MAX_CACHE_BYTES) cache.put(CLAIMS_CACHE_KEY, b64, CLAIMS_CACHE_TTL);
   } catch (_) {}
 
+  const claimsForYear = filterByYear(allClaims, year);
   const start = (page - 1) * pageSize;
-  return { claims: allClaims.slice(start, start + pageSize), totalCount: allClaims.length };
+  return { claims: claimsForYear.slice(start, start + pageSize), totalCount: claimsForYear.length };
+}
+
+/**
+ * Filters an allClaims array by year. When year is falsy, "all", or not a
+ * 4-digit integer the full array is returned unchanged.
+ */
+function filterByYear(allClaims, year) {
+  if (!year || year === "all") return allClaims;
+  const yr = parseInt(year, 10);
+  if (isNaN(yr)) return allClaims;
+  return allClaims.filter(c => c.date && new Date(c.date).getFullYear() === yr);
 }
 
 function getDraftDetails(refNo, userId) {
@@ -384,8 +425,7 @@ function processPayments(refNoList, userId) {
     if (rowOwner  !== userId)        continue; // only own claims
     if (rowStatus !== "Submitted")   continue; // only submitted claims
 
-    sheet.getRange(i + 1, 11).setValue("Paid");
-    sheet.getRange(i + 1, 12).setValue(today);
+    sheet.getRange(i + 1, 11, 1, 2).setValues([["Paid", today]]);
   }
   invalidateClaimsCache();
   return { success: true };
@@ -408,7 +448,7 @@ function submitSelectedRows(rowNums, userId) {
     if (data[i][1].toString() !== userId)      continue; // ownership check
     if (data[i][9].toString() !== "Draft")     continue; // only draft rows
 
-    sheet.getRange(sheetRow, 10).setValue("Submitted");
+    sheet.getRange(sheetRow, 10, 1, 1).setValues([["Submitted"]]);
   }
   invalidateClaimsCache();
   return { success: true };
@@ -505,19 +545,21 @@ function deleteDraft(refNo, userId) {
 
     if (!toDelete.length) return { success: false, message: "Draft not found." };
 
-    // Delete rows bottom-up to preserve row indices
-    for (let i = toDelete.length - 1; i >= 0; i--) sheet.deleteRow(toDelete[i]);
+    // Delete claim rows in batched ranges (bottom-up)
+    deleteRowRanges(sheet, toDelete);
 
     // Clean up attachments
     const attSheet = getSheet("App_Attachments");
     if (attSheet && attSheet.getLastRow() > 1) {
-      const attData = attSheet.getDataRange().getValues();
+      const attData  = attSheet.getDataRange().getValues();
+      const attToDelete = [];
       for (let i = attData.length - 1; i >= 1; i--) {
         if (attData[i][0].toString() === refNo) {
-          attSheet.deleteRow(i + 1);
+          attToDelete.push(i + 1);
           try { DriveApp.getFileById(attData[i][5].toString()).setTrashed(true); } catch (_) {}
         }
       }
+      deleteRowRanges(attSheet, attToDelete);
     }
 
     invalidateClaimsCache();
@@ -545,8 +587,7 @@ function markRowsAsPaid(rowNums, userId) {
     if (!rowNums.includes(sheetRow)) continue;
     if (data[i][1].toString() !== userId) continue; // ownership
     if (data[i][9].toString() !== "Submitted") continue; // only submitted rows
-    sheet.getRange(sheetRow, 11).setValue("Paid");
-    sheet.getRange(sheetRow, 12).setValue(today);
+    sheet.getRange(sheetRow, 11, 1, 2).setValues([["Paid", today]]);
     updated++;
   }
 
@@ -735,6 +776,77 @@ function deleteAttachment(refNo, userId, fileUrl) {
       }
     }
     return { success: false, message: "Attachment not found." };
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ── data archive ───────────────────────────────────────────────────────────
+
+/**
+ * Moves all Paid claim rows whose Timestamp falls in `year` from App_Claims
+ * to a yearly archive sheet (App_Claims_Archive_YYYY). This keeps the active
+ * sheet small for long-term use.
+ *
+ * Only rows with PaymentStatus === "Paid" are archived; draft/submitted rows
+ * are never touched. Returns { success, archived, message }.
+ */
+function archivePaidClaims(year) { // eslint-disable-line no-unused-vars
+  try {
+    year = parseInt(year, 10);
+    if (!year || year < 2000 || year > 2099)
+      return { success: false, message: "Invalid year." };
+
+    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = getSheet("App_Claims");
+    if (!sheet || sheet.getLastRow() < 2)
+      return { success: true, archived: 0, message: "No data to archive." };
+
+    const archiveName = "App_Claims_Archive_" + year;
+    let archiveSheet  = ss.getSheetByName(archiveName);
+    if (!archiveSheet) {
+      archiveSheet = ss.insertSheet(archiveName);
+      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues();
+      archiveSheet.getRange(1, 1, 1, headers[0].length)
+                  .setValues(headers)
+                  .setFontWeight("bold")
+                  .setBackground("#f3f3f3");
+      archiveSheet.setFrozenRows(1);
+    }
+
+    const data      = sheet.getDataRange().getValues();
+    const toArchive = []; // row data arrays
+    const toDelete  = []; // 1-based row indices in the source sheet
+
+    for (let i = 1; i < data.length; i++) {
+      const payStatus = (data[i][10] || "").toString();
+      if (payStatus !== "Paid") continue;
+      const rawTs = data[i][12];
+      if (!rawTs) continue;
+      let rowYear;
+      try { rowYear = new Date(rawTs).getFullYear(); } catch (_) { continue; }
+      if (rowYear !== year) continue;
+      toArchive.push(data[i]);
+      toDelete.push(i + 1);
+    }
+
+    if (!toArchive.length)
+      return { success: true, archived: 0, message: "No paid claims found for " + year + "." };
+
+    // Append archived rows in one batch write
+    const nextRow = archiveSheet.getLastRow() + 1;
+    archiveSheet.getRange(nextRow, 1, toArchive.length, toArchive[0].length)
+                .setValues(toArchive);
+
+    // Remove from active sheet using batched range deletes
+    deleteRowRanges(sheet, toDelete);
+    invalidateClaimsCache();
+
+    return {
+      success:  true,
+      archived: toArchive.length,
+      message:  toArchive.length + " paid claim row(s) from " + year + " archived to '" + archiveName + "'."
+    };
   } catch (e) {
     return { success: false, message: e.toString() };
   }

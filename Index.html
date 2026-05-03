@@ -1629,7 +1629,10 @@
         <div class="card-header">
           <div class="card-icon card-icon-violet"><i class="bi bi-journal-text"></i></div>
           <h3>Claim Record</h3>
-          <button class="btn btn-ghost btn-sm ms-auto" onclick="loadHistory()" style="margin-left:auto">
+          <button class="btn btn-ghost btn-sm" onclick="exportHistoryCSV()" title="Export loaded claims to CSV" style="margin-left:auto">
+            <i class="bi bi-download"></i> CSV
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="loadHistory()">
             <i class="bi bi-arrow-clockwise"></i> Refresh
           </button>
         </div>
@@ -1642,6 +1645,9 @@
           <button class="fpill"        id="fpill-unpaid"    onclick="setHistoryFilter('unpaid',this)">Unpaid</button>
           <button class="fpill"        id="fpill-partial"   onclick="setHistoryFilter('partial',this)">Partial</button>
           <button class="fpill"        id="fpill-paid"      onclick="setHistoryFilter('paid',this)">Paid</button>
+          <select id="yearFilter" class="t-input" title="Filter by year"
+                  style="margin-left:auto;width:auto;font-size:.78rem;padding:.22rem .55rem;height:auto"
+                  onchange="onYearFilterChange()"></select>
         </div>
 
         <div class="search-wrap">
@@ -1738,6 +1744,24 @@
               <i class="bi bi-floppy"></i> Save Settings
             </button>
           </div>
+
+          <!-- Data Archive -->
+          <div style="margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid var(--border)">
+            <h4 style="margin-bottom:.5rem">
+              <i class="bi bi-archive" style="color:var(--ink-3);margin-right:.35rem"></i>Data Archive
+            </h4>
+            <p style="font-size:.82rem;color:var(--ink-3);margin-bottom:1rem">
+              Move all <strong>Paid</strong> claim rows from a past year into a separate archive sheet.
+              This keeps the active dataset small and improves performance.
+            </p>
+            <div class="settings-add-row">
+              <select id="archiveYear" class="t-input" style="width:auto"></select>
+              <button id="archiveBtn" class="btn btn-ghost btn-sm" onclick="triggerArchive()">
+                <i class="bi bi-archive"></i> Archive Year
+              </button>
+            </div>
+            <p id="archiveStatus" style="font-size:.8rem;color:var(--ink-3);margin-top:.6rem"></p>
+          </div>
         </div>
       </div>
     </div>
@@ -1808,6 +1832,9 @@
       <button class="btn btn-success-ghost btn-sm btn-full" onclick="generateReport(panelCurrentRef)">
         <i class="bi bi-printer"></i> Print / Generate Report
       </button>
+      <button class="btn btn-ghost btn-sm btn-full" onclick="exportClaimCSV(panelCurrentRef)" style="margin-top:.4rem">
+        <i class="bi bi-download"></i> Export CSV
+      </button>
       <div id="panelAttachments"></div>
     </div>
   </aside>
@@ -1853,6 +1880,8 @@ let selectedRecipient = 'Datuk Wira Syamsul Azly Akbar';
 // Pagination state for the history tab
 let historyCurrentPage = 0;
 let historyTotalCount  = 0;
+// Year filter for history (populated by initYearFilter on login)
+let historyYear = 'all';
 // Dirty flag: true means the history tab must reload from server on next switch.
 // Set to true after any write; cleared after a successful loadHistory().
 let historyNeedsRefresh = true;
@@ -1989,6 +2018,8 @@ function initApp() {
   google.script.run
     .withSuccessHandler(s => { if (s) appSettings = s; })
     .getSettings();
+  initYearFilter();
+  initArchiveYearSelect();
   switchTab('history');
 }
 
@@ -2141,7 +2172,7 @@ function loadHistory() {
       renderHistory(null);
       toast('Failed to load claims. Please try again.', true);
     })
-    .getUserClaims(currentUser.userId, 1, HISTORY_PAGE_SIZE);
+    .getUserClaims(currentUser.userId, 1, HISTORY_PAGE_SIZE, historyYear);
 }
 
 function loadMoreHistory() {
@@ -2168,7 +2199,7 @@ function loadMoreHistory() {
       toast('Failed to load more claims.', true);
       historyCurrentPage--;
     })
-    .getUserClaims(currentUser.userId, historyCurrentPage, HISTORY_PAGE_SIZE);
+    .getUserClaims(currentUser.userId, historyCurrentPage, HISTORY_PAGE_SIZE, historyYear);
 }
 
 function updateLoadMoreUI(show) {
@@ -2778,6 +2809,109 @@ function formatDate(dateStr) {
     if (isNaN(d.getTime())) return '—';
     return d.toLocaleDateString('en-MY', { day:'2-digit', month:'short', year:'numeric' });
   } catch (_) { return '—'; }
+}
+
+// ── year filter & archive helpers ─────────────────────────────────────────
+function initYearFilter() {
+  const sel     = document.getElementById('yearFilter');
+  if (!sel) return;
+  const current = new Date().getFullYear();
+  sel.innerHTML = '<option value="all">All Years</option>';
+  for (let y = current; y >= current - 5; y--) {
+    const opt      = document.createElement('option');
+    opt.value      = y;
+    opt.textContent = y;
+    sel.appendChild(opt);
+  }
+  sel.value  = 'all';
+  historyYear = 'all';
+}
+
+function onYearFilterChange() {
+  historyYear         = document.getElementById('yearFilter').value;
+  historyNeedsRefresh = true;
+  loadHistory();
+}
+
+function initArchiveYearSelect() {
+  const sel     = document.getElementById('archiveYear');
+  if (!sel) return;
+  const current = new Date().getFullYear();
+  sel.innerHTML = '';
+  for (let y = current - 1; y >= current - 10; y--) {
+    const opt      = document.createElement('option');
+    opt.value      = y;
+    opt.textContent = y;
+    sel.appendChild(opt);
+  }
+}
+
+function triggerArchive() {
+  const year = document.getElementById('archiveYear').value;
+  if (!year) return;
+  const btn = document.getElementById('archiveBtn');
+  const statusEl = document.getElementById('archiveStatus');
+  if (!confirm('Archive all Paid claims from ' + year + '? This moves them to a separate sheet and cannot be undone easily.')) return;
+  setBtn('archiveBtn', '<span class="spin"></span> Archiving…', true);
+  if (statusEl) statusEl.textContent = '';
+  google.script.run
+    .withSuccessHandler(res => {
+      setBtn('archiveBtn', '<i class="bi bi-archive"></i> Archive Year', false);
+      if (statusEl) {
+        statusEl.style.color = res.success ? 'var(--emerald)' : 'var(--rose)';
+        statusEl.textContent = res.message || (res.success ? 'Done.' : 'Failed.');
+      }
+      if (res.success && res.archived > 0) { historyNeedsRefresh = true; }
+    })
+    .withFailureHandler(() => {
+      setBtn('archiveBtn', '<i class="bi bi-archive"></i> Archive Year', false);
+      if (statusEl) { statusEl.style.color = 'var(--rose)'; statusEl.textContent = 'Server error.'; }
+    })
+    .archivePaidClaims(year);
+}
+
+// ── CSV export ────────────────────────────────────────────────────────────
+function csvRow(cols) {
+  return cols.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',');
+}
+
+function downloadCSV(filename, rows) {
+  const csv  = rows.map(csvRow).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportHistoryCSV() {
+  if (!historyData || !historyData.length) { toast('No data loaded — refresh the Records tab first.', true); return; }
+  const rows = [['Ref No', 'Submitted By', 'Recipient', 'Date', 'Total (RM)', 'Status', 'Payment Status']];
+  historyData.forEach(r => rows.push([r.refNo, r.ownerName || r.ownerId, r.recipient, r.date || '', r.total || 0, r.status, r.payStatus]));
+  downloadCSV('claims-' + new Date().toISOString().slice(0, 10) + '.csv', rows);
+}
+
+function exportClaimCSV(refNo) {
+  if (!refNo) return;
+  toast('Preparing CSV…');
+  google.script.run
+    .withSuccessHandler(data => {
+      if (!data || !data.items || !data.items.length) { toast('No data to export.', true); return; }
+      const rows = [['Ref No', 'Date', 'Type', 'Invoice No', 'Description', 'Pay Via', 'Amount (RM)', 'Payment Status']];
+      data.items.forEach(it => rows.push([
+        data.refNo, it.date || '', it.type || '', it.invNo || '',
+        it.description || '', it.paymentVia || '',
+        parseFloat(it.amount) || 0, it.paymentStatus || ''
+      ]));
+      rows.push(['', '', '', '', '', 'TOTAL', data.total, '']);
+      downloadCSV(data.refNo + '.csv', rows);
+    })
+    .withFailureHandler(() => toast('Failed to export CSV.', true))
+    .getClaimReport(refNo);
 }
 
 // ── report ────────────────────────────────────────────────────────────────
