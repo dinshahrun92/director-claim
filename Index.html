@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ClaimFlow — Director Portal</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
     /* ── Tokens ─────────────────────────────────────────────────────────── */
@@ -62,7 +62,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { height: 100%; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Outfit', system-ui, sans-serif;
       background: #f5f5f5;
       color: var(--ink);
       font-size: 14px;
@@ -339,7 +339,7 @@
       border: 1.5px solid var(--border);
       border-radius: 99px;
       padding: .45rem 1.1rem .45rem 2.4rem;
-      font-size: .82rem; font-family: 'Inter', sans-serif;
+      font-size: .82rem; font-family: 'Outfit', sans-serif;
       color: var(--ink); outline: none;
       transition: all .18s;
     }
@@ -446,7 +446,7 @@
       border: 1.5px solid var(--border);
       color: var(--ink-4);
       cursor: pointer; background: var(--surface-2);
-      font-family: 'Inter', sans-serif;
+      font-family: 'Outfit', sans-serif;
       transition: all .15s;
     }
     .fpill:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
@@ -603,9 +603,10 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: .25rem .65rem;
-      font-family: 'DM Mono', monospace;
+      font-family: 'Outfit', sans-serif;
+      font-variant-numeric: tabular-nums;
       font-size: .8rem;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--ink-2);
     }
     .ref-badge i { color: var(--ink-4); font-size: .75rem; }
@@ -668,7 +669,7 @@
       box-shadow: 0 0 0 2px rgba(240,78,55,.1);
     }
     .t-input::placeholder { color: var(--ink-4); }
-    .t-input[type="number"] { font-family: 'DM Mono', monospace; font-size: 13px; }
+    .t-input[type="number"] { font-family: 'Outfit', sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; }
     select.t-input { cursor: pointer; }
 
     .entry-footer {
@@ -718,7 +719,8 @@
       vertical-align: middle;
     }
     .data-table .col-mono {
-      font-family: 'DM Mono', monospace;
+      font-family: 'Outfit', sans-serif;
+      font-variant-numeric: tabular-nums;
       font-size: .8rem;
       letter-spacing: .01em;
     }
@@ -730,8 +732,9 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       padding: .28rem .65rem;
-      font-family: 'DM Mono', monospace;
-      font-size: .78rem; font-weight: 500;
+      font-family: 'Outfit', sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-size: .78rem; font-weight: 600;
       color: var(--ink-2);
       cursor: pointer;
       transition: all .15s;
@@ -888,92 +891,137 @@
       display: flex; flex-direction: column;
       transform: translateX(105%);
       transition: transform .3s cubic-bezier(.4,0,.2,1);
+      font-family: 'Outfit', sans-serif;
     }
     #sidePanel.open { transform: translateX(0); }
 
     .panel-hdr {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 1.25rem;
+      padding: 1rem 1.5rem;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
       flex-shrink: 0;
+      gap: .75rem;
     }
-    .panel-hdr-left { display: flex; align-items: center; gap: .75rem; }
+    .panel-hdr-left { display: flex; align-items: center; gap: .85rem; flex: 1; min-width: 0; }
     .panel-hdr-icon {
-      width: 36px; height: 36px;
-      border-radius: 9px;
+      width: 40px; height: 40px;
+      border-radius: 11px;
       background: var(--brand-light);
       color: var(--brand);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem;
+      font-size: 1.1rem;
+      flex-shrink: 0;
     }
     .panel-hdr h4 {
-      font-size: .92rem; font-weight: 700; color: var(--ink); letter-spacing: -.01em;
+      font-size: 1rem; font-weight: 700; color: var(--ink); letter-spacing: -.02em;
+      line-height: 1.25;
     }
-    .panel-hdr .panel-sub { font-size: .75rem; color: var(--ink-3); margin-top: .08rem; }
+    .panel-hdr .panel-sub {
+      font-size: .78rem; font-weight: 500; color: var(--ink-4);
+      font-variant-numeric: tabular-nums;
+      margin-top: .1rem; letter-spacing: .01em;
+    }
     .panel-close {
-      width: 32px; height: 32px;
+      width: 34px; height: 34px;
       border-radius: 8px;
       background: var(--surface-2); border: 1px solid var(--border);
       color: var(--ink-3); font-size: 1rem;
       display: flex; align-items: center; justify-content: center;
       transition: all .15s;
+      flex-shrink: 0;
     }
     .panel-close:hover { background: var(--rose-bg); border-color: var(--rose); color: var(--rose); }
 
     .panel-body { flex: 1; overflow-y: auto; }
 
     .panel-footer {
-      border-top: 1px solid var(--border);
-      padding: 1rem 1.25rem;
+      border-top: 1.5px solid var(--border);
+      padding: 1rem 1.5rem;
       background: var(--surface-2);
       flex-shrink: 0;
     }
     .panel-totals {
-      display: flex; gap: 1rem; justify-content: flex-end;
-      margin-bottom: .85rem;
+      display: flex; gap: 0; justify-content: flex-end;
+      margin-bottom: .9rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
     }
     .panel-total-item {
       text-align: right;
+      padding: .65rem 1.1rem;
+      border-left: 1px solid var(--border);
+      flex: 1;
     }
-    .panel-total-item .pt-label { font-size: .7rem; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
-    .panel-total-item .pt-val { font-size: 1rem; font-weight: 700; color: var(--ink); }
+    .panel-total-item:first-child { border-left: none; }
+    .panel-total-item .pt-label {
+      font-size: .68rem; font-weight: 700; color: var(--ink-4);
+      text-transform: uppercase; letter-spacing: .07em;
+    }
+    .panel-total-item .pt-val {
+      font-size: 1.05rem; font-weight: 700; color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.01em; margin-top: .1rem;
+    }
     .panel-sel-row {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: .75rem;
-      padding: .5rem .75rem;
+      margin-bottom: .65rem;
+      padding: .5rem .85rem;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
     }
-    .panel-sel-row .sel-label { font-size: .82rem; color: var(--ink-3); }
-    .panel-sel-row .sel-amount { font-size: .9rem; font-weight: 700; color: var(--brand); }
+    .panel-sel-row .sel-label { font-size: .82rem; font-weight: 500; color: var(--ink-3); }
+    .panel-sel-row .sel-amount {
+      font-size: .92rem; font-weight: 700; color: var(--brand);
+      font-variant-numeric: tabular-nums;
+    }
 
     /* ── Panel table ─────────────────────────────────────────────────────── */
     .panel-table { width: 100%; border-collapse: collapse; }
     .panel-table thead tr {
-      background: var(--surface-2);
-      border-bottom: 1.5px solid var(--border);
+      background: var(--ink);
     }
     .panel-table thead th {
       padding: .6rem 1rem;
-      font-size: .7rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .06em;
-      color: var(--ink-3); text-align: left; white-space: nowrap;
+      font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: rgba(255,255,255,.7); text-align: left; white-space: nowrap;
     }
     .panel-table thead th:first-child { width: 44px; text-align: center; }
+    .panel-table thead th:last-child { text-align: right; }
     .panel-table tbody tr {
       border-bottom: 1px solid var(--surface-3);
       transition: background .12s;
     }
+    .panel-table tbody tr:hover { background: var(--surface-2); }
     .panel-table tbody tr:last-child { border-bottom: none; }
     .panel-table tbody td {
-      padding: .75rem 1rem;
+      padding: .72rem 1rem;
       vertical-align: middle;
+      font-size: .855rem;
+      color: var(--ink-2);
     }
     .panel-table tbody td:first-child { text-align: center; }
+    /* Description column — slightly dimmer */
+    .panel-table tbody td.td-desc { color: var(--ink-3); font-size: .82rem; }
+    /* Type column */
+    .panel-table tbody td.td-type { font-weight: 600; color: var(--ink); }
+    /* Invoice column */
+    .panel-table tbody td.td-inv {
+      font-variant-numeric: tabular-nums;
+      font-size: .78rem; color: var(--ink-3); letter-spacing: .02em;
+    }
+    /* Amount column */
+    .panel-table tbody td.td-amt {
+      text-align: right; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.01em;
+    }
     .panel-table tr.submitted-row { background: #f0fdf4; }
-    .panel-table tr.submitted-row td { opacity: .8; }
+    .panel-table tr.submitted-row:hover { background: #e7faf2; }
 
     /* ── Checkbox ────────────────────────────────────────────────────────── */
     .chk {
@@ -995,7 +1043,7 @@
     }
 
     .rpt-page {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Outfit', system-ui, sans-serif;
       color: #0d1117;
       font-size: 12px;
       line-height: 1.5;
@@ -1048,14 +1096,42 @@
       padding: .55rem .75rem; font-weight: 600; font-size: .68rem;
       text-transform: uppercase; letter-spacing: .05em; text-align: left;
     }
+    .rpt-table thead th.th-amt { text-align: right; }
     .rpt-table tbody tr:nth-child(even) { background: #f7f8fa; }
     .rpt-table tbody td {
       padding: .5rem .75rem;
       border-bottom: 1px solid #e4e8ef;
       vertical-align: middle;
     }
-    .rpt-table tfoot tr { background: var(--brand-light); border-top: 2px solid var(--brand); }
+    /* Boxed amount column — every body cell in the Amount column gets a strong
+       left border and shaded background so an accountant can scan the column
+       and reconcile each figure at a glance. */
+    .rpt-table thead th.th-amt {
+      background: #1e293b;
+      letter-spacing: .04em;
+    }
+    .rpt-table td.rpt-amt-cell {
+      text-align: right;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      background: #fafbff;
+      border-left: 2px solid #cbd5e1;
+      border-right: 2px solid #cbd5e1;
+      border-bottom: 1px solid #e4e8ef;
+      padding: .5rem .85rem;
+      letter-spacing: -.01em;
+      color: #0d1117;
+    }
+    .rpt-table tfoot tr { background: var(--brand-light); border-top: 2.5px solid var(--brand); }
     .rpt-table tfoot td { padding: .6rem .75rem; font-weight: 700; font-size: .875rem; }
+    .rpt-table tfoot td.rpt-amt-cell {
+      background: #fff3f1;
+      border: 2px solid var(--brand);
+      border-top: 2.5px solid var(--brand);
+      color: var(--brand);
+      font-size: 1rem;
+      padding: .6rem .85rem;
+    }
 
     .rpt-sigs {
       display: flex; gap: 1rem; margin-top: .5rem;
@@ -1241,7 +1317,8 @@
     .src-meta span { display: inline-flex; align-items: center; gap: .2rem; }
     .src-right { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; flex-shrink: 0; }
     .src-amt {
-      font-family: 'DM Mono', monospace;
+      font-family: 'Outfit', sans-serif;
+      font-variant-numeric: tabular-nums;
       font-weight: 700; font-size: .85rem; color: var(--ink);
     }
     .search-no-results {
@@ -1959,15 +2036,15 @@ function addRow(data = {}) {
   tr.innerHTML = `
     <td><input type="date" class="t-input i-date" value="${esc(data.date || '')}"></td>
     <td><select class="t-input i-type">${typeOpts}</select></td>
-    <td><input type="text" class="t-input i-inv" value="${esc(data.invNo || '')}" placeholder="INV-" maxlength="50" style="text-transform:uppercase;font-family:'DM Mono',monospace;font-size:12.5px"></td>
+    <td><input type="text" class="t-input i-inv" value="${esc(data.invNo || '')}" placeholder="INV-" maxlength="50" style="text-transform:uppercase;font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums;font-size:12.5px"></td>
     <td><input type="text" class="t-input i-desc" value="${esc(data.description || '')}" placeholder="Description" maxlength="200" style="text-transform:uppercase"></td>
     <td><select class="t-input i-via">${viaOpts}</select></td>
     <td>
       <div style="display:flex;align-items:center;gap:5px">
-        <span style="font-size:12px;color:var(--ink-3);font-weight:600;font-family:'DM Mono',monospace">RM</span>
+        <span style="font-size:12px;color:var(--ink-3);font-weight:600;font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums">RM</span>
         <input type="number" class="t-input i-amt" min="0" step="0.01" oninput="calc()" onblur="formatAmtInput(this)"
                value="${parseFloat(data.amount) || ''}" placeholder="0.00"
-               style="flex:1;font-family:'DM Mono',monospace">
+               style="flex:1;font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums">
       </div>
     </td>
     <td>
@@ -2222,7 +2299,7 @@ function buildHistoryRow(r) {
       </div>
     </td>
     <td style="color:var(--ink-3);font-size:.82rem">${formatDate(r.date)}</td>
-    <td style="font-weight:700;font-family:'DM Mono',monospace;font-size:.85rem">RM ${fmtAmt(r.total)}</td>
+    <td style="font-weight:700;font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums;font-size:.85rem">RM ${fmtAmt(r.total)}</td>
     <td><span class="badge badge-${(r.status||'').toLowerCase()}">${esc(r.status)}</span></td>
     <td><span class="badge badge-${(r.payStatus||'').toLowerCase()}">${esc(r.payStatus)}</span></td>
     <td></td>`;
@@ -2379,22 +2456,22 @@ function openDetailPanel(refNo, claimStatus) {
           if (isDraft) {
             tr.innerHTML = `
               <td><input type="checkbox" class="chk panel-item-chk" value="${it.rowNum}" onchange="updatePanelSelectionInfo()"></td>
-              <td style="color:var(--ink-3);font-size:.82rem">${esc(formatDate(it.date))}</td>
-              <td>${esc(it.type || '')}</td>
-              <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
-              <td>${esc(it.description || '')}</td>
-              <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace">RM ${fmtAmt(amount)}</td>`;
+              <td>${esc(formatDate(it.date))}</td>
+              <td class="td-type">${esc(it.type || '')}</td>
+              <td class="td-inv">${esc(it.invNo || '—')}</td>
+              <td class="td-desc">${esc(it.description || '')}</td>
+              <td class="td-desc">${esc(it.paymentVia || '')}</td>
+              <td class="td-amt">RM ${fmtAmt(amount)}</td>`;
           } else if (isPaid) {
             tr.className = 'submitted-row';
             tr.innerHTML = `
               <td><i class="bi bi-cash-coin" style="color:var(--emerald);font-size:.95rem" title="Paid"></i></td>
-              <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
-              <td>${esc(it.type || '')}</td>
-              <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
-              <td>${esc(it.description || '')}</td>
-              <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-              <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--emerald)">RM ${fmtAmt(amount)} <span style="font-size:.75rem;font-weight:500">(Paid)</span></td>`;
+              <td>${esc(formatDate(it.date))}</td>
+              <td class="td-type">${esc(it.type || '')}</td>
+              <td class="td-inv">${esc(it.invNo || '—')}</td>
+              <td class="td-desc">${esc(it.description || '')}</td>
+              <td class="td-desc">${esc(it.paymentVia || '')}</td>
+              <td class="td-amt" style="color:var(--emerald)">RM ${fmtAmt(amount)} <span style="font-size:.72rem;font-weight:500;opacity:.75">(Paid)</span></td>`;
           } else {
             // Submitted but not yet paid
             tr.className = 'submitted-row';
@@ -2402,21 +2479,21 @@ function openDetailPanel(refNo, claimStatus) {
               // Owner can mark as paid — show checkbox
               tr.innerHTML = `
                 <td><input type="checkbox" class="chk panel-pay-chk" value="${it.rowNum}" onchange="updatePanelPaymentInfo()"></td>
-                <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
-                <td>${esc(it.type || '')}</td>
-                <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
-                <td>${esc(it.description || '')}</td>
-                <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-                <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
+                <td>${esc(formatDate(it.date))}</td>
+                <td class="td-type">${esc(it.type || '')}</td>
+                <td class="td-inv">${esc(it.invNo || '—')}</td>
+                <td class="td-desc">${esc(it.description || '')}</td>
+                <td class="td-desc">${esc(it.paymentVia || '')}</td>
+                <td class="td-amt" style="color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
             } else {
               tr.innerHTML = `
                 <td><i class="bi bi-check-circle-fill" style="color:var(--brand);font-size:.95rem" title="Submitted"></i></td>
-                <td style="font-size:.82rem">${esc(formatDate(it.date))}</td>
-                <td>${esc(it.type || '')}</td>
-                <td style="font-family:'DM Mono',monospace;font-size:.8rem">${esc(it.invNo || '—')}</td>
-                <td>${esc(it.description || '')}</td>
-                <td style="font-size:.8rem;color:var(--ink-3)">${esc(it.paymentVia || '')}</td>
-                <td style="text-align:right;font-weight:700;font-family:'DM Mono',monospace;color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
+                <td>${esc(formatDate(it.date))}</td>
+                <td class="td-type">${esc(it.type || '')}</td>
+                <td class="td-inv">${esc(it.invNo || '—')}</td>
+                <td class="td-desc">${esc(it.description || '')}</td>
+                <td class="td-desc">${esc(it.paymentVia || '')}</td>
+                <td class="td-amt" style="color:var(--brand)">RM ${fmtAmt(amount)}</td>`;
             }
           }
           frag.appendChild(tr);
@@ -2736,10 +2813,10 @@ function renderAndPrintReport(d) {
       <td style="text-align:center">${i+1}</td>
       <td>${esc(it.date || '—')}</td>
       <td>${esc(it.type || '')}</td>
-      <td style="font-family:'DM Mono',monospace">${esc(it.invNo || '—')}</td>
+      <td style="font-variant-numeric:tabular-nums;font-size:.85em">${esc(it.invNo || '—')}</td>
       <td>${esc(it.description || '')}</td>
       <td>${esc(it.paymentVia || '')}</td>
-      <td style="text-align:right">${fmt(it.amount)}</td>
+      <td class="rpt-amt-cell">${fmt(it.amount)}</td>
     </tr>`).join('');
 
   const sigBox = (label, name, sub) => `
@@ -2770,7 +2847,7 @@ function renderAndPrintReport(d) {
       <div class="rpt-meta">
         <div class="rpt-meta-item">
           <div class="m-label">Reference No</div>
-          <div class="m-val" style="font-family:'DM Mono',monospace">${esc(d.refNo)}</div>
+          <div class="m-val" style="font-family:'Outfit',sans-serif;font-variant-numeric:tabular-nums">${esc(d.refNo)}</div>
         </div>
         <div class="rpt-meta-item">
           <div class="m-label">Submitted Date</div>
@@ -2791,14 +2868,14 @@ function renderAndPrintReport(d) {
             <th style="width:120px">Invoice No</th>
             <th>Description</th>
             <th style="width:75px">Pay Via</th>
-            <th style="width:95px;text-align:right">Amount (RM)</th>
+            <th class="th-amt" style="width:110px">Amount (RM)</th>
           </tr>
         </thead>
         <tbody>${itemRows}</tbody>
         <tfoot>
           <tr>
-            <td colspan="6" style="text-align:right;padding-right:.75rem">TOTAL (RM)</td>
-            <td style="text-align:right">${fmt(d.total)}</td>
+            <td colspan="6" style="text-align:right;padding-right:.75rem;font-weight:700">TOTAL (RM)</td>
+            <td class="rpt-amt-cell">${fmt(d.total)}</td>
           </tr>
         </tfoot>
       </table>
