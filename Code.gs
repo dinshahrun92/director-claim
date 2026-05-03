@@ -224,8 +224,6 @@ function getUserClaims(userId, page, pageSize) { // eslint-disable-line no-unuse
   const cache = CacheService.getScriptCache();
 
   // ── Try the pre-built aggregated cache first ──────────────────────────────
-  // The aggregated cache stores the full sorted list; we just slice it here,
-  // so repeated page loads cost nothing after the first call.
   const cachedAll = cache.get(CLAIMS_CACHE_KEY);
   if (cachedAll) {
     try {
@@ -450,13 +448,14 @@ function getClaimReport(refNo) {
     const amount = parseFloat(claimsData[i][7]) || 0;
     total += amount;
     items.push({
-      rowNum:      i + 1,
-      date:        dateStr,
-      type:        claimsData[i][4],
-      invNo:       claimsData[i][5],
-      description: claimsData[i][6],
-      paymentVia:  "",
-      amount:      amount
+      rowNum:        i + 1,
+      date:          dateStr,
+      type:          claimsData[i][4],
+      invNo:         claimsData[i][5],
+      description:   claimsData[i][6],
+      paymentVia:    claimsData[i][13] || "",
+      paymentStatus: claimsData[i][10] || "",
+      amount:        amount
     });
   }
 
