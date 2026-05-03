@@ -22,6 +22,8 @@ const CLAIMS_CACHE_KEY     = "allClaims_gz";
 const CLAIMS_RAW_CACHE_KEY = "claimsRaw_gz";
 const CLAIMS_CACHE_TTL     = 300; // 5 minutes
 const CLAIMS_RAW_CACHE_TTL = 60;  // 1 minute
+// GAS CacheService limit per key is 100 KB; stay safely below it.
+const MAX_CACHE_BYTES      = 95 * 1024;
 
 function invalidateClaimsCache() {
   CacheService.getScriptCache().removeAll([CLAIMS_CACHE_KEY, CLAIMS_RAW_CACHE_KEY]);
@@ -46,7 +48,7 @@ function getCachedClaimsValues() {
     const json = JSON.stringify(values);
     const gz   = Utilities.gzip(Utilities.newBlob(json, "application/json"));
     const b64  = Utilities.base64Encode(gz.getBytes());
-    if (b64.length < 95 * 1024) cache.put(CLAIMS_RAW_CACHE_KEY, b64, CLAIMS_RAW_CACHE_TTL);
+    if (b64.length < MAX_CACHE_BYTES) cache.put(CLAIMS_RAW_CACHE_KEY, b64, CLAIMS_RAW_CACHE_TTL);
   } catch (_) {}
   return values;
 }
@@ -213,6 +215,8 @@ function saveBatchClaims(items, userId, recipient, isDraft, existingRef) {
 
 function getUserClaims(userId, page, pageSize) { // eslint-disable-line no-unused-vars
   // page and pageSize support server-side pagination.
+  // The default pageSize of 50 matches the HISTORY_PAGE_SIZE constant in Index.html;
+  // keep both values in sync if the page size ever needs to change.
   // Returns { claims: [...], totalCount: N } so the client can show a "Load more" button.
   page     = Math.max(1, parseInt(page,     10) || 1);
   pageSize = Math.max(1, parseInt(pageSize, 10) || 50);
@@ -324,7 +328,7 @@ function getUserClaims(userId, page, pageSize) { // eslint-disable-line no-unuse
     const json = JSON.stringify(allClaims);
     const gz   = Utilities.gzip(Utilities.newBlob(json, "application/json"));
     const b64  = Utilities.base64Encode(gz.getBytes());
-    if (b64.length < 95 * 1024) cache.put(CLAIMS_CACHE_KEY, b64, CLAIMS_CACHE_TTL);
+    if (b64.length < MAX_CACHE_BYTES) cache.put(CLAIMS_CACHE_KEY, b64, CLAIMS_CACHE_TTL);
   } catch (_) {}
 
   const start = (page - 1) * pageSize;

@@ -1429,7 +1429,7 @@
             <tbody id="historyBody"></tbody>
           </table>
         </div>
-        <!-- Pagination: "Load more" button and claim count are injected here -->
+        <!-- Pagination: "Load more" button and claims count are injected here -->
         <div id="loadMoreContainer"></div>
       </div>
     </div>
@@ -1894,7 +1894,8 @@ function updateLoadMoreUI(show) {
          <p style="color:var(--ink-3);font-size:.82rem;margin-bottom:.5rem">
            Showing ${historyData.length} of ${historyTotalCount} claims
          </p>
-         <button id="loadMoreBtn" class="btn btn-ghost btn-sm" onclick="loadMoreHistory()">
+         <button id="loadMoreBtn" class="btn btn-ghost btn-sm" onclick="loadMoreHistory()"
+                 aria-label="Load ${Math.min(remaining, HISTORY_PAGE_SIZE)} more claims">
            <i class="bi bi-arrow-down-circle"></i> Load ${Math.min(remaining, HISTORY_PAGE_SIZE)} more
          </button>
        </div>`;
