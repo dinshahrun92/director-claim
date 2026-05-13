@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup 2 — Corporate Glass | ClaimFlow Director Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    /* ── Design 2: "Corporate Glass" ─────────────────────────────────── */
+    :root {
+      --bg-grad-start: #eef2ff;
+      --bg-grad-end:   #faf5ff;
+      --glass:         rgba(255,255,255,.72);
+      --glass-border:  rgba(255,255,255,.65);
+      --glass-shadow:  0 8px 32px rgba(79,70,229,.1), 0 1px 0 rgba(255,255,255,.8) inset;
+      --indigo:        #4f46e5;
+      --indigo-dim:    rgba(79,70,229,.1);
+      --indigo-mid:    rgba(79,70,229,.18);
+      --violet:        #7c3aed;
+      --violet-dim:    rgba(124,58,237,.1);
+      --teal:          #0891b2;
+      --teal-dim:      rgba(8,145,178,.1);
+      --emerald:       #059669;
+      --emerald-dim:   rgba(5,150,105,.1);
+      --amber:         #d97706;
+      --amber-dim:     rgba(217,119,6,.1);
+      --rose:          #e11d48;
+      --rose-dim:      rgba(225,29,72,.1);
+      --ink:           #1e1b4b;
+      --ink-2:         #312e81;
+      --ink-3:         #6366f1;
+      --muted:         #818cf8;
+      --muted-2:       #a5b4fc;
+      --sidebar-w:     280px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
+      background-attachment: fixed;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+      position: relative;
+    }
+    /* Decorative blobs */
+    body::before, body::after {
+      content: '';
+      position: fixed; pointer-events: none; z-index: 0;
+      border-radius: 50%;
+      filter: blur(80px);
+    }
+    body::before {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,.18) 0%, transparent 70%);
+      top: -200px; right: -100px;
+    }
+    body::after {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(124,58,237,.14) 0%, transparent 70%);
+      bottom: -200px; left: -100px;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(79,70,229,.2); border-radius: 99px; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Shell ─────────────────────────────────────────────────────── */
+    .shell { display: flex; height: 100vh; position: relative; z-index: 1; }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      box-shadow: 4px 0 24px rgba(79,70,229,.06);
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Logo */
+    .sb-logo {
+      padding: 1.5rem 1.5rem 1.25rem;
+      display: flex; align-items: center; gap: .85rem;
+    }
+    .sb-logo-mark {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 1.1rem;
+      box-shadow: 0 6px 20px rgba(79,70,229,.35);
+    }
+    .sb-logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em; color: var(--ink); }
+    .sb-logo-text span { color: var(--indigo); }
+    .sb-logo-tagline { font-size: .7rem; color: var(--muted); margin-top: .05rem; }
+
+    /* User profile */
+    .sb-profile {
+      margin: 0 1.25rem .75rem;
+      background: linear-gradient(135deg, var(--indigo-dim), var(--violet-dim));
+      border: 1px solid rgba(79,70,229,.18);
+      border-radius: 14px;
+      padding: .85rem 1rem;
+      display: flex; align-items: center; gap: .8rem;
+    }
+    .sb-avatar {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      color: #fff; font-size: .85rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(79,70,229,.3);
+    }
+    .sb-profile-name { font-size: .88rem; font-weight: 700; color: var(--ink); }
+    .sb-profile-role {
+      display: inline-flex; align-items: center; gap: .25rem;
+      font-size: .68rem; font-weight: 600;
+      background: var(--indigo-mid);
+      color: var(--indigo);
+      border-radius: 99px;
+      padding: .15rem .6rem;
+      margin-top: .2rem;
+    }
+
+    /* Nav */
+    .sb-nav { flex: 1; padding: .25rem 1rem; overflow-y: auto; }
+    .sb-nav-section { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted-2); padding: .65rem .5rem .3rem; }
+    .sb-item {
+      display: flex; align-items: center; gap: .85rem;
+      padding: .62rem .85rem;
+      border-radius: 11px;
+      cursor: pointer;
+      font-size: .85rem; font-weight: 500;
+      color: #6b7280;
+      transition: all .18s;
+      margin-bottom: .1rem;
+      position: relative;
+    }
+    .sb-item i { font-size: 1rem; flex-shrink: 0; }
+    .sb-item .sb-badge {
+      margin-left: auto;
+      background: var(--indigo);
+      color: #fff;
+      font-size: .68rem; font-weight: 700;
+      border-radius: 99px; padding: 1px 7px;
+    }
+    .sb-item:hover { background: rgba(79,70,229,.08); color: var(--indigo); }
+    .sb-item.active {
+      background: linear-gradient(135deg, var(--indigo-dim), var(--violet-dim));
+      color: var(--indigo);
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(79,70,229,.1);
+    }
+    .sb-item.active::before {
+      content: '';
+      position: absolute; left: 0; top: 20%; bottom: 20%;
+      width: 3px; border-radius: 99px;
+      background: linear-gradient(to bottom, var(--indigo), var(--violet));
+    }
+
+    /* Quick actions */
+    .sb-quick {
+      margin: .75rem 1rem 1rem;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      border-radius: 14px;
+      padding: 1rem 1.15rem;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(79,70,229,.3);
+    }
+    .sb-quick p { font-size: .72rem; opacity: .8; margin-bottom: .5rem; }
+    .sb-quick-btn {
+      display: flex; align-items: center; gap: .45rem;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 8px;
+      padding: .45rem .85rem;
+      font-size: .8rem; font-weight: 600; color: #fff;
+      cursor: pointer; width: 100%; font-family: inherit;
+      transition: background .15s;
+    }
+    .sb-quick-btn:hover { background: rgba(255,255,255,.28); }
+
+    /* ── Main ────────────────────────────────────────────────────── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── Welcome strip ──────────────────────────────────────────── */
+    .welcome {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 1.25rem 1.75rem;
+      display: flex; align-items: center; gap: 1.5rem;
+    }
+    .welcome-text h2 {
+      font-size: 1.15rem; font-weight: 800;
+      color: var(--ink); letter-spacing: -.02em;
+    }
+    .welcome-text p { font-size: .82rem; color: #6366f1; margin-top: .18rem; }
+    .welcome-alert {
+      display: flex; align-items: center; gap: .6rem;
+      background: linear-gradient(135deg, rgba(224,36,36,.08), rgba(79,70,229,.08));
+      border: 1px solid rgba(224,36,36,.2);
+      border-radius: 10px;
+      padding: .6rem 1rem;
+      font-size: .82rem; color: #be123c;
+      font-weight: 600;
+    }
+    .welcome-alert i { color: #e11d48; }
+    .welcome-actions { margin-left: auto; display: flex; gap: .65rem; }
+    .glass-btn {
+      display: flex; align-items: center; gap: .45rem;
+      padding: .55rem 1.1rem;
+      border-radius: 10px;
+      font-size: .82rem; font-weight: 600;
+      cursor: pointer; border: none; font-family: inherit;
+      transition: all .18s;
+    }
+    .glass-btn-primary {
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(79,70,229,.3);
+    }
+    .glass-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,.4); }
+    .glass-btn-ghost {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--indigo);
+      backdrop-filter: blur(8px);
+    }
+    .glass-btn-ghost:hover { background: var(--indigo-dim); }
+
+    /* ── Content ─────────────────────────────────────────────────── */
+    .content { flex: 1; overflow-y: auto; padding: 1.5rem 1.75rem; }
+
+    /* ── KPI row ─────────────────────────────────────────────────── */
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .kpi-glass {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.25rem 1.35rem;
+      box-shadow: var(--glass-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-glass-glow {
+      position: absolute; top: -20px; right: -20px;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      filter: blur(30px);
+      opacity: .4;
+    }
+    .kpi-icon-glass {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .95rem;
+      margin-bottom: .85rem;
+    }
+    .kpi-label-glass { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9ca3af; margin-bottom: .35rem; }
+    .kpi-val-glass {
+      font-size: 1.65rem; font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+    .kpi-unit-glass { font-size: .85rem; font-weight: 600; opacity: .7; margin-right: .1rem; }
+    .kpi-change {
+      display: inline-flex; align-items: center; gap: .25rem;
+      font-size: .7rem; font-weight: 600; margin-top: .5rem;
+      padding: .2rem .6rem; border-radius: 99px;
+    }
+
+    /* ── Glass card ──────────────────────────────────────────────── */
+    .gc {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      box-shadow: var(--glass-shadow);
+      overflow: hidden;
+    }
+    .gc-head {
+      padding: 1.1rem 1.35rem;
+      border-bottom: 1px solid rgba(79,70,229,.1);
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .gc-head h3 { font-size: .92rem; font-weight: 700; color: var(--ink); }
+    .gc-head .gc-sub { font-size: .72rem; color: var(--muted); margin-left: .2rem; }
+    .gc-head-right { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
+
+    /* ── Claim card grid ─────────────────────────────────────────── */
+    .grid-main { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .claim-card {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.15rem 1.25rem;
+      box-shadow: var(--glass-shadow);
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .claim-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(79,70,229,.15), 0 1px 0 rgba(255,255,255,.9) inset;
+      border-color: rgba(79,70,229,.35);
+    }
+    .claim-card-top { display: flex; align-items: center; gap: .75rem; margin-bottom: .85rem; }
+    .cc-avatar {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,.15);
+    }
+    .cc-ref { font-family: 'DM Mono', monospace; font-size: .72rem; color: var(--muted); margin-bottom: .12rem; }
+    .cc-name { font-size: .85rem; font-weight: 700; color: var(--ink); }
+    .cc-badges { display: flex; gap: .4rem; margin-left: auto; align-items: center; }
+    .glass-badge {
+      display: inline-flex; align-items: center; gap: .25rem;
+      padding: .22rem .65rem;
+      border-radius: 99px;
+      font-size: .68rem; font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .gb-draft     { background: var(--amber-dim);    color: var(--amber);   border-color: rgba(217,119,6,.2); }
+    .gb-submitted { background: var(--indigo-dim);   color: var(--indigo);  border-color: rgba(79,70,229,.2); }
+    .gb-paid      { background: var(--emerald-dim);  color: var(--emerald); border-color: rgba(5,150,105,.2); }
+    .gb-partial   { background: rgba(234,88,12,.08); color: #ea580c;        border-color: rgba(234,88,12,.2); }
+
+    .claim-card-meta {
+      display: flex; justify-content: space-between; align-items: flex-end;
+    }
+    .cc-amount {
+      font-size: 1.35rem; font-weight: 800;
+      color: var(--ink); letter-spacing: -.02em;
+    }
+    .cc-amount .cc-curr { font-size: .8rem; font-weight: 600; color: var(--muted); margin-right: .15rem; }
+    .cc-items { font-size: .72rem; color: #9ca3af; margin-top: .12rem; }
+    .cc-ring {
+      width: 46px; height: 46px; position: relative; flex-shrink: 0;
+    }
+    .cc-ring svg { transform: rotate(-90deg); }
+    .cc-ring-label {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .65rem; font-weight: 700; color: var(--indigo);
+    }
+
+    /* ── Recipient profile cards ────────────────────────────────── */
+    .rec-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: .85rem; }
+    .rec-card {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: var(--glass-shadow);
+      text-align: center;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .rec-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(79,70,229,.12); }
+    .rc-av {
+      width: 48px; height: 48px;
+      border-radius: 13px;
+      margin: 0 auto .7rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .88rem; font-weight: 700; color: #fff;
+      box-shadow: 0 6px 16px rgba(0,0,0,.15);
+    }
+    .rc-name { font-size: .82rem; font-weight: 700; color: var(--ink); margin-bottom: .3rem; }
+    .rc-title { font-size: .7rem; color: #9ca3af; margin-bottom: .6rem; }
+    .rc-stat { font-size: .75rem; font-weight: 600; color: var(--indigo); }
+    .rc-year-label { font-size: .65rem; color: #9ca3af; }
+    .rc-quick {
+      margin-top: .65rem;
+      display: flex; align-items: center; justify-content: center; gap: .3rem;
+      font-size: .72rem; font-weight: 600; color: var(--indigo);
+      padding: .3rem .7rem; border-radius: 99px;
+      background: var(--indigo-dim);
+      cursor: pointer; border: none; font-family: inherit; width: 100%;
+      transition: background .15s;
+    }
+    .rc-quick:hover { background: var(--indigo-mid); }
+
+    /* ── Grid layouts ────────────────────────────────────────────── */
+    .two-col { display: grid; grid-template-columns: 7fr 5fr; gap: 1rem; margin-bottom: 1.25rem; }
+
+    /* ── Chip filters ────────────────────────────────────────────── */
+    .chip-row { display: flex; gap: .45rem; margin-bottom: .85rem; }
+    .glass-chip {
+      padding: .28rem .75rem;
+      border-radius: 99px;
+      font-size: .72rem; font-weight: 600;
+      border: 1px solid rgba(79,70,229,.2);
+      color: #6366f1;
+      cursor: pointer;
+      transition: all .15s;
+      background: transparent; font-family: inherit;
+    }
+    .glass-chip:hover, .glass-chip.active { background: var(--indigo-mid); border-color: var(--indigo); color: var(--indigo); }
+
+    /* ── Table (glass) ───────────────────────────────────────────── */
+    .glass-table { width: 100%; border-collapse: collapse; }
+    .glass-table thead th {
+      padding: .65rem 1rem;
+      font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: #9ca3af; text-align: left; white-space: nowrap;
+      border-bottom: 1px solid rgba(79,70,229,.1);
+    }
+    .glass-table tbody tr {
+      border-bottom: 1px solid rgba(79,70,229,.07);
+      transition: background .12s;
+    }
+    .glass-table tbody tr:last-child { border-bottom: none; }
+    .glass-table tbody tr:hover { background: var(--indigo-dim); }
+    .glass-table td { padding: .82rem 1rem; vertical-align: middle; }
+    .mono-ref {
+      font-family: 'DM Mono', monospace; font-size: .75rem;
+      background: var(--indigo-dim); border: 1px solid rgba(79,70,229,.2);
+      border-radius: 5px; padding: .2rem .55rem; color: var(--indigo);
+    }
+    .amt-glass { font-weight: 700; font-size: .88rem; color: var(--ink); font-family: 'DM Mono', monospace; }
+
+    /* ── Bottom label ─────────────────────────────────────────────── */
+    .mockup-label {
+      position: fixed;
+      bottom: 1rem; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(79,70,229,.12);
+      border: 1px solid rgba(79,70,229,.4);
+      color: var(--indigo);
+      padding: .35rem 1.1rem;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      backdrop-filter: blur(12px);
+      z-index: 9999;
+    }
+
+    .mini-btn {
+      padding: .22rem .65rem; border-radius: 7px;
+      font-size: .72rem; font-weight: 600; cursor: pointer; border: none;
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: all .15s;
+      background: var(--indigo-dim); color: var(--indigo);
+    }
+    .mini-btn:hover { background: var(--indigo-mid); }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-mark"><i class="bi bi-clipboard2-check-fill"></i></div>
+      <div>
+        <div class="sb-logo-text">Claim<span>Flow</span></div>
+        <div class="sb-logo-tagline">Director Portal</div>
+      </div>
+    </div>
+
+    <!-- User card -->
+    <div class="sb-profile">
+      <div class="sb-avatar">SA</div>
+      <div>
+        <div class="sb-profile-name">Syamsul Azly</div>
+        <div class="sb-profile-role"><i class="bi bi-shield-check" style="font-size:.65rem"></i> Administrator</div>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-nav-section">Overview</div>
+      <div class="sb-item active"><i class="bi bi-grid-1x2-fill"></i> Dashboard</div>
+      <div class="sb-item"><i class="bi bi-pencil-square"></i> New Claim</div>
+
+      <div class="sb-nav-section" style="margin-top:.4rem">Claims</div>
+      <div class="sb-item"><i class="bi bi-journal-text"></i> All Records <span class="sb-badge">4</span></div>
+      <div class="sb-item"><i class="bi bi-people"></i> Recipients</div>
+      <div class="sb-item"><i class="bi bi-cash-coin"></i> Payments <span class="sb-badge">2</span></div>
+
+      <div class="sb-nav-section" style="margin-top:.4rem">Insights</div>
+      <div class="sb-item"><i class="bi bi-bar-chart-line"></i> Analytics</div>
+      <div class="sb-item"><i class="bi bi-clock-history"></i> Audit Trail</div>
+
+      <div class="sb-nav-section" style="margin-top:.4rem">System</div>
+      <div class="sb-item"><i class="bi bi-gear"></i> Settings</div>
+    </nav>
+
+    <div class="sb-quick">
+      <p>Quick shortcuts</p>
+      <button class="sb-quick-btn"><i class="bi bi-plus-circle"></i> Start New Claim</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+    <!-- Welcome strip -->
+    <div class="welcome">
+      <div class="welcome-text">
+        <h2>Good morning, Syamsul ☀️</h2>
+        <p>Tuesday, 29 April 2025 — Here's your portal overview</p>
+      </div>
+      <div class="welcome-alert">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        3 claims need your attention
+      </div>
+      <div class="welcome-actions">
+        <button class="glass-btn glass-btn-ghost"><i class="bi bi-printer"></i> Reports</button>
+        <button class="glass-btn glass-btn-primary"><i class="bi bi-plus-lg"></i> New Claim</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- KPI row -->
+      <div class="kpi-row">
+        <div class="kpi-glass">
+          <div class="kpi-glass-glow" style="background:var(--indigo)"></div>
+          <div class="kpi-icon-glass" style="background:var(--indigo-dim);color:var(--indigo)"><i class="bi bi-receipt"></i></div>
+          <div class="kpi-label-glass">Total Claims</div>
+          <div class="kpi-val-glass" style="color:var(--indigo)">48</div>
+          <div class="kpi-change" style="background:var(--emerald-dim);color:var(--emerald)"><i class="bi bi-arrow-up-right"></i>+12% this month</div>
+        </div>
+        <div class="kpi-glass">
+          <div class="kpi-glass-glow" style="background:var(--amber)"></div>
+          <div class="kpi-icon-glass" style="background:var(--amber-dim);color:var(--amber)"><i class="bi bi-hourglass-split"></i></div>
+          <div class="kpi-label-glass">Pending Payment</div>
+          <div class="kpi-val-glass" style="color:var(--amber)"><span class="kpi-unit-glass">RM</span>6,240</div>
+          <div class="kpi-change" style="background:var(--rose-dim);color:var(--rose)"><i class="bi bi-arrow-down-right"></i>4 claims unpaid</div>
+        </div>
+        <div class="kpi-glass">
+          <div class="kpi-glass-glow" style="background:var(--emerald)"></div>
+          <div class="kpi-icon-glass" style="background:var(--emerald-dim);color:var(--emerald)"><i class="bi bi-cash-stack"></i></div>
+          <div class="kpi-label-glass">Paid This Month</div>
+          <div class="kpi-val-glass" style="color:var(--emerald)"><span class="kpi-unit-glass">RM</span>12,450</div>
+          <div class="kpi-change" style="background:var(--emerald-dim);color:var(--emerald)"><i class="bi bi-arrow-up-right"></i>+8% vs last month</div>
+        </div>
+        <div class="kpi-glass">
+          <div class="kpi-glass-glow" style="background:var(--violet)"></div>
+          <div class="kpi-icon-glass" style="background:var(--violet-dim);color:var(--violet)"><i class="bi bi-people"></i></div>
+          <div class="kpi-label-glass">Recipients</div>
+          <div class="kpi-val-glass" style="color:var(--violet)">3</div>
+          <div class="kpi-change" style="background:var(--violet-dim);color:var(--violet)"><i class="bi bi-check-circle"></i>All active</div>
+        </div>
+      </div>
+
+      <!-- Recipient profiles -->
+      <div class="gc" style="margin-bottom:1.25rem">
+        <div class="gc-head">
+          <div class="kpi-icon-glass" style="background:var(--violet-dim);color:var(--violet);width:30px;height:30px;font-size:.8rem"><i class="bi bi-people-fill"></i></div>
+          <h3>Recipient Profiles</h3>
+          <div class="gc-head-right">
+            <span class="glass-chip active">This Year</span>
+            <span class="glass-chip">All Time</span>
+          </div>
+        </div>
+        <div style="padding:1rem 1.25rem">
+          <div class="rec-cards">
+            <div class="rec-card">
+              <div class="rc-av" style="background:linear-gradient(135deg,#4f46e5,#818cf8)">DSA</div>
+              <div class="rc-name">Datuk Wira Syamsul</div>
+              <div class="rc-title">Director</div>
+              <div class="rc-stat">RM 18,400</div>
+              <div class="rc-year-label">claimed this year</div>
+              <button class="rc-quick"><i class="bi bi-plus-circle" style="font-size:.7rem"></i> Quick Claim</button>
+            </div>
+            <div class="rec-card">
+              <div class="rc-av" style="background:linear-gradient(135deg,#0891b2,#059669)">DWA</div>
+              <div class="rc-name">Datin Wira Ardiana</div>
+              <div class="rc-title">Director</div>
+              <div class="rc-stat">RM 14,250</div>
+              <div class="rc-year-label">claimed this year</div>
+              <button class="rc-quick"><i class="bi bi-plus-circle" style="font-size:.7rem"></i> Quick Claim</button>
+            </div>
+            <div class="rec-card">
+              <div class="rc-av" style="background:linear-gradient(135deg,#d97706,#e11d48)">DKA</div>
+              <div class="rc-name">Datin Kalsom Aziz</div>
+              <div class="rc-title">Director</div>
+              <div class="rc-stat">RM 9,320</div>
+              <div class="rc-year-label">claimed this year</div>
+              <button class="rc-quick"><i class="bi bi-plus-circle" style="font-size:.7rem"></i> Quick Claim</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Claim card grid + recent table -->
+      <div class="two-col">
+        <!-- Claim cards -->
+        <div>
+          <div class="gc-head" style="padding:.85rem 0 .75rem;background:transparent;border:none">
+            <h3 style="color:var(--ink)">Recent Claim Batches</h3>
+            <div class="gc-head-right">
+              <div class="chip-row" style="margin:0">
+                <button class="glass-chip active">All</button>
+                <button class="glass-chip">Pending</button>
+                <button class="glass-chip">Paid</button>
+              </div>
+            </div>
+          </div>
+          <div class="grid-main">
+            <!-- Card 1 -->
+            <div class="claim-card">
+              <div class="claim-card-top">
+                <div class="cc-avatar" style="background:linear-gradient(135deg,#4f46e5,#818cf8)">DSA</div>
+                <div>
+                  <div class="cc-ref">#CF-0042</div>
+                  <div class="cc-name">Datuk Syamsul</div>
+                </div>
+                <div class="cc-badges"><span class="glass-badge gb-submitted">Submitted</span></div>
+              </div>
+              <div class="claim-card-meta">
+                <div>
+                  <div class="cc-amount"><span class="cc-curr">RM</span>2,350.00</div>
+                  <div class="cc-items">5 items · 24 Apr 2025</div>
+                </div>
+                <div class="cc-ring">
+                  <svg width="46" height="46" viewBox="0 0 46 46">
+                    <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(79,70,229,.1)" stroke-width="5"/>
+                    <circle cx="23" cy="23" r="18" fill="none" stroke="#4f46e5" stroke-width="5" stroke-dasharray="113" stroke-dashoffset="60" stroke-linecap="round"/>
+                  </svg>
+                  <div class="cc-ring-label">47%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="claim-card">
+              <div class="claim-card-top">
+                <div class="cc-avatar" style="background:linear-gradient(135deg,#0891b2,#059669)">DWA</div>
+                <div>
+                  <div class="cc-ref">#CF-0041</div>
+                  <div class="cc-name">Datin Ardiana</div>
+                </div>
+                <div class="cc-badges"><span class="glass-badge gb-paid">Paid</span></div>
+              </div>
+              <div class="claim-card-meta">
+                <div>
+                  <div class="cc-amount"><span class="cc-curr">RM</span>1,800.00</div>
+                  <div class="cc-items">4 items · 20 Apr 2025</div>
+                </div>
+                <div class="cc-ring">
+                  <svg width="46" height="46" viewBox="0 0 46 46">
+                    <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(5,150,105,.1)" stroke-width="5"/>
+                    <circle cx="23" cy="23" r="18" fill="none" stroke="#059669" stroke-width="5" stroke-dasharray="113" stroke-dashoffset="0" stroke-linecap="round"/>
+                  </svg>
+                  <div class="cc-ring-label" style="color:#059669">100%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="claim-card">
+              <div class="claim-card-top">
+                <div class="cc-avatar" style="background:linear-gradient(135deg,#d97706,#e11d48)">DKA</div>
+                <div>
+                  <div class="cc-ref">#CF-0040</div>
+                  <div class="cc-name">Datin Kalsom</div>
+                </div>
+                <div class="cc-badges"><span class="glass-badge gb-partial">Partial</span></div>
+              </div>
+              <div class="claim-card-meta">
+                <div>
+                  <div class="cc-amount"><span class="cc-curr">RM</span>980.50</div>
+                  <div class="cc-items">3 items · 18 Apr 2025</div>
+                </div>
+                <div class="cc-ring">
+                  <svg width="46" height="46" viewBox="0 0 46 46">
+                    <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(234,88,12,.1)" stroke-width="5"/>
+                    <circle cx="23" cy="23" r="18" fill="none" stroke="#ea580c" stroke-width="5" stroke-dasharray="113" stroke-dashoffset="56" stroke-linecap="round"/>
+                  </svg>
+                  <div class="cc-ring-label" style="color:#ea580c">49%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="claim-card">
+              <div class="claim-card-top">
+                <div class="cc-avatar" style="background:linear-gradient(135deg,#4f46e5,#818cf8)">DSA</div>
+                <div>
+                  <div class="cc-ref">#CF-0039</div>
+                  <div class="cc-name">Datuk Syamsul</div>
+                </div>
+                <div class="cc-badges"><span class="glass-badge gb-paid">Paid</span></div>
+              </div>
+              <div class="claim-card-meta">
+                <div>
+                  <div class="cc-amount"><span class="cc-curr">RM</span>4,200.00</div>
+                  <div class="cc-items">8 items · 12 Apr 2025</div>
+                </div>
+                <div class="cc-ring">
+                  <svg width="46" height="46" viewBox="0 0 46 46">
+                    <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(5,150,105,.1)" stroke-width="5"/>
+                    <circle cx="23" cy="23" r="18" fill="none" stroke="#059669" stroke-width="5" stroke-dasharray="113" stroke-dashoffset="0" stroke-linecap="round"/>
+                  </svg>
+                  <div class="cc-ring-label" style="color:#059669">100%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent activity -->
+        <div>
+          <div class="gc-head" style="padding:.85rem 0 .75rem;background:transparent;border:none">
+            <h3 style="color:var(--ink)">Payment Queue</h3>
+            <div class="gc-head-right">
+              <button class="mini-btn">View all</button>
+            </div>
+          </div>
+          <div class="gc">
+            <table class="glass-table">
+              <thead>
+                <tr>
+                  <th>Claim</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="font-size:.8rem;font-weight:600;color:var(--ink)">CF-0042</div>
+                    <div style="font-size:.7rem;color:#9ca3af">Datuk Syamsul</div>
+                  </td>
+                  <td><span class="amt-glass">RM 2,350.00</span></td>
+                  <td><span class="glass-badge gb-submitted">Unpaid</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-size:.8rem;font-weight:600;color:var(--ink)">CF-0040</div>
+                    <div style="font-size:.7rem;color:#9ca3af">Datin Kalsom</div>
+                  </td>
+                  <td><span class="amt-glass">RM 500.25</span></td>
+                  <td><span class="glass-badge gb-partial">Remaining</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-size:.8rem;font-weight:600;color:var(--ink)">CF-0037</div>
+                    <div style="font-size:.7rem;color:#9ca3af">Datin Ardiana</div>
+                  </td>
+                  <td><span class="amt-glass">RM 1,200.00</span></td>
+                  <td><span class="glass-badge gb-submitted">Unpaid</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-size:.8rem;font-weight:600;color:var(--ink)">CF-0035</div>
+                    <div style="font-size:.7rem;color:#9ca3af">Datuk Syamsul</div>
+                  </td>
+                  <td><span class="amt-glass">RM 2,190.00</span></td>
+                  <td><span class="glass-badge gb-submitted">Unpaid</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="padding:.85rem 1.25rem;border-top:1px solid rgba(79,70,229,.1);display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:.78rem;color:#9ca3af">4 items pending · <strong style="color:var(--indigo)">RM 6,240.25</strong> total</div>
+              <button class="glass-btn glass-btn-primary" style="font-size:.75rem;padding:.38rem .85rem"><i class="bi bi-cash-coin"></i> Mark as Paid</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<div class="mockup-label">✦ Design 2 — Corporate Glass</div>
+
+</body>
+</html>

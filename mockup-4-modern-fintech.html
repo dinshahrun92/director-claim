@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup 4 — Modern Fintech | ClaimFlow Director Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    /* ── Design 4: "Modern Fintech" ──────────────────────────────── */
+    :root {
+      --white:      #ffffff;
+      --off:        #fafafa;
+      --bg:         #f5f5f5;
+      --coral:      #f04e37;
+      --coral-dark: #d93e29;
+      --coral-dim:  rgba(240,78,55,.08);
+      --coral-mid:  rgba(240,78,55,.15);
+      --orange:     #ff6b35;
+      --slate:      #64748b;
+      --slate-light:#94a3b8;
+      --slate-dim:  #f1f5f9;
+      --ink:        #0f172a;
+      --ink-2:      #1e293b;
+      --ink-3:      #334155;
+      --ink-4:      #64748b;
+      --ink-5:      #94a3b8;
+      --emerald:    #10b981;
+      --emerald-dim:rgba(16,185,129,.1);
+      --sky:        #0ea5e9;
+      --sky-dim:    rgba(14,165,233,.1);
+      --amber:      #f59e0b;
+      --amber-dim:  rgba(245,158,11,.1);
+      --violet:     #8b5cf6;
+      --violet-dim: rgba(139,92,246,.1);
+      --rose:       #f43f5e;
+      --rose-dim:   rgba(244,63,94,.1);
+      --border:     #e2e8f0;
+      --border-2:   #cbd5e1;
+      --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow:     0 4px 12px rgba(0,0,0,.08);
+      --tab-h:      60px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 99px; }
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    .shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center;
+      height: 60px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-brand {
+      display: flex; align-items: center; gap: .7rem;
+      flex-shrink: 0;
+    }
+    .header-mark {
+      width: 34px; height: 34px;
+      background: var(--coral);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .95rem;
+      box-shadow: 0 4px 12px rgba(240,78,55,.35);
+    }
+    .header-title {
+      font-size: .95rem; font-weight: 800;
+      color: var(--ink); letter-spacing: -.025em;
+    }
+    .header-title span { color: var(--coral); }
+
+    .header-search {
+      flex: 1; max-width: 400px; margin: 0 2rem;
+      position: relative;
+    }
+    .header-search i {
+      position: absolute; left: .85rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-5); font-size: .82rem; pointer-events: none;
+    }
+    .header-search input {
+      width: 100%;
+      background: var(--off);
+      border: 1.5px solid var(--border);
+      border-radius: 99px;
+      padding: .45rem 1.1rem .45rem 2.4rem;
+      font-size: .82rem; font-family: 'Inter', sans-serif;
+      color: var(--ink); outline: none;
+      transition: all .18s;
+    }
+    .header-search input:focus {
+      border-color: var(--coral);
+      background: var(--white);
+      box-shadow: 0 0 0 3px var(--coral-dim);
+    }
+    .header-search input::placeholder { color: var(--ink-5); }
+
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
+    .hdr-icon {
+      width: 34px; height: 34px;
+      border-radius: 99px;
+      background: var(--off);
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: .88rem; color: var(--ink-4);
+      transition: all .15s; position: relative;
+    }
+    .hdr-icon:hover { background: var(--border); color: var(--ink); }
+    .hdr-icon .dot {
+      position: absolute; top: 4px; right: 4px;
+      width: 8px; height: 8px;
+      background: var(--coral); border: 2px solid var(--white);
+      border-radius: 50%;
+    }
+    .user-chip-ft {
+      display: flex; align-items: center; gap: .55rem;
+      padding: .3rem .75rem .3rem .3rem;
+      background: var(--off);
+      border: 1.5px solid var(--border);
+      border-radius: 99px; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .user-chip-ft:hover { border-color: var(--coral); }
+    .uav {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--coral), var(--orange));
+      color: #fff; font-size: .65rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .uname { font-size: .8rem; font-weight: 600; color: var(--ink-2); }
+
+    /* ── Subheader with hero stats ───────────────────────────────── */
+    .subheader {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex; align-items: flex-start; gap: 2.5rem;
+      flex-shrink: 0;
+    }
+    .hero-stat {
+      display: flex; flex-direction: column;
+    }
+    .hero-stat-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-5); margin-bottom: .3rem; }
+    .hero-stat-value {
+      font-size: 2.2rem; font-weight: 900;
+      letter-spacing: -.04em; line-height: 1;
+      color: var(--ink);
+    }
+    .hero-stat-value.coral { color: var(--coral); }
+    .hero-stat-value.emerald { color: var(--emerald); }
+    .hero-stat-value.sky { color: var(--sky); }
+    .hero-stat-unit { font-size: 1rem; font-weight: 700; color: inherit; opacity: .65; margin-right: .15rem; }
+    .hero-stat-sub { font-size: .72rem; color: var(--ink-5); margin-top: .3rem; }
+    .hero-divider { width: 1px; height: 60px; background: var(--border); align-self: center; flex-shrink: 0; }
+
+    .subheader-right { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: .5rem; }
+    .sub-actions { display: flex; gap: .55rem; }
+    .filter-pill-row { display: flex; gap: .4rem; }
+
+    /* ── Filter pills ────────────────────────────────────────────── */
+    .fpill {
+      padding: .3rem .85rem;
+      border-radius: 99px;
+      font-size: .75rem; font-weight: 600;
+      border: 1.5px solid var(--border);
+      color: var(--ink-4);
+      cursor: pointer; background: var(--off);
+      font-family: 'Inter', sans-serif;
+      transition: all .15s;
+    }
+    .fpill:hover { border-color: var(--coral); color: var(--coral); background: var(--coral-dim); }
+    .fpill.active { border-color: var(--coral); color: var(--coral); background: var(--coral-dim); }
+
+    /* ── Buttons ─────────────────────────────────────────────────── */
+    .btn-coral {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .5rem 1.1rem;
+      border-radius: 99px;
+      background: var(--coral); color: #fff;
+      font-size: .82rem; font-weight: 700;
+      border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 14px rgba(240,78,55,.3);
+      transition: all .18s;
+    }
+    .btn-coral:hover { background: var(--coral-dark); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(240,78,55,.4); }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .48rem 1rem;
+      border-radius: 99px;
+      background: var(--white); color: var(--ink-2);
+      font-size: .82rem; font-weight: 600;
+      border: 1.5px solid var(--border-2); cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all .15s;
+    }
+    .btn-outline:hover { border-color: var(--coral); color: var(--coral); background: var(--coral-dim); }
+    .btn-xs-ft {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .22rem .7rem;
+      border-radius: 99px;
+      font-size: .72rem; font-weight: 600;
+      border: 1.5px solid var(--border);
+      color: var(--ink-4); cursor: pointer;
+      font-family: 'Inter', sans-serif; background: var(--off);
+      transition: all .15s;
+    }
+    .btn-xs-ft:hover { border-color: var(--coral); color: var(--coral); background: var(--coral-dim); }
+
+    /* ── Content area ────────────────────────────────────────────── */
+    .content-scroll {
+      flex: 1; overflow-y: auto;
+      padding: 1.5rem 2rem;
+      padding-bottom: calc(var(--tab-h) + 1.5rem);
+    }
+
+    /* ── Timeline layout ─────────────────────────────────────────── */
+    .timeline { position: relative; }
+    .timeline-month-label {
+      font-size: .72rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: var(--coral);
+      margin-bottom: .75rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .timeline-month-label::after {
+      content: '';
+      flex: 1; height: 1px; background: var(--border);
+    }
+
+    .tl-group { display: flex; gap: 1.5rem; margin-bottom: 1.25rem; }
+    .tl-date-col {
+      width: 72px; flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: flex-end;
+      padding-top: 1.1rem;
+      position: relative;
+    }
+    .tl-date-col::after {
+      content: '';
+      position: absolute; right: -1.5rem; top: 1.4rem;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--coral);
+      border: 2px solid var(--white);
+      box-shadow: 0 0 0 2px var(--coral-mid);
+    }
+    /* Vertical line */
+    .tl-date-col::before {
+      content: '';
+      position: absolute; right: calc(-1.5rem + 4px); top: 0; bottom: -100%;
+      width: 2px; background: var(--border);
+    }
+    .tl-day { font-size: 1.4rem; font-weight: 900; color: var(--ink); letter-spacing: -.04em; line-height: 1; }
+    .tl-month { font-size: .68rem; font-weight: 700; color: var(--ink-5); text-transform: uppercase; letter-spacing: .06em; }
+
+    .tl-cards { flex: 1; display: flex; flex-direction: column; gap: .65rem; }
+
+    /* ── Claim cards (timeline) ──────────────────────────────────── */
+    .tc {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 1.15rem 1.35rem;
+      box-shadow: var(--shadow-sm);
+      transition: all .18s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .tc::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 4px;
+      border-radius: 2px 0 0 2px;
+    }
+    .tc.tc-submitted::before { background: var(--sky); }
+    .tc.tc-paid::before { background: var(--emerald); }
+    .tc.tc-draft::before { background: var(--amber); }
+    .tc.tc-partial::before { background: var(--orange); }
+    .tc:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--border-2); }
+
+    .tc-top { display: flex; align-items: center; gap: .85rem; margin-bottom: .85rem; }
+    .tc-av {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 700; color: #fff; flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(0,0,0,.12);
+    }
+    .tc-ref { font-family: 'DM Mono', monospace; font-size: .72rem; color: var(--ink-5); margin-bottom: .1rem; }
+    .tc-name { font-size: .88rem; font-weight: 700; color: var(--ink); }
+    .tc-badges { display: flex; gap: .4rem; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+
+    .ft-badge {
+      display: inline-flex; align-items: center; gap: .25rem;
+      padding: .22rem .65rem;
+      border-radius: 99px;
+      font-size: .68rem; font-weight: 700;
+      border: 1.5px solid transparent;
+    }
+    .fb-draft     { background: var(--amber-dim);    color: var(--amber);   border-color: rgba(245,158,11,.2); }
+    .fb-submitted { background: var(--sky-dim);      color: var(--sky);     border-color: rgba(14,165,233,.2); }
+    .fb-paid      { background: var(--emerald-dim);  color: var(--emerald); border-color: rgba(16,185,129,.2); }
+    .fb-partial   { background: rgba(255,107,53,.1); color: var(--orange);  border-color: rgba(255,107,53,.25); }
+
+    .tc-bottom { display: flex; align-items: flex-end; justify-content: space-between; }
+    .tc-amount {
+      font-size: 1.5rem; font-weight: 900;
+      color: var(--ink); letter-spacing: -.03em;
+    }
+    .tc-curr { font-size: .85rem; font-weight: 700; color: var(--ink-5); margin-right: .12rem; }
+    .tc-meta { font-size: .72rem; color: var(--ink-5); margin-top: .15rem; }
+    .tc-ring { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+    .tc-ring svg { transform: rotate(-90deg); }
+    .tc-ring-label {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .65rem; font-weight: 800;
+    }
+
+    /* ── Two column ──────────────────────────────────────────────── */
+    .page-cols { display: grid; grid-template-columns: 3fr 2fr; gap: 1.5rem; }
+
+    /* ── Right panel ─────────────────────────────────────────────── */
+    .rp {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .rp-head {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: .65rem;
+    }
+    .rp-head h4 { font-size: .88rem; font-weight: 700; color: var(--ink); }
+    .rp-head-right { margin-left: auto; }
+
+    .pay-item {
+      display: flex; align-items: center; gap: .85rem;
+      padding: .85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s; cursor: pointer;
+    }
+    .pay-item:last-child { border-bottom: none; }
+    .pay-item:hover { background: var(--off); }
+    .pay-av {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .pay-info { flex: 1; min-width: 0; }
+    .pay-name { font-size: .82rem; font-weight: 600; color: var(--ink); }
+    .pay-ref { font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--ink-5); }
+    .pay-amount { text-align: right; }
+    .pay-amt-val { font-family: 'DM Mono', monospace; font-size: .88rem; font-weight: 700; color: var(--ink); }
+    .pay-amt-sub { font-size: .68rem; color: var(--ink-5); margin-top: .08rem; }
+
+    /* Progress bar */
+    .prog-bar-wrap { margin: .55rem 0 .25rem; }
+    .prog-bar-bg { background: var(--border); border-radius: 99px; height: 5px; overflow: hidden; }
+    .prog-bar-fill { height: 100%; border-radius: 99px; background: var(--coral); transition: width .3s; }
+    .prog-labels { display: flex; justify-content: space-between; font-size: .65rem; color: var(--ink-5); margin-top: .2rem; }
+
+    /* ── Bottom tab bar ──────────────────────────────────────────── */
+    .tabbar {
+      height: var(--tab-h);
+      background: var(--white);
+      border-top: 1.5px solid var(--border);
+      display: flex;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      z-index: 500;
+      box-shadow: 0 -4px 16px rgba(0,0,0,.06);
+    }
+    .tab-item {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: .2rem;
+      cursor: pointer;
+      transition: color .15s; color: var(--ink-5);
+      position: relative;
+      font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .tab-item i { font-size: 1.2rem; }
+    .tab-item.active { color: var(--coral); }
+    .tab-item.active::before {
+      content: '';
+      position: absolute; top: 0; left: 20%; right: 20%;
+      height: 3px; border-radius: 0 0 3px 3px;
+      background: var(--coral);
+    }
+    .tab-item .tab-badge {
+      position: absolute; top: 6px; right: calc(50% - 16px);
+      width: 16px; height: 16px;
+      background: var(--coral); color: #fff;
+      font-size: .58rem; font-weight: 800;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--white);
+    }
+
+    /* ── FAB ────────────────────────────────────────────────────── */
+    .fab {
+      position: fixed; bottom: calc(var(--tab-h) + 1.2rem); right: 1.5rem;
+      width: 52px; height: 52px;
+      background: var(--coral);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 1.35rem;
+      box-shadow: 0 6px 20px rgba(240,78,55,.45);
+      cursor: pointer;
+      z-index: 600;
+      transition: all .18s;
+    }
+    .fab:hover { background: var(--coral-dark); transform: scale(1.1) rotate(45deg); }
+
+    /* ── Smart search overlay (visual) ──────────────────────────── */
+    .search-overlay {
+      position: fixed; top: 68px; left: 50%; transform: translateX(-50%);
+      width: 500px; max-width: 90vw;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.12);
+      z-index: 9000;
+      overflow: hidden;
+      display: none;
+    }
+    .so-section-label {
+      font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--ink-5); padding: .6rem 1rem .3rem;
+    }
+    .so-item {
+      display: flex; align-items: center; gap: .85rem;
+      padding: .65rem 1rem;
+      cursor: pointer; transition: background .12s;
+    }
+    .so-item:hover { background: var(--off); }
+    .so-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .82rem; flex-shrink: 0; }
+    .so-text { font-size: .82rem; font-weight: 600; color: var(--ink); }
+    .so-sub { font-size: .72rem; color: var(--ink-5); }
+
+    /* ── Bottom label ─────────────────────────────────────────────── */
+    .mockup-label {
+      position: fixed;
+      bottom: calc(var(--tab-h) + .5rem); left: 50%;
+      transform: translateX(-50%);
+      background: rgba(240,78,55,.08);
+      border: 1.5px solid var(--coral);
+      color: var(--coral);
+      padding: .3rem 1.1rem;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      z-index: 9999;
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-mark"><i class="bi bi-clipboard2-check-fill"></i></div>
+      <span class="header-title">Claim<span>Flow</span></span>
+    </div>
+
+    <div class="header-search">
+      <i class="bi bi-search"></i>
+      <input type="text" placeholder="Search claims, recipients, amounts…">
+    </div>
+
+    <div class="header-right">
+      <div class="hdr-icon"><i class="bi bi-bell"></i><div class="dot"></div></div>
+      <div class="hdr-icon"><i class="bi bi-moon"></i></div>
+      <div class="user-chip-ft">
+        <div class="uav">SA</div>
+        <span class="uname">Syamsul</span>
+        <i class="bi bi-chevron-down" style="font-size:.62rem;color:var(--ink-5)"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Subheader — Hero Stats ── -->
+  <div class="subheader">
+    <div class="hero-stat">
+      <div class="hero-stat-label">Total This Month</div>
+      <div class="hero-stat-value coral"><span class="hero-stat-unit">RM</span>12,450</div>
+      <div class="hero-stat-sub">↑ 8% vs March 2025</div>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">Pending Payment</div>
+      <div class="hero-stat-value sky"><span class="hero-stat-unit">RM</span>6,240</div>
+      <div class="hero-stat-sub">4 claims outstanding</div>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">Paid to Date</div>
+      <div class="hero-stat-value emerald"><span class="hero-stat-unit">RM</span>48,920</div>
+      <div class="hero-stat-sub">2025 financial year</div>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">Claim Batches</div>
+      <div class="hero-stat-value" style="font-size:2rem">48</div>
+      <div class="hero-stat-sub">3 recipients · All active</div>
+    </div>
+    <div class="subheader-right">
+      <div class="sub-actions">
+        <button class="btn-outline"><i class="bi bi-download"></i> Export</button>
+        <button class="btn-outline"><i class="bi bi-printer"></i> Report</button>
+        <button class="btn-coral"><i class="bi bi-plus-lg"></i> New Claim</button>
+      </div>
+      <div class="filter-pill-row">
+        <button class="fpill active">All</button>
+        <button class="fpill">This Month</button>
+        <button class="fpill">Unpaid</button>
+        <button class="fpill">Partial</button>
+        <button class="fpill">Paid</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Content ── -->
+  <div class="content-scroll">
+    <div class="page-cols">
+      <!-- Left: Timeline -->
+      <div>
+        <div class="timeline">
+          <!-- April 2025 -->
+          <div class="timeline-month-label">April 2025</div>
+
+          <!-- 24 Apr -->
+          <div class="tl-group">
+            <div class="tl-date-col">
+              <div class="tl-day">24</div>
+              <div class="tl-month">Apr</div>
+            </div>
+            <div class="tl-cards">
+              <div class="tc tc-submitted">
+                <div class="tc-top">
+                  <div class="tc-av" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">DSA</div>
+                  <div>
+                    <div class="tc-ref">#CF-0042</div>
+                    <div class="tc-name">Datuk Wira Syamsul Azly</div>
+                  </div>
+                  <div class="tc-badges">
+                    <span class="ft-badge fb-submitted">Submitted</span>
+                    <span class="ft-badge" style="background:var(--rose-dim);color:var(--rose);border-color:rgba(244,63,94,.2)">Unpaid</span>
+                  </div>
+                </div>
+                <div class="tc-bottom">
+                  <div>
+                    <div class="tc-amount"><span class="tc-curr">RM</span>2,350.00</div>
+                    <div class="tc-meta">5 items · 3 receipts · via MBB</div>
+                  </div>
+                  <div class="tc-ring">
+                    <svg width="48" height="48" viewBox="0 0 48 48">
+                      <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(14,165,233,.1)" stroke-width="5"/>
+                      <circle cx="24" cy="24" r="19" fill="none" stroke="#0ea5e9" stroke-width="5" stroke-dasharray="119" stroke-dashoffset="119" stroke-linecap="round"/>
+                    </svg>
+                    <div class="tc-ring-label" style="color:var(--sky)">0%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 20 Apr -->
+          <div class="tl-group">
+            <div class="tl-date-col">
+              <div class="tl-day">20</div>
+              <div class="tl-month">Apr</div>
+            </div>
+            <div class="tl-cards">
+              <div class="tc tc-paid">
+                <div class="tc-top">
+                  <div class="tc-av" style="background:linear-gradient(135deg,#10b981,#0891b2)">DWA</div>
+                  <div>
+                    <div class="tc-ref">#CF-0041</div>
+                    <div class="tc-name">Datin Wira Ardiana Zanaria</div>
+                  </div>
+                  <div class="tc-badges">
+                    <span class="ft-badge fb-paid">Paid</span>
+                  </div>
+                </div>
+                <div class="tc-bottom">
+                  <div>
+                    <div class="tc-amount"><span class="tc-curr">RM</span>1,800.00</div>
+                    <div class="tc-meta">4 items · 2 receipts · via CIMB</div>
+                  </div>
+                  <div class="tc-ring">
+                    <svg width="48" height="48" viewBox="0 0 48 48">
+                      <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(16,185,129,.1)" stroke-width="5"/>
+                      <circle cx="24" cy="24" r="19" fill="none" stroke="#10b981" stroke-width="5" stroke-dasharray="119" stroke-dashoffset="0" stroke-linecap="round"/>
+                    </svg>
+                    <div class="tc-ring-label" style="color:var(--emerald)">100%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 18 Apr -->
+          <div class="tl-group">
+            <div class="tl-date-col">
+              <div class="tl-day">18</div>
+              <div class="tl-month">Apr</div>
+            </div>
+            <div class="tl-cards">
+              <div class="tc tc-partial">
+                <div class="tc-top">
+                  <div class="tc-av" style="background:linear-gradient(135deg,#f59e0b,#f04e37)">DKA</div>
+                  <div>
+                    <div class="tc-ref">#CF-0040</div>
+                    <div class="tc-name">Datin Kalsom Aziz</div>
+                  </div>
+                  <div class="tc-badges">
+                    <span class="ft-badge fb-partial">Partial</span>
+                  </div>
+                </div>
+                <div class="tc-bottom">
+                  <div>
+                    <div class="tc-amount"><span class="tc-curr">RM</span>980.50</div>
+                    <div class="tc-meta">3 items · RM 480.25 paid so far</div>
+                  </div>
+                  <div class="tc-ring">
+                    <svg width="48" height="48" viewBox="0 0 48 48">
+                      <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(255,107,53,.1)" stroke-width="5"/>
+                      <circle cx="24" cy="24" r="19" fill="none" stroke="#ff6b35" stroke-width="5" stroke-dasharray="119" stroke-dashoffset="60" stroke-linecap="round"/>
+                    </svg>
+                    <div class="tc-ring-label" style="color:var(--orange)">49%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 08 Apr -->
+          <div class="tl-group">
+            <div class="tl-date-col">
+              <div class="tl-day">08</div>
+              <div class="tl-month">Apr</div>
+            </div>
+            <div class="tl-cards">
+              <div class="tc tc-draft">
+                <div class="tc-top">
+                  <div class="tc-av" style="background:linear-gradient(135deg,#10b981,#0891b2)">DWA</div>
+                  <div>
+                    <div class="tc-ref">#CF-0038</div>
+                    <div class="tc-name">Datin Wira Ardiana Zanaria</div>
+                  </div>
+                  <div class="tc-badges">
+                    <span class="ft-badge fb-draft">Draft</span>
+                  </div>
+                </div>
+                <div class="tc-bottom">
+                  <div>
+                    <div class="tc-amount"><span class="tc-curr">RM</span>3,120.00</div>
+                    <div class="tc-meta">5 items · not yet submitted</div>
+                  </div>
+                  <div style="display:flex;gap:.45rem">
+                    <button class="btn-xs-ft"><i class="bi bi-pencil"></i> Edit</button>
+                    <button class="btn-xs-ft" style="background:var(--coral-dim);color:var(--coral);border-color:rgba(240,78,55,.3)"><i class="bi bi-send"></i> Submit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- March 2025 -->
+          <div class="timeline-month-label" style="margin-top:.5rem">March 2025</div>
+
+          <div class="tl-group">
+            <div class="tl-date-col">
+              <div class="tl-day">28</div>
+              <div class="tl-month">Mar</div>
+            </div>
+            <div class="tl-cards">
+              <div class="tc tc-paid">
+                <div class="tc-top">
+                  <div class="tc-av" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">DSA</div>
+                  <div>
+                    <div class="tc-ref">#CF-0037</div>
+                    <div class="tc-name">Datuk Wira Syamsul Azly</div>
+                  </div>
+                  <div class="tc-badges">
+                    <span class="ft-badge fb-paid">Paid</span>
+                  </div>
+                </div>
+                <div class="tc-bottom">
+                  <div>
+                    <div class="tc-amount"><span class="tc-curr">RM</span>4,200.00</div>
+                    <div class="tc-meta">8 items · 4 receipts · via MBB</div>
+                  </div>
+                  <div class="tc-ring">
+                    <svg width="48" height="48" viewBox="0 0 48 48">
+                      <circle cx="24" cy="24" r="19" fill="none" stroke="rgba(16,185,129,.1)" stroke-width="5"/>
+                      <circle cx="24" cy="24" r="19" fill="none" stroke="#10b981" stroke-width="5" stroke-dasharray="119" stroke-dashoffset="0" stroke-linecap="round"/>
+                    </svg>
+                    <div class="tc-ring-label" style="color:var(--emerald)">100%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /timeline -->
+      </div>
+
+      <!-- Right: panels -->
+      <div style="display:flex;flex-direction:column;gap:1rem">
+
+        <!-- Payment queue -->
+        <div class="rp">
+          <div class="rp-head">
+            <div style="width:28px;height:28px;border-radius:8px;background:var(--coral-dim);color:var(--coral);display:flex;align-items:center;justify-content:center;font-size:.82rem"><i class="bi bi-cash-coin"></i></div>
+            <h4>Payment Queue</h4>
+            <div class="rp-head-right">
+              <span style="font-size:.72rem;font-weight:700;background:var(--coral-dim);color:var(--coral);padding:.18rem .65rem;border-radius:99px">4 pending</span>
+            </div>
+          </div>
+
+          <div class="pay-item">
+            <div class="pay-av" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">DSA</div>
+            <div class="pay-info">
+              <div class="pay-name">Datuk Syamsul</div>
+              <div class="pay-ref">CF-0042</div>
+              <div class="prog-bar-wrap">
+                <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:0%"></div></div>
+                <div class="prog-labels"><span>0% paid</span><span>RM 2,350</span></div>
+              </div>
+            </div>
+            <div class="pay-amount">
+              <div class="pay-amt-val">2,350</div>
+              <div class="pay-amt-sub">RM outstanding</div>
+            </div>
+          </div>
+
+          <div class="pay-item">
+            <div class="pay-av" style="background:linear-gradient(135deg,#f59e0b,#f04e37)">DKA</div>
+            <div class="pay-info">
+              <div class="pay-name">Datin Kalsom</div>
+              <div class="pay-ref">CF-0040</div>
+              <div class="prog-bar-wrap">
+                <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:49%;background:var(--orange)"></div></div>
+                <div class="prog-labels"><span>49% paid</span><span>RM 980.50</span></div>
+              </div>
+            </div>
+            <div class="pay-amount">
+              <div class="pay-amt-val">500.25</div>
+              <div class="pay-amt-sub">RM remaining</div>
+            </div>
+          </div>
+
+          <div class="pay-item">
+            <div class="pay-av" style="background:linear-gradient(135deg,#10b981,#0891b2)">DWA</div>
+            <div class="pay-info">
+              <div class="pay-name">Datin Ardiana</div>
+              <div class="pay-ref">CF-0037</div>
+              <div class="prog-bar-wrap">
+                <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:0%"></div></div>
+                <div class="prog-labels"><span>0% paid</span><span>RM 1,200</span></div>
+              </div>
+            </div>
+            <div class="pay-amount">
+              <div class="pay-amt-val">1,200</div>
+              <div class="pay-amt-sub">RM outstanding</div>
+            </div>
+          </div>
+
+          <div style="padding:.85rem 1.25rem;border-top:1px solid var(--border)">
+            <button class="btn-coral" style="width:100%;justify-content:center">
+              <i class="bi bi-cash-coin"></i> Mark Selected as Paid
+            </button>
+          </div>
+        </div>
+
+        <!-- Recipients -->
+        <div class="rp">
+          <div class="rp-head">
+            <div style="width:28px;height:28px;border-radius:8px;background:var(--violet-dim);color:var(--violet);display:flex;align-items:center;justify-content:center;font-size:.82rem"><i class="bi bi-people-fill"></i></div>
+            <h4>Recipients</h4>
+          </div>
+
+          <div class="pay-item">
+            <div class="pay-av" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">DSA</div>
+            <div class="pay-info">
+              <div class="pay-name">Datuk Syamsul</div>
+              <div class="pay-ref">18 claims · 2025</div>
+            </div>
+            <div class="pay-amount">
+              <div class="pay-amt-val" style="font-size:.82rem">18,400</div>
+              <div class="pay-amt-sub">RM claimed</div>
+            </div>
+          </div>
+
+          <div class="pay-item">
+            <div class="pay-av" style="background:linear-gradient(135deg,#10b981,#0891b2)">DWA</div>
+            <div class="pay-info">
+              <div class="pay-name">Datin Ardiana</div>
+              <div class="pay-ref">16 claims · 2025</div>
+            </div>
+            <div class="pay-amount">
+              <div class="pay-amt-val" style="font-size:.82rem">14,250</div>
+              <div class="pay-amt-sub">RM claimed</div>
+            </div>
+          </div>
+
+          <div class="pay-item">
+            <div class="pay-av" style="background:linear-gradient(135deg,#f59e0b,#f04e37)">DKA</div>
+            <div class="pay-info">
+              <div class="pay-name">Datin Kalsom</div>
+              <div class="pay-ref">14 claims · 2025</div>
+            </div>
+            <div class="pay-amount">
+              <div class="pay-amt-val" style="font-size:.82rem">9,320</div>
+              <div class="pay-amt-sub">RM claimed</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /right -->
+    </div><!-- /page-cols -->
+  </div><!-- /content-scroll -->
+
+  <!-- ── FAB ── -->
+  <div class="fab"><i class="bi bi-plus-lg"></i></div>
+
+  <!-- ── Bottom Tab Bar ── -->
+  <div class="tabbar">
+    <div class="tab-item">
+      <i class="bi bi-grid-1x2"></i>
+      Dashboard
+    </div>
+    <div class="tab-item active">
+      <i class="bi bi-journal-text"></i>
+      Records
+      <div class="tab-badge">4</div>
+    </div>
+    <div class="tab-item">
+      <i class="bi bi-cash-coin"></i>
+      Payments
+      <div class="tab-badge">2</div>
+    </div>
+    <div class="tab-item">
+      <i class="bi bi-bar-chart-line"></i>
+      Analytics
+    </div>
+    <div class="tab-item">
+      <i class="bi bi-gear"></i>
+      Settings
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<div class="mockup-label">✦ Design 4 — Modern Fintech</div>
+
+</body>
+</html>
